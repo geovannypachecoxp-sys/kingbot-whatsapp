@@ -268,9 +268,19 @@ const puppeteerConfig = {
 // Si detectamos que es Termux, inyectamos la ruta del Chromium móvil de forma automática
 if (isTermux) {
     puppeteerConfig.executablePath = '/data/data/com.termux/files/usr/bin/chromium-browser';
-    console.log('[xa Enrutador] Entorno detectado: Android/Termux. Cargando Chromium móvil...');
+    puppeteerConfig.args.push(
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-webgl',
+        '--disable-dev-shm-usage',
+        '--single-process',
+        '--no-zygote',
+        '--disable-accelerated-2d-canvas',
+        '--disable-extensions'
+    );
+    console.log('[Enrutador] Entorno detectado: Android/Termux. Cargando Chromium movil...');
 } else {
-    console.log('[xa Enrutador] Entorno detectado: Computadora (Windows). Cargando Puppeteer estándar...');
+    console.log('[Enrutador] Entorno detectado: Computadora (Windows). Cargando Puppeteer estandar...');
 }
 
 const client = new Client({

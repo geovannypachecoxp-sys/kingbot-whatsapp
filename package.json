@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@juzi/whatsapp-web.js": "^1.30.34",
     "@wppconnect/wa-version": "^1.5.4368",
+    "debug": "^4.4.3",
     "firebase-admin": "^13.10.0",
     "node-cron": "^4.2.1",
     "qrcode-terminal": "^0.12.0",
