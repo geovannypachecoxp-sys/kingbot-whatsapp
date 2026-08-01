@@ -57,7 +57,7 @@ function guardarKeysYCuotas() {
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
 }
 
-const MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const MODELS = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
@@ -4091,7 +4091,7 @@ _Use !bot desprogramar <índice>_`;
                 await msg.reply(respuestaTexto);
             }
         } else {
-            await msg.reply("a Cuota agotada en IA.");
+            await msg.reply("⚠️ *Las llaves API de Gemini están agotadas o inhabilitadas por Google.*\n\nObtén una llave gratis en https://aistudio.google.com/app/apikey y agrégala con:\n*!bot addkey <TU_API_KEY>*");
         }
     } catch (error) {
         console.error("Error general:", error);
