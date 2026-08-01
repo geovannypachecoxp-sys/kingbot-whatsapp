@@ -2561,7 +2561,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 const html = await response.text();
                 
                 const snippets = [];
-                const rege= /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+                const regex = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
                 let match;
                 let count = 0;
                 while ((match = regex.exec(html)) !== null && count < 5) {
@@ -3017,7 +3017,7 @@ _Use !bot desprogramar <índice>_`;
                 if (searchRes.ok) {
                     const html = await searchRes.text();
                     const snippets = [];
-                    const rege= /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+                    const regex = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
                     let m;
                     let count = 0;
                     while ((m = regex.exec(html)) !== null && count < 5) {
@@ -3228,7 +3228,7 @@ _Use !bot desprogramar <índice>_`;
                 if (searchRes.ok) {
                     const html = await searchRes.text();
                     const snippets = [];
-                    const rege= /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+                    const regex = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
                     let m;
                     let count = 0;
                     while ((m = regex.exec(html)) !== null && count < 5) {
@@ -3501,7 +3501,7 @@ _Use !bot desprogramar <índice>_`;
                             if (searchRes.ok) {
                                 const html = await searchRes.text();
                                 const snippets = [];
-                                const rege= /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+                                const regex = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
                                 let m;
                                 let count = 0;
                                 while ((m = regex.exec(html)) !== null && count < 5) {
