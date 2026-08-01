@@ -19,11 +19,7 @@ const isTermux = process.platform === 'android' || !!process.env.PREFIX;
 // ---------------------------------------------------------
 // CONFIGURACIN DE MULTI-API KEYS Y MODELOS (GEMINI)
 // ---------------------------------------------------------
-const DEFAULT_KEYS = [
-    'AIzaSyB22lz4PudM7-pXugNIiOxUcUcFt89FN7s',               // Key 1
-    'AIzaSyByuy6_lJ17NBIaRdTZ4Z-_rWBvKsqskrM',               // Key 2
-    'AIzaSyD0_VJV_fueqmAyuDsQn1P1QDKLF2Dgh6I'                // Key 3
-];
+const DEFAULT_KEYS = [];
 let API_KEYS = [...DEFAULT_KEYS];
 let keyStatus = {};
 let currentKeyIndex =  0;
@@ -57,7 +53,7 @@ function guardarKeysYCuotas() {
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
 }
 
-const MODELS = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+const MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
