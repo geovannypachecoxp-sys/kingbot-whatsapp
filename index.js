@@ -238,6 +238,33 @@ function guardarAlarmas() {
     fs.writeFileSync('alarmas.json', JSON.stringify(alarmasGuardadas, null, 2));
 }
 
+function getHoraElSalvador(date = new Date()) {
+    try {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'America/El_Salvador',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).formatToParts(date);
+        const h = parts.find(p => p.type === 'hour').value;
+        const m = parts.find(p => p.type === 'minute').value;
+        return h + ':' + m;
+    } catch (e) {
+        const hoy = date;
+        const utc = hoy.getTime() + (hoy.getTimezoneOffset() * 60000);
+        const hoyES = new Date(utc + (3600000 * -6));
+        return String(hoyES.getHours()).padStart(2, '0') + ':' + String(hoyES.getMinutes()).padStart(2, '0');
+    }
+}
+
+function normalizarHora(h) {
+    if (!h) return '';
+    const parts = h.trim().split(':');
+    if (parts.length !== 2) return h.trim();
+    return String(parseInt(parts[0], 10)).padStart(2, '0') + ':' + String(parseInt(parts[1], 10)).padStart(2, '0');
+}
+
+
 // Cargar tareas estructuradas
 let tareasGuardadas = [];
 if (fs.existsSync('tareas.json')) {
@@ -943,21 +970,24 @@ client.on('ready', () => {
 
     cron.schedule('0 8,13,16,20,22 * * *', verificarYouTube);
 
-    // Cron para alarmas persistentes (cada minuto)
-    cron.schedule('* * * * *', async () => {
+    // Cron para alarmas persistentes (verificación cada 20 segundos con timezone exacta de El Salvador)
+    cron.schedule('*/20 * * * * *', async () => {
         if (!botGlobalmenteActivo || alarmasGuardadas.length === 0) return;
         
         const hoy = new Date();
-        const utc = hoy.getTime() + (hoy.getTimezoneOffset() * 60000);
-        const hoyES = new Date(utc + (3600000 * -6));
-        const horaStr = String(hoyES.getHours()).padStart(2, '0') + ':' + String(hoyES.getMinutes()).padStart(2, '0');
+        const horaStr = getHoraElSalvador(hoy);
+        const fechaHoraActual = hoy.toLocaleDateString() + ' ' + horaStr;
         
         const alarmasAEliminar = [];
         for (let i = 0; i < alarmasGuardadas.length; i++) {
             const alarma = alarmasGuardadas[i];
-            if (alarma.hora === horaStr) {
+            const horaAlarmaNorm = normalizarHora(alarma.hora);
+            
+            if (horaAlarmaNorm === horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
+                alarma.ultimoDisparo = fechaHoraActual;
                 try {
-                    await client.sendMessage(alarma.chatId, ` *¡ALARMA ACTIVADA!* \n\nGeovanny, es hora:\n_"${alarma.mensaje}"_`);
+                    console.log(`[⏰ ALARMA DISPARADA] Enviando alarma programada para las ${horaAlarmaNorm}: "${alarma.mensaje}" a ${alarma.chatId}`);
+                    await client.sendMessage(alarma.chatId, `⏰ *¡ALARMA ACTIVADA!* ⏰\n\nSeñor Geovanny, es hora:\n👉 _"${alarma.mensaje}"_`);
                     if (!alarma.recurrente) {
                         alarmasAEliminar.push(i);
                     }
@@ -3950,9 +3980,7 @@ _Use !bot desprogramar <índice>_`;
                             guardarAlarmas();
                             console.log(`[x Agentic Alarm Add]: Alarma a las ${hora} recurrente=${recurrente}: ${msgAlarma}`);
                             // Calcular hora actual GT para mostrarla
-                            const _tzNow = new Date();
-                            const _tzGT = new Date(_tzNow.getTime() + (_tzNow.getTimezoneOffset() * 60000) + (3600000 * -6));
-                            const _horaActualGT = String(_tzGT.getHours()).padStart(2, '0') + ':' + String(_tzGT.getMinutes()).padStart(2, '0');
+                            const _horaActualGT = getHoraElSalvador(new Date());
                             const _alarmMsg = '\n\n *Kingbot  Alarma Configurada:*\nxR Hora programada: *' + hora + '*  _(hora actual: ' + _horaActualGT + ')_\nx Recordatorio: _"' + msgAlarma + '"_\n' + (recurrente ? 'x Tipo: Diaria (se repite cada día)' : 'x" Tipo: Una sola vez (se autodestruye al dispararse)');
                             respuestaTexto = respuestaTexto.replace(match[0], _alarmMsg).trim();
                         } else {
