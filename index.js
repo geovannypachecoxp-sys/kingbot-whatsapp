@@ -315,13 +315,41 @@ async function obtenerIdCanal(url) {
 async function downloadTikTok(url) {
     try {
         const fetch = require('node-fetch');
-        const res = await fetch('https://www.tikwm.com/api/?url=' + url);
+        let fullUrl = url;
+        try {
+            const head = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+            if (head.url) fullUrl = head.url;
+        } catch(e){}
+        const res = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(fullUrl));
         const json = await res.json();
         if (json.code === 0 && json.data && json.data.play) {
             return json.data.play;
         }
     } catch (e) {
         console.error("Error en tikwm:", e);
+    }
+    return null;
+}
+
+async function downloadTikTokMedia(url) {
+    try {
+        const fetch = require('node-fetch');
+        const playUrl = await downloadTikTok(url);
+        if (playUrl) {
+            const videoRes = await fetch(playUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.tiktok.com/',
+                    'Accept': '*/*'
+                }
+            });
+            if (videoRes.ok) {
+                const buffer = await videoRes.buffer();
+                return new MessageMedia('video/mp4', buffer.toString('base64'), 'tiktok.mp4');
+            }
+        }
+    } catch (e) {
+        console.error("Error en downloadTikTokMedia:", e);
     }
     return null;
 }
@@ -1141,12 +1169,7 @@ client.on('message', async (msg) => {
                 const _isTikTok = urlDescargar.includes('tiktok.com') || urlDescargar.includes('vm.tiktok') || urlDescargar.includes('vt.tiktok');
                 
                 if (_isTikTok) {
-                    const tiktokUrl = await downloadTikTok(urlDescargar);
-                    if (tiktokUrl) {
-                        try {
-                            media = await MessageMedia.fromUrl(tiktokUrl, { unsafeMime: true });
-                        } catch (e) {}
-                    }
+                    media = await downloadTikTokMedia(urlDescargar);
                 }
                 
                 if (!media) {
@@ -2059,9 +2082,12 @@ client.on('message', async (msg) => {
             return;
         }
 
-        if (comando === 'video' || comando === 'tiktok') {
-            // Smart URL extraction - get the URL from anywhere in the argument text
-            const urlMatch = argumento.match(/(https?:\/\/[^\s]+)/);
+        const esTikTokLink = textoOriginal.includes('tiktok.com') || textoOriginal.includes('vm.tiktok') || textoOriginal.includes('vt.tiktok');
+        const esComandoDescarga = ['video', 'tiktok', 'descarga', 'descargar', 'bajar', 'mp4'].includes(comando);
+
+        if (esComandoDescarga || (esTikTokLink && (usaPrefijo || /descarg|baj|vide/i.test(textoOriginal)))) {
+            // Smart URL extraction - get the URL from anywhere in the text
+            const urlMatch = (argumento || textoOriginal).match(/(https?:\/\/[^\s]+)/);
             const videoUrl = urlMatch ? urlMatch[1] : argumento;
             
             if (!videoUrl || !videoUrl.includes('http')) return msg.reply("❌ *Kingbot:* Requiero un enlace de video real para iniciar mis protocolos.");
@@ -2077,17 +2103,16 @@ client.on('message', async (msg) => {
                 : ' *Kingbot:* Iniciando protocolos de descarga para el video...');
             
             if (_isTikTok) {
-                const tiktokUrl = await downloadTikTok(videoUrl);
-                if (tiktokUrl) {
+                const media = await downloadTikTokMedia(videoUrl);
+                if (media) {
                     try {
-                        const media = await MessageMedia.fromUrl(tiktokUrl, { unsafeMime: true });
                         await msg.reply(media, undefined, { sendMediaAsDocument: false });
                         return;
                     } catch (err) {
                         console.error('[!] Error enviando tiktok via API:', err);
                     }
                 }
-                await msg.reply("a *Kingbot:* API TikTok falló. Intentando yt-dlp...");
+                await msg.reply("⚠️ *Kingbot:* API TikTok falló. Intentando yt-dlp...");
             }
 
             const outputFile = 'video_' + Date.now() + '.mp4';
@@ -3643,10 +3668,9 @@ _Use !bot desprogramar <índice>_`;
                             
                             // TikTok API first
                             if (_isTikTok) {
-                                const tiktokUrl = await downloadTikTok(urlStr);
-                                if (tiktokUrl) {
+                                const media = await downloadTikTokMedia(urlStr);
+                                if (media) {
                                     try {
-                                        const media = await MessageMedia.fromUrl(tiktokUrl, { unsafeMime: true });
                                         await msg.reply(media, undefined, { sendMediaAsDocument: false });
                                         continue;
                                     } catch (err) {
