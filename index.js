@@ -302,6 +302,7 @@ if (isTermux) {
         '--disable-extensions'
     );
     console.log('[Enrutador] Entorno detectado: Android/Termux. Cargando Chromium movil...');
+    console.log('[ℹ️ WhatsApp Web]: Conectando sesión... (Los mensajes de "PUPPETEER PAGE LOG / storage denied" son advertencias internas normales de WhatsApp Web en móvil. Espera ~20 segundos a que diga LISTO)...');
 } else {
     console.log('[Enrutador] Entorno detectado: Computadora (Windows). Cargando Puppeteer estandar...');
 }
