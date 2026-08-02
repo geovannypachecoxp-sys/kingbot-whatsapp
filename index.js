@@ -345,7 +345,7 @@ async function downloadTikTokMedia(url) {
             });
             if (videoRes.ok) {
                 const buffer = await videoRes.buffer();
-                return new MessageMedia('video/mp4', buffer.toString('base64'), 'tiktok.mp4');
+                return new MessageMedia('video/mp4', buffer.toString('base64'), 'tiktok.mp4', buffer.length);
             }
         }
     } catch (e) {
@@ -2109,7 +2109,13 @@ client.on('message', async (msg) => {
                         await msg.reply(media, undefined, { sendMediaAsDocument: false });
                         return;
                     } catch (err) {
-                        console.error('[!] Error enviando tiktok via API:', err);
+                        console.error('[!] Error enviando tiktok como video normal, reintentando como documento MP4...');
+                        try {
+                            await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: '🎬 *Kingbot:* Video TikTok' });
+                            return;
+                        } catch (err2) {
+                            console.error('[!] Error enviando documento tiktok:', err2);
+                        }
                     }
                 }
                 await msg.reply("⚠️ *Kingbot:* API TikTok falló. Intentando yt-dlp...");
@@ -2155,7 +2161,15 @@ client.on('message', async (msg) => {
                     }
                     const media = MessageMedia.fromFilePath(outputFile);
                     const asDoc = sizeMB > 15;
-                    await msg.reply(media, undefined, { sendMediaAsDocument: asDoc });
+                    try {
+                        await msg.reply(media, undefined, { sendMediaAsDocument: asDoc });
+                    } catch (e1) {
+                        if (!asDoc) {
+                            await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: '🎬 *Kingbot:* Video' });
+                        } else {
+                            throw e1;
+                        }
+                    }
                     if (asDoc) await msg.reply('  *Kingbot:* El video se envió como documento porque es largo/pesado (' + sizeMB.toFixed(1) + ' MB).');
                     if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
                 } catch (err) {
@@ -3674,7 +3688,13 @@ _Use !bot desprogramar <índice>_`;
                                         await msg.reply(media, undefined, { sendMediaAsDocument: false });
                                         continue;
                                     } catch (err) {
-                                        console.error('[!] Error enviando tiktok agentic via API:', err);
+                                        console.error('[!] Error enviando tiktok agentic como video, reintentando como documento...');
+                                        try {
+                                            await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: '🎬 *Kingbot:* Video TikTok' });
+                                            continue;
+                                        } catch (err2) {
+                                            console.error('[!] Error enviando documento tiktok agentic:', err2);
+                                        }
                                     }
                                 }
                             }
