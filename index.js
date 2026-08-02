@@ -293,8 +293,13 @@ if (isTermux) {
     puppeteerConfig.executablePath = '/data/data/com.termux/files/usr/bin/chromium-browser';
     puppeteerConfig.args.push(
         '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-webgl',
         '--disable-dev-shm-usage',
+        '--single-process',
+        '--no-zygote',
         '--disable-accelerated-2d-canvas',
+        '--disable-extensions',
         '--no-first-run',
         '--no-default-browser-check',
         '--disable-background-timer-throttling',
