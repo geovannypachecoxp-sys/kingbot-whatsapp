@@ -310,8 +310,27 @@ if (isTermux) {
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: puppeteerConfig,
-    webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1041671649-alpha.html' }
+    webVersionCache: { type: 'none' }
 });
+
+let wppConnected = false;
+client.on('qr', () => { wppConnected = true; });
+client.on('authenticated', () => { wppConnected = true; });
+client.on('ready', () => { wppConnected = true; });
+
+setTimeout(() => {
+    if (!wppConnected) {
+        console.log('\n[⚠️ ALERTA]: Chromium móvil quedó bloqueado esperando el ServiceWorker o caché de la sesión anterior en Termux.');
+        console.log('[🔄 AUTO-RECOVERY]: Destrabando caché temporal y reiniciando automáticamente...');
+        try {
+            const swPath = path.join(__dirname, '.wwebjs_auth', 'session', 'Default', 'Service Worker');
+            const cachePath = path.join(__dirname, '.wwebjs_auth', 'session', 'Default', 'Cache');
+            if (fs.existsSync(swPath)) fs.rmSync(swPath, { recursive: true, force: true });
+            if (fs.existsSync(cachePath)) fs.rmSync(cachePath, { recursive: true, force: true });
+        } catch(e) {}
+        process.exit(1);
+    }
+}, 75000);
 
 const originalSendMessage = client.sendMessage.bind(client);
 client.sendMessage = async (...args) => {
