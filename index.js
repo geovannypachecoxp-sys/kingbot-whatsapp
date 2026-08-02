@@ -310,7 +310,7 @@ if (isTermux) {
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: puppeteerConfig,
-    webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1044300879-alpha.html' }
+    webVersionCache: { type: 'none' }
 });
 
 const originalSendMessage = client.sendMessage.bind(client);
