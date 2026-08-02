@@ -3488,13 +3488,20 @@ _Use !bot desprogramar <índice>_`;
             try { await msg.reply(_loadMsgs[Math.floor(Math.random() * _loadMsgs.length)]); } catch(e) {}
         }
 
+        let downloadedMedia = null;
         if (mensajeAProcesar.hasMedia) {
-            const media = await mensajeAProcesar.downloadMedia();
+            downloadedMedia = await mensajeAProcesar.downloadMedia();
             if (comando === 'sticker') {
-                await msg.reply(media, msg.from, { sendMediaAsSticker: true, stickerName: 'Bot VIP Multiplataforma', stickerAuthor: 'Geovanny' });
+                if (downloadedMedia) {
+                    await msg.reply(downloadedMedia, msg.from, { sendMediaAsSticker: true, stickerName: 'Bot VIP Multiplataforma', stickerAuthor: 'Geovanny' });
+                } else {
+                    await msg.reply('❌ *Kingbot:* No se pudo descargar el archivo multimedia para crear el sticker.');
+                }
                 return;
             }
-            contenido.push({ inlineData: { data: media.data, mimeType: media.mimetype } });
+            if (downloadedMedia && downloadedMedia.data) {
+                contenido.push({ inlineData: { data: downloadedMedia.data, mimeType: downloadedMedia.mimetype } });
+            }
         }
         if (contenido.length === 0) contenido.push("Analiza esto.");
 
@@ -3518,11 +3525,10 @@ _Use !bot desprogramar <índice>_`;
 
             if (isConversational) {
                 let entradaMessage = `[${fechaContexto}]\n${textoParaGemini}`;
-                if (mensajeAProcesar.hasMedia) {
+                if (mensajeAProcesar.hasMedia && downloadedMedia && downloadedMedia.data) {
                     let partsUsuario = [];
                     partsUsuario.push({ text: `[${fechaContexto}]\n${textoParaGemini || 'Analiza esta imagen.'}` });
-                    const media = await mensajeAProcesar.downloadMedia();
-                    partsUsuario.push({ inlineData: { data: media.data, mimeType: media.mimetype } });
+                    partsUsuario.push({ inlineData: { data: downloadedMedia.data, mimeType: downloadedMedia.mimetype } });
                     entradaMessage = partsUsuario;
                 }
 
@@ -3532,11 +3538,10 @@ _Use !bot desprogramar <índice>_`;
                     return result.response.text();
                 });
 
-                if (mensajeAProcesar.hasMedia) {
+                if (mensajeAProcesar.hasMedia && downloadedMedia && downloadedMedia.data) {
                     if (textoParaGemini) partsGuardar.push({ text: `[${fechaContexto}]\n${textoParaGemini}` });
                     else partsGuardar.push({ text: `[${fechaContexto}]\nAnaliza esta imagen.` });
-                    const media = await mensajeAProcesar.downloadMedia();
-                    partsGuardar.push({ inlineData: { data: media.data, mimeType: media.mimetype } });
+                    partsGuardar.push({ inlineData: { data: downloadedMedia.data, mimeType: downloadedMedia.mimetype } });
                 } else { partsGuardar = [{ text: `[${fechaContexto}]\n${textoParaGemini}` }]; }
             } else {
                 respuestaTexto = await ejecutarGeminiConRetries(async (model) => {
