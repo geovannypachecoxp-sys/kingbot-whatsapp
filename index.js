@@ -53,7 +53,7 @@ function guardarKeysYCuotas() {
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
 }
 
-const MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+const MODELS = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
@@ -172,7 +172,7 @@ let canalesYoutube = [
 ];
 
 let agentesCustom = {
-    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.6 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con elocuencia y precisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.6 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: Sé extremadamente directo, preciso y al grano. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Tareas programadas: [ACTION_SCHEDULE: cron_expr | descripcion | tag_accion] (ej. [ACTION_SCHEDULE: 0 8 * * * | Dar las noticias | [ACTION_SEARCH: noticias hoy]])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA ABSOLUTA DE SISTEMA: BAJO NINGUNA CIRCUNSTANCIA puedes decirle al usuario comandos manuales de texto. Usa aNICA Y EXCLUSIVAMENTE los tags [ACTION_*] en tu respuesta y deja que el sistema lo maneje."
+    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.7 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.7 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Tareas programadas: [ACTION_SCHEDULE: cron_expr | descripcion | tag_accion] (ej. [ACTION_SCHEDULE: 0 8 * * * | Dar las noticias | [ACTION_SEARCH: noticias hoy]])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
 };
 
 let botGlobalmenteActivo = true;
@@ -255,6 +255,36 @@ function getHoraElSalvador(date = new Date()) {
         const hoyES = new Date(utc + (3600000 * -6));
         return String(hoyES.getHours()).padStart(2, '0') + ':' + String(hoyES.getMinutes()).padStart(2, '0');
     }
+}
+
+function getFechaElSalvador(date = new Date()) {
+    try {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'America/El_Salvador',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).formatToParts(date);
+        const y = parts.find(p => p.type === 'year').value;
+        const m = parts.find(p => p.type === 'month').value;
+        const d = parts.find(p => p.type === 'day').value;
+        return d + '/' + m + '/' + y;
+    } catch (e) {
+        const hoy = date;
+        const utc = hoy.getTime() + (hoy.getTimezoneOffset() * 60000);
+        const hoyES = new Date(utc + (3600000 * -6));
+        return String(hoyES.getDate()).padStart(2, '0') + '/' + String(hoyES.getMonth()+1).padStart(2, '0') + '/' + hoyES.getFullYear();
+    }
+}
+
+function getFechaObjetivoAlarma(horaStrObjetivo) {
+    const hoy = new Date();
+    const horaActual = getHoraElSalvador(hoy);
+    let fechaObj = new Date(hoy);
+    if (horaStrObjetivo < horaActual) {
+        fechaObj.setDate(fechaObj.getDate() + 1);
+    }
+    return getFechaElSalvador(fechaObj);
 }
 
 function normalizarHora(h) {
@@ -982,14 +1012,42 @@ client.on('ready', () => {
         
         const hoy = new Date();
         const horaStr = getHoraElSalvador(hoy);
-        const fechaHoraActual = hoy.toLocaleDateString() + ' ' + horaStr;
+        const fechaStr = getFechaElSalvador(hoy);
+        const fechaHoraActual = fechaStr + ' ' + horaStr;
         
         const alarmasAEliminar = [];
         for (let i = 0; i < alarmasGuardadas.length; i++) {
             const alarma = alarmasGuardadas[i];
             const horaAlarmaNorm = normalizarHora(alarma.hora);
             
-            if (horaAlarmaNorm === horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
+            let debeDisparar = false;
+
+            if (!alarma.recurrente) {
+                if (alarma.fecha === fechaStr) {
+                    if (horaAlarmaNorm <= horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
+                        debeDisparar = true;
+                    }
+                } else {
+                    const parseDate = (dStr) => {
+                        if (!dStr) return new Date(0);
+                        const parts = dStr.split('/');
+                        if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]);
+                        return new Date(0);
+                    };
+                    const fAlarma = parseDate(alarma.fecha);
+                    const fHoy = parseDate(fechaStr);
+                    if (fAlarma < fHoy) {
+                        alarmasAEliminar.push(i);
+                        continue;
+                    }
+                }
+            } else {
+                if (horaAlarmaNorm === horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
+                    debeDisparar = true;
+                }
+            }
+
+            if (debeDisparar) {
                 alarma.ultimoDisparo = fechaHoraActual;
                 try {
                     console.log(`[⏰ ALARMA DISPARADA] Enviando alarma programada para las ${horaAlarmaNorm}: "${alarma.mensaje}" a ${alarma.chatId}`);
@@ -2782,7 +2840,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 recurrente = true;
                 msgAlarma = msgAlarma.replace('--diaria', '').replace('--recurrente', '').trim();
             }
-            alarmasGuardadas.push({ hora, mensaje: msgAlarma, chatId, recurrente, fecha: new Date().toLocaleDateString() });
+            alarmasGuardadas.push({ hora, mensaje: msgAlarma, chatId, recurrente, fecha: getFechaObjetivoAlarma(hora) });
             guardarAlarmas();
             return msg.reply(` *Kingbot:* Alarma establecida con éxito a las ${hora} para: _"${msgAlarma}"_ ${recurrente ? '(Diaria x)' : '(Una vez x")'}.`);
         }
@@ -3987,7 +4045,7 @@ _Use !bot desprogramar <índice>_`;
                         const recurrente = (diariaStr === 'true' || diariaStr === 'diaria');
                         
                         if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(hora) && msgAlarma) {
-                            alarmasGuardadas.push({ hora, mensaje: msgAlarma, chatId, recurrente, fecha: new Date().toLocaleDateString() });
+                            alarmasGuardadas.push({ hora, mensaje: msgAlarma, chatId, recurrente, fecha: getFechaObjetivoAlarma(hora) });
                             guardarAlarmas();
                             console.log(`[x Agentic Alarm Add]: Alarma a las ${hora} recurrente=${recurrente}: ${msgAlarma}`);
                             // Calcular hora actual GT para mostrarla
