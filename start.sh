@@ -1,4 +1,8 @@
 #!/bin/bash
+
+echo "[*] Comprobando actualizaciones automáticas..."
+git pull origin main
+
 pkill -9 -f chromium 2>/dev/null
 pkill -9 -f chrome 2>/dev/null
 pkill -9 -f node 2>/dev/null
