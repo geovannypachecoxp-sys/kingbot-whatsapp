@@ -1758,10 +1758,8 @@ client.on('message', async (msg) => {
         }
     }
 
-    if (!isGroup && adminChatId !== chatId) {
-        adminChatId = chatId;
-        guardarAdminJson();
-    }
+    // adminChatId auto-assignment removed to prevent security flaw.
+    // Use !bot claimadmin to set yourself as the admin.
 
     if (primerPalabra === '!iniciarbot' || primerPalabra === '!botgrupal') {
         if (primerPalabra === '!iniciarbot' && isGroup) return msg.reply("❌ Usa *!botgrupal* en grupos.");
@@ -1815,6 +1813,12 @@ client.on('message', async (msg) => {
         argumento = argumento.substring(5).trim();
     }
     let mensajeAProcesar = msg;
+
+    if (comando === 'seradmin') {
+        adminChatId = chatId;
+        guardarAdminJson();
+        return msg.reply("S& *Kingbot:* Te he reconocido como el Administrador Principal. De ahora en adelante, me activaré de forma automática y conversacional solo contigo en privado.");
+    }
 
         if (!msg.hasMedia) {
         if (msg.hasQuotedMsg) {
