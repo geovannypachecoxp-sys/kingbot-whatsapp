@@ -1783,7 +1783,10 @@ client.on('message_create', async (msg) => {
 
         chatsActivos.add(chatId);
 
-        const systemPromptFluid = agentesCustom[nombreAgente];
+        let systemPromptFluid = agentesCustom[nombreAgente];
+        if (isGroup || chatId !== adminChatId) {
+            systemPromptFluid += "\n\n(ADVERTENCIA: EL USUARIO ACTUAL NO ES GEOVANNY PACHECO O ESTÁS EN UN GRUPO. Tienes ESTRICTAMENTE PROHIBIDO usar tags de notas, finanzas, recordatorios o alarmas. Tampoco debes mencionar los intereses personales de Geovanny. Comportate como un asistente útil y neutral.)";
+        }
 
         sesionesChat.set(chatId, [
             { role: "user", parts: [{ text: systemPromptFluid }] },
@@ -2617,7 +2620,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
         // --- NUEVO COMANDO: GENERADOR QR ---
         if (comando === 'qr') {
             if (!argumento) return msg.reply("❌ *Kingbot:* Ingrese el texto o enlace que desea codificar.");
-            await msg.reply("x *Kingbot:* Renderizando matriz de código QR...");
+            await msg.reply("x  *Kingbot:* Renderizando matriz de código QR...");
             try {
                 const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(argumento)}`;
                 const response = await fetch(url);
@@ -2634,6 +2637,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
 
         // --- NUEVO COMANDO: RECORDATORIOS ---
         if (comando === 'recordar' || comando === 'recordatorio') {
+            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido al administrador");
             const parts = argumento.split(' ');
             const tiempoStr = parts[0];
             const mensajeRecordatorio = parts.slice(1).join(' ');
@@ -2650,7 +2654,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             
             setTimeout(async () => {
                 try {
-                    const alertMsg = `x *KINGBOT  RECORDATORIO!*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
+                    const alertMsg = `x   *KINGBOT   RECORDATORIO!*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
                     await client.sendMessage(chatId, alertMsg);
                 } catch (e) {
                     console.error("Error al disparar recordatorio:", e);
@@ -2661,19 +2665,21 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
 
         // --- BLOC DE NOTAS ---
         if (comando === 'nota' || comando === 'guardarnota') {
+            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido al administrador");
             if (!argumento) return msg.reply("❌ *Kingbot:* Ingrese el texto de la nota que desea guardar.");
             notasGuardadas.push({ texto: argumento, fecha: new Date().toLocaleDateString() });
             fs.writeFileSync('notas.json', JSON.stringify(notasGuardadas, null, 2));
-            return msg.reply(`x *Kingbot:* Nota guardada con éxito, Señor.`);
+            return msg.reply(`x  *Kingbot:* Nota guardada con éxito, Señor.`);
         }
 
         if (comando === 'notas') {
+            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido al administrador");
             if (notasGuardadas.length === 0) {
-                return msg.reply(" *Kingbot:* No tiene notas archivadas.");
+                return msg.reply("  *Kingbot:* No tiene notas archivadas.");
             }
-            let lista = `x *SUS NOTAS ARCHIVADAS:*\n\n`;
+            let lista = `x  *SUS NOTAS ARCHIVADAS:*\n\n`;
             notasGuardadas.forEach((n, index) => {
-                lista += `${inde+ 1}. [${n.fecha}] ${n.texto}\n`;
+                lista += `${index + 1}. [${n.fecha}] ${n.texto}\n`;
             });
             lista += `\n_Para eliminar una nota, use *!bot borrarnota <número>*_`;
             return msg.reply(lista);
@@ -3621,7 +3627,11 @@ _Use !bot desprogramar <índice>_`;
             } else {
                 respuestaTexto = await ejecutarGeminiConRetries(async (model) => {
                     let contenidoCopia = [...contenido];
-                    contenidoCopia.unshift(`Eres Kinbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, programar o borrar alarmas, ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir aNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}`);
+                    let promptStr = `Eres Kinbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, programar o borrar alarmas, ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir aNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}`;
+                    if (isGroup || chatId !== adminChatId) {
+                        promptStr += "\n\n(ADVERTENCIA: EL USUARIO ACTUAL NO ES GEOVANNY PACHECO O ESTÁS EN UN GRUPO. Tienes ESTRICTAMENTE PROHIBIDO usar tags de notas, finanzas, recordatorios o alarmas. Tampoco debes mencionar los intereses personales de Geovanny. Comportate como un asistente útil y neutral.)";
+                    }
+                    contenidoCopia.unshift(promptStr);
                     const result = await model.generateContent(contenidoCopia);
                     return result.response.text();
                 });
