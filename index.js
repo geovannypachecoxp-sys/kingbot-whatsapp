@@ -1122,7 +1122,12 @@ client.on('ready', () => {
     }, 10000);
 });
 
-client.on('message', async (msg) => {
+client.on('message_create', async (msg) => {
+    if (msg.fromMe) {
+        const lowerBody = (msg.body || "").toLowerCase();
+        const isCommand = lowerBody.startsWith('!bot') || lowerBody.startsWith('.s') || lowerBody.startsWith('.sticker') || lowerBody.startsWith('!iniciarbot') || lowerBody.startsWith('!finalizarbot');
+        if (!isCommand) return; // Ignorar mensajes propios que no sean comandos
+    }
     const originalReply = msg.reply.bind(msg);
     msg.reply = async (...args) => {
         try {
@@ -1136,7 +1141,7 @@ client.on('message', async (msg) => {
     };
     if (isStartupSync) return;
     if (msg.timestamp < Math.floor(Date.now() / 1000) - 3600) return;
-            const chatId = msg.from;
+    const chatId = msg.fromMe ? msg.to : msg.from;
     const isGroup = chatId.endsWith('@g.us');
     let textoOriginal = (msg.body || "").trim();
 
