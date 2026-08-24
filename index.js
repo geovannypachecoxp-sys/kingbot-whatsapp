@@ -1116,7 +1116,7 @@ client.on('ready', () => {
                             },
                             downloadMedia: async () => null
                         };
-                        client.emit('message', fakeMsg);
+                        client.emit('message_create', fakeMsg);
                     } catch (e) {
                         console.error("Error en tarea programada:", e);
                     }
@@ -4003,7 +4003,7 @@ _Use !bot desprogramar <índice>_`;
                                     getContact: async () => ({ number: "Admin", pushname: "Admin" }),
                                     reply: async (txt, ch, opts) => await client.sendMessage(adminChatId, txt, opts)
                                 };
-                                client.emit('message', fakeMsg);
+                                client.emit('message_create', fakeMsg);
                             }, { scheduled: true, timezone: "America/El_Salvador" });
                             if (global.activeCronJobs) global.activeCronJobs.set(newIdx, job);
                         } catch(e) {
