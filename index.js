@@ -179,7 +179,7 @@ let canalesYoutube = [
 ];
 
 let agentesCustom = {
-    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.7 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.7 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Tareas programadas: [ACTION_SCHEDULE: cron_expr | descripcion | tag_accion] (ej. [ACTION_SCHEDULE: 0 8 * * * | Dar las noticias | [ACTION_SEARCH: noticias hoy]])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
+    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.7 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.7 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Tareas programadas: [ACTION_SCHEDULE: cron_expr | descripcion | prompt_natural] (ej. [ACTION_SCHEDULE: 0 8 * * * | Dar las noticias | Busca las noticias de hoy y dame un resumen en viñetas])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
 };
 
 let botGlobalmenteActivo = true;
@@ -1089,7 +1089,7 @@ client.on('ready', () => {
             }
             guardarAlarmas();
         }
-    });
+    }, { timezone: "America/El_Salvador" });
 
     
     // Inicializar Tareas Programadas
@@ -1120,7 +1120,7 @@ client.on('ready', () => {
                     } catch (e) {
                         console.error("Error en tarea programada:", e);
                     }
-                });
+                }, { scheduled: true, timezone: "America/El_Salvador" });
                 global.activeCronJobs.set(index, job);
             } catch (e) {
                 console.error("Cron inválido para tarea " + index, e);
@@ -3140,6 +3140,39 @@ _Use !bot desprogramar <índice>_`;
             return msg.reply(`✔️ *Kingbot:* Tarea desprogramada: "${eliminada.descripcion}"`);
         }
 
+        
+        if (comando === 'programados') {
+            if (tareasProgramadas.length === 0) {
+                return msg.reply("❌ *Kingbot:* No hay tareas programadas.");
+            }
+            let list = `📅 *TAREAS PROGRAMADAS:*
+
+`;
+            tareasProgramadas.forEach((t, i) => {
+                list += `*${i}*. [ ${t.cron} ] - ${t.descripcion}
+`;
+            });
+            list += `
+_Use !bot desprogramar <índice>_`;
+            return msg.reply(list);
+        }
+
+        if (comando === 'desprogramar') {
+            const index = parseInt(argumento, 10);
+            if (isNaN(index) || index < 0 || index >= tareasProgramadas.length) {
+                return msg.reply("❌ *Kingbot:* Índice no válido.");
+            }
+            const eliminada = tareasProgramadas.splice(index, 1)[0];
+            fs.writeFileSync('tareas_programadas.json', JSON.stringify(tareasProgramadas, null, 2));
+            if (global.activeCronJobs && global.activeCronJobs.has(index)) {
+                global.activeCronJobs.get(index).stop();
+                global.activeCronJobs.delete(index);
+            }
+            // Re-init to fix indices
+            if (typeof inicializarTareas !== 'undefined') inicializarTareas();
+            return msg.reply(`✔️ *Kingbot:* Tarea desprogramada: "${eliminada.descripcion}"`);
+        }
+
         if (comando === 'tareas') {
             if (tareasGuardadas.length === 0) {
                 return msg.reply(" *Kingbot:* No hay tareas pendientes.");
@@ -3944,6 +3977,41 @@ _Use !bot desprogramar <índice>_`;
                 }
 
                 // Buscar música por nombre (sin enlace) - Agentic
+                // ACTION_SCHEDULE
+                if (respuestaTexto.includes('[ACTION_SCHEDULE:')) {
+                    const match = respuestaTexto.match(/\[ACTION_SCHEDULE:\s*([^|]+)\|([^|]+)\|([^\]]+)\]/);
+                    if (match) {
+                        const cronExpr = match[1].trim();
+                        const desc = match[2].trim();
+                        const tagAccion = match[3].trim();
+                        
+                        tareasProgramadas.push({ cron: cronExpr, descripcion: desc, prompt: tagAccion });
+                        fs.writeFileSync('tareas_programadas.json', JSON.stringify(tareasProgramadas, null, 2));
+                        
+                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n📅 *Tarea programada creada:* "${desc}" (${cronExpr})`).trim();
+                        
+                        try {
+                            const newIdx = tareasProgramadas.length - 1;
+                            const job = cron.schedule(cronExpr, async () => {
+                                if (!botGlobalmenteActivo) return;
+                                const fakeMsg = {
+                                    body: tagAccion,
+                                    from: adminChatId,
+                                    hasMedia: false,
+                                    timestamp: Math.floor(Date.now() / 1000),
+                                    getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false }),
+                                    getContact: async () => ({ number: "Admin", pushname: "Admin" }),
+                                    reply: async (txt, ch, opts) => await client.sendMessage(adminChatId, txt, opts)
+                                };
+                                client.emit('message', fakeMsg);
+                            }, { scheduled: true, timezone: "America/El_Salvador" });
+                            if (global.activeCronJobs) global.activeCronJobs.set(newIdx, job);
+                        } catch(e) {
+                            console.error("Cron Error", e);
+                        }
+                    }
+                }
+
                 if (respuestaTexto.includes('[ACTION_MUSICA_BUSCAR:')) {
                     const match = respuestaTexto.match(/\[ACTION_MUSICA_BUSCAR:\s*([^\]]+)\]/);
                     if (match) {
