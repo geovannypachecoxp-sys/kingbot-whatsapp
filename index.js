@@ -1109,7 +1109,7 @@ client.on('ready', () => {
                             from: adminChatId,
                             hasMedia: false,
                             timestamp: Math.floor(Date.now() / 1000),
-                            getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false }),
+                            getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false, sendStateTyping: async () => {} }),
                             getContact: async () => ({ number: "Admin", pushname: "Admin" }),
                             reply: async (txt, chatId, options) => {
                                 await client.sendMessage(adminChatId, txt, options);
@@ -3999,7 +3999,7 @@ _Use !bot desprogramar <índice>_`;
                                     from: adminChatId,
                                     hasMedia: false,
                                     timestamp: Math.floor(Date.now() / 1000),
-                                    getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false }),
+                                    getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false, sendStateTyping: async () => {} }),
                                     getContact: async () => ({ number: "Admin", pushname: "Admin" }),
                                     reply: async (txt, ch, opts) => await client.sendMessage(adminChatId, txt, opts)
                                 };
