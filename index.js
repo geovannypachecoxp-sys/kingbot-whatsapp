@@ -1148,7 +1148,8 @@ client.on('message_create', async (msg) => {
     if (msg.fromMe) {
         const lowerBody = (msg.body || "").toLowerCase();
         const isCommand = lowerBody.startsWith('!bot') || lowerBody.startsWith('.s') || lowerBody.startsWith('.sticker') || lowerBody.startsWith('!iniciarbot') || lowerBody.startsWith('!finalizarbot');
-        if (!isCommand) return; // Ignorar mensajes propios que no sean comandos
+        const isSelfChat = msg.to === msg.from;
+        if (!isCommand && !isSelfChat) return; // Ignorar mensajes propios que no sean comandos
     }
     const originalReply = msg.reply.bind(msg);
     msg.reply = async (...args) => {
