@@ -77,11 +77,6 @@ function obtenerModel(modelName = null) {
 function rotarApiKey() {
     if (API_KEYS.length <= 1) return false;
     
-    // Marcar la key actual como Agotada
-    if (keyStatus[currentKeyIndex]) {
-        keyStatus[currentKeyIndex].status = 'Agotada';
-    }
-    
     let nextIndex =  currentKeyIndex;
     for (let i = 0; i < API_KEYS.length; i++) {
         nextIndex =  (nextIndex + 1) % API_KEYS.length;
@@ -1020,6 +1015,18 @@ client.on('ready', () => {
     };
 
     cron.schedule('0 8,13,16,20,22 * * *', verificarYouTube);
+
+    // Resetear cuotas de API keys todos los días a la medianoche
+    cron.schedule('0 0 * * *', () => {
+        API_KEYS.forEach((key, idx) => {
+            if (keyStatus[idx]) {
+                keyStatus[idx].status = 'Activa';
+                keyStatus[idx].requestsToday = 0;
+            }
+        });
+        guardarKeysYCuotas();
+        console.log('[NODE-CRON] Cuotas diarias de Gemini reiniciadas a la medianoche.');
+    });
 
     // Cron para alarmas persistentes (verificación cada 20 segundos con timezone exacta de El Salvador)
     cron.schedule('*/20 * * * * *', async () => {
