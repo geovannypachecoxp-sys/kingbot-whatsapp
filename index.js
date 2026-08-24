@@ -1,3 +1,15 @@
+// [KINGBOT SUPRESOR DE LOGS SPAM]
+const origLog = console.log;
+const origWarn = console.warn;
+console.log = function(...args) {
+    if (typeof args[0] === 'string' && args[0].includes('PUPPETEER PAGE LOG:')) return;
+    origLog.apply(console, args);
+};
+console.warn = function(...args) {
+    if (typeof args[0] === 'string' && (args[0].includes('missed execution at') || args[0].includes('Possible blocking IO'))) return;
+    origWarn.apply(console, args);
+};
+
 let isStartupSync = true;
 const { Client, LocalAuth, MessageMedia, Poll } = require('@juzi/whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
