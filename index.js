@@ -315,8 +315,8 @@ const juegosEstado = new Map();
 // ---------------------------------------------------------
 const puppeteerConfig = {
     headless: true,
-    protocolTimeout: 300000,
-    timeout: 300000,
+    protocolTimeout: 0,
+    timeout: 0,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
 };
 
@@ -347,7 +347,7 @@ if (isTermux) {
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: puppeteerConfig,
-    authTimeoutMs: 300000,
+    authTimeoutMs: 0,
     webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1044300879-alpha.html' }
 });
 
