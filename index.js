@@ -339,14 +339,12 @@ if (isTermux) {
         '--disable-software-rasterizer',
         '--disable-webgl',
         '--disable-dev-shm-usage',
-        // '--single-process',
-        '--no-zygote',
         '--disable-accelerated-2d-canvas',
         '--disable-extensions',
         '--no-first-run',
         '--no-default-browser-check',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
+        '--mute-audio',
+        '--no-sandbox',
         '--disable-renderer-backgrounding'
     );
     console.log('[Enrutador] Entorno detectado: Android/Termux. Cargando Chromium movil...');
