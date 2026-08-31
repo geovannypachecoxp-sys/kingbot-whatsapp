@@ -1110,7 +1110,7 @@ client.on('ready', () => {
                     } catch (e) {
                         console.error("Error en tarea programada:", e);
                     }
-                }, { scheduled: true, timezone: "America/El_Salvador" });
+                }, { scheduled: true });
                 global.activeCronJobs.set(index, job);
             } catch (e) {
                 console.error("Cron inválido para tarea " + index, e);
@@ -4115,7 +4115,7 @@ _Use !bot desprogramar <índice>_`;
                                     reply: async (txt, ch, opts) => await client.sendMessage(adminChatId, txt, opts)
                                 };
                                 client.emit('message_create', fakeMsg);
-                            }, { scheduled: true, timezone: "America/El_Salvador" });
+                            }, { scheduled: true });
                             if (global.activeCronJobs) global.activeCronJobs.set(newIdx, job);
                         } catch(e) {
                             console.error("Cron Error", e);
