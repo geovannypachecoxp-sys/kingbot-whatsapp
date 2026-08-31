@@ -245,6 +245,10 @@ function guardarAlarmas() {
     fs.writeFileSync('alarmas.json', JSON.stringify(alarmasGuardadas, null, 2));
 }
 
+function guardarNotas() {
+    fs.writeFileSync('notas.json', JSON.stringify(notasGuardadas, null, 2));
+}
+
 function getHoraElSalvador(date = new Date()) {
     try {
         const parts = new Intl.DateTimeFormat('en-GB', {
@@ -444,30 +448,16 @@ function obtenerFechaContexto() {
 
 async function generarAudioTTS(texto, msg) {
     try {
-        const postData = new URLSearchParams({
-            msg: texto,
-            lang: 'Enrique',
-            source: 'ttsmp3'
-        });
-        const response = await fetch('https://ttsmp3.com/makemp3.php', {
-            method: 'POST',
-            body: postData,
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        });
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=es&client=tw-ob&q=${encodeURIComponent(texto)}`;
+        const response = await fetch(url);
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
-        const data = await response.json();
-        if (data.Error === 0 && data.URL) {
-            const fileRes = await fetch(data.URL);
-            const arrayBuffer = await fileRes.arrayBuffer();
-            const base64 = Buffer.from(arrayBuffer).toString('base64');
-            const media = new MessageMedia('audio/mpeg', base64, 'tts.mp3');
-            await msg.reply(media, undefined, { sendAudioAsVoice: true });
-            return true;
-        }
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const media = new MessageMedia('audio/mpeg', base64, 'tts.mp3');
+        await msg.reply(media, undefined, { sendAudioAsVoice: true });
+        return true;
     } catch (e) {
         console.error("Error en helper TTS:", e);
     }
@@ -1107,6 +1097,8 @@ client.on('ready', () => {
                         const fakeMsg = {
                             body: tarea.prompt || tarea.descripcion,
                             from: adminChatId,
+                            to: adminChatId,
+                            fromMe: true,
                             hasMedia: false,
                             timestamp: Math.floor(Date.now() / 1000),
                             getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false, sendStateTyping: async () => {} }),
