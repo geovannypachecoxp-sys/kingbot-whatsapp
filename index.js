@@ -339,7 +339,7 @@ if (isTermux) {
         '--disable-software-rasterizer',
         '--disable-webgl',
         '--disable-dev-shm-usage',
-        '--single-process',
+        // '--single-process',
         '--no-zygote',
         '--disable-accelerated-2d-canvas',
         '--disable-extensions',
@@ -359,7 +359,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: puppeteerConfig,
     authTimeoutMs: 0,
-    webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1044300879-alpha.html' }
+    webVersionCache: { type: 'none' }
 });
 
 const originalSendMessage = client.sendMessage.bind(client);
@@ -4074,7 +4074,49 @@ _Use !bot desprogramar <índice>_`;
                     }
                 }
 
-                // Audio TTS\n                // Video por nombre
+                
+                // Notas (Agentic)
+                if (respuestaTexto.includes('[ACTION_NOTE_ADD:')) {
+                    const match = respuestaTexto.match(/\[ACTION_NOTE_ADD:\s*([^\]]+)\]/);
+                    if (match) {
+                        const noteText = match[1].trim();
+                        notasGuardadas.push(noteText);
+                        guardarNotas();
+                        console.log(`[🤖 Agentic Note Add]: ${noteText}`);
+                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n📝 *Nota guardada:* "${noteText}"`).trim();
+                    }
+                }
+                
+                if (respuestaTexto.includes('[ACTION_NOTE_LIST]')) {
+                    if (notasGuardadas.length === 0) {
+                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n📝 *No tienes notas guardadas.*`).trim();
+                    } else {
+                        let listStr = `\n\n📝 *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
+                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', listStr).trim();
+                    }
+                }
+                
+                if (respuestaTexto.includes('[ACTION_NOTE_DELETE:')) {
+                    const match = respuestaTexto.match(/\[ACTION_NOTE_DELETE:\s*([^\]]+)\]/);
+                    if (match) {
+                        const argBorrar = match[1].trim();
+                        const noteIndex = parseInt(argBorrar) - 1;
+                        let borrada = null;
+                        if (!isNaN(noteIndex) && noteIndex >= 0 && noteIndex < notasGuardadas.length) {
+                            borrada = notasGuardadas.splice(noteIndex, 1)[0];
+                        } else {
+                            const idx = notasGuardadas.findIndex(n => n.toLowerCase().includes(argBorrar.toLowerCase()));
+                            if (idx !== -1) borrada = notasGuardadas.splice(idx, 1)[0];
+                        }
+                        if (borrada) {
+                            guardarNotas();
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Nota eliminada:* "${borrada}"`).trim();
+                        } else {
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
+                        }
+                    }
+                }
+// Audio TTS\n                // Video por nombre
                 if (respuestaTexto.includes('[ACTION_VIDEO_BUSCAR:')) {
                     const match = respuestaTexto.match(/\[ACTION_VIDEO_BUSCAR:\s*([^\]]+)\]/);
                     if (match) {
