@@ -1157,6 +1157,84 @@ client.on('message_create', async (msg) => {
     const chatId = msg.fromMe ? msg.to : msg.from;
     const isGroup = chatId.endsWith('@g.us');
     let textoOriginal = (msg.body || "").trim();
+    const lowerBody = textoOriginal.toLowerCase();
+
+    // --- COMANDOS DE YT Y KEYS ---
+    if (lowerBody.startsWith('!bot keys')) {
+        let reply = "🔑 *Estado de las API Keys (Gemini)*\n\n";
+        API_KEYS.forEach((key, idx) => {
+            const status = keyStatus[idx] || { status: 'Desconocido', requestsToday: 0 };
+            const isCurrent = idx === currentKeyIndex ? '📍 (Actual)' : '';
+            reply += `[${idx + 1}] ${key.substring(0, 8)}... ${isCurrent}\nEstado: ${status.status} | Peticiones hoy: ${status.requestsToday}\n\n`;
+        });
+        await msg.reply(reply);
+        return;
+    }
+
+    if (lowerBody.startsWith('!bot addkey')) {
+        const newKey = textoOriginal.substring('!bot addkey'.length).trim();
+        if (newKey.length < 20) {
+            await msg.reply("❌ Inválido. Usa: !bot addkey <TU_API_KEY>");
+            return;
+        }
+        if (API_KEYS.includes(newKey)) {
+            await msg.reply("⚠️ Esa API Key ya está registrada.");
+            return;
+        }
+        API_KEYS.push(newKey);
+        keyStatus.push({ status: 'Activa', requestsToday: 0, lastRequest: null });
+        guardarKeysYCuotas();
+        await msg.reply(`✅ API Key agregada correctamente. Ahora tienes ${API_KEYS.length} llaves.`);
+        return;
+    }
+
+    if (lowerBody.startsWith('!bot ytadd')) {
+        const url = textoOriginal.substring('!bot ytadd'.length).trim();
+        if (!url) {
+            await msg.reply("❌ Usa: !bot ytadd <enlace_del_canal_de_youtube>");
+            return;
+        }
+        await msg.reply("🔍 Buscando el ID del canal...");
+        const id = await obtenerIdCanal(url);
+        if (!id) {
+            await msg.reply("❌ No pude encontrar el ID del canal. Asegúrate de enviar un enlace válido.");
+            return;
+        }
+        if (canalesYoutube.find(c => c.id === id)) {
+            await msg.reply("⚠️ Ese canal ya está en la lista de monitoreo.");
+            return;
+        }
+        canalesYoutube.push({ id: id, nombre: 'Canal Nuevo', ultimoVideo: '' });
+        fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
+        await msg.reply("✅ ¡Canal agregado exitosamente al monitoreo! Se revisará automáticamente.");
+        return;
+    }
+
+    if (lowerBody.startsWith('!bot ytlist')) {
+        if (canalesYoutube.length === 0) {
+            await msg.reply("📭 No hay canales de YouTube en monitoreo.");
+            return;
+        }
+        let reply = "📺 *Canales de YouTube en Monitoreo:*\n\n";
+        canalesYoutube.forEach((c, idx) => {
+            reply += `*${idx + 1}.* ${c.nombre}\n(ID: ${c.id})\n\n`;
+        });
+        reply += "_Para eliminar uno usa !bot ytdel <numero>_";
+        await msg.reply(reply);
+        return;
+    }
+
+    if (lowerBody.startsWith('!bot ytdel')) {
+        const num = parseInt(textoOriginal.substring('!bot ytdel'.length).trim());
+        if (isNaN(num) || num < 1 || num > canalesYoutube.length) {
+            await msg.reply("❌ Inválido. Usa: !bot ytdel <numero>");
+            return;
+        }
+        const borrado = canalesYoutube.splice(num - 1, 1)[0];
+        fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
+        await msg.reply(`🗑️ Canal eliminado: ${borrado.nombre}`);
+        return;
+    }
 
     // --- HOOK DE UBICACIN PARA CLIMA ---
     if (msg.type === 'location' && msg.location) {
@@ -3685,6 +3763,48 @@ _Use !bot desprogramar <índice>_`;
             while (loops < 3) {
                 loops++;
                 
+                // Notas (Agentic)
+                if (respuestaTexto.includes('[ACTION_NOTE_ADD:')) {
+                    const match = respuestaTexto.match(/\[ACTION_NOTE_ADD:\s*([^\]]+)\]/);
+                    if (match) {
+                        const noteText = match[1].trim();
+                        notasGuardadas.push(noteText);
+                        guardarNotas();
+                        console.log(`[🤖 Agentic Note Add]: ${noteText}`);
+                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n📝 *Nota guardada:* "${noteText}"`).trim();
+                    }
+                }
+                
+                if (respuestaTexto.includes('[ACTION_NOTE_LIST]')) {
+                    if (notasGuardadas.length === 0) {
+                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n📝 *No tienes notas guardadas.*`).trim();
+                    } else {
+                        let listStr = `\n\n📝 *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
+                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', listStr).trim();
+                    }
+                }
+                
+                if (respuestaTexto.includes('[ACTION_NOTE_DELETE:')) {
+                    const match = respuestaTexto.match(/\[ACTION_NOTE_DELETE:\s*([^\]]+)\]/);
+                    if (match) {
+                        const argBorrar = match[1].trim();
+                        const noteIndex = parseInt(argBorrar) - 1;
+                        let borrada = null;
+                        if (!isNaN(noteIndex) && noteIndex >= 0 && noteIndex < notasGuardadas.length) {
+                            borrada = notasGuardadas.splice(noteIndex, 1)[0];
+                        } else {
+                            const idx = notasGuardadas.findIndex(n => n.toLowerCase().includes(argBorrar.toLowerCase()));
+                            if (idx !== -1) borrada = notasGuardadas.splice(idx, 1)[0];
+                        }
+                        if (borrada) {
+                            guardarNotas();
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Nota eliminada:* "${borrada}"`).trim();
+                        } else {
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
+                        }
+                    }
+                }
+
                 // Búsqueda Web
                 if (respuestaTexto.includes('[ACTION_SEARCH:')) {
                     const match = respuestaTexto.match(/\[ACTION_SEARCH:\s*([^\]]+)\]/);
