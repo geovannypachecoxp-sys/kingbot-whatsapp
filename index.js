@@ -1110,7 +1110,7 @@ client.on('ready', () => {
                     } catch (e) {
                         console.error("Error en tarea programada:", e);
                     }
-                }, { scheduled: true, timezone: "America/El_Salvador" });
+                }, { scheduled: true });
                 global.activeCronJobs.set(index, job);
             } catch (e) {
                 console.error("Cron inválido para tarea " + index, e);
@@ -4120,14 +4120,17 @@ _Use !bot desprogramar <índice>_`;
                                 const fakeMsg = {
                                     body: tagAccion,
                                     from: adminChatId,
+                                    to: adminChatId,
+                                    fromMe: true,
                                     hasMedia: false,
                                     timestamp: Math.floor(Date.now() / 1000),
                                     getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false, sendStateTyping: async () => {} }),
                                     getContact: async () => ({ number: "Admin", pushname: "Admin" }),
                                     reply: async (txt, ch, opts) => await client.sendMessage(adminChatId, txt, opts)
                                 };
+                                console.log("[🤖 CRON] Disparando tarea dinámica:", tagAccion);
                                 client.emit('message_create', fakeMsg);
-                            }, { scheduled: true, timezone: "America/El_Salvador" });
+                            }, { scheduled: true });
                             if (global.activeCronJobs) global.activeCronJobs.set(newIdx, job);
                         } catch(e) {
                             console.error("Cron Error", e);
