@@ -1092,8 +1092,10 @@ client.on('ready', () => {
                     if (!botGlobalmenteActivo) return;
                     console.log("[🤖 CRON] Ejecutando tarea:", tarea.descripcion);
                     try {
+                        const rawBody = tarea.prompt || tarea.descripcion;
+                        const promptText = rawBody.toLowerCase().startsWith('!bot') ? rawBody : `!bot ${rawBody}`;
                         const fakeMsg = {
-                            body: tarea.prompt || tarea.descripcion,
+                            body: promptText,
                             from: adminChatId,
                             to: adminChatId,
                             fromMe: true,
@@ -1149,7 +1151,7 @@ client.on('message_create', async (msg) => {
             console.error("[msg.reply fallback] Error:", e.message);
             try {
                 const dest = msg.fromMe ? msg.to : msg.from;
-                return await client.sendMessage(dest, args[0]);
+                return await client.sendMessage(dest, args[0], args[2] || {});
             } catch(e2) {
                 console.error("[msg.reply fallback] Falló:", e2.message);
             }
@@ -2339,14 +2341,15 @@ client.on('message_create', async (msg) => {
                 _ytArgs = [
                     '--user-agent', ua,
                     '-f', 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]/worst',
+                    '--merge-output-format', 'mp4',
                     '--max-filesize', '60m',
                     '-o', outputFile,
                     videoUrl
                 ];
             } else if (_isTikTok) {
-                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', 'User-Agent:' + ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl];
+                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', 'User-Agent:' + ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '--merge-output-format', 'mp4', '-o', outputFile, videoUrl];
             } else {
-                _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl];
+                _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '--merge-output-format', 'mp4', '-o', outputFile, videoUrl];
             }
             
             const child = spawn('yt-dlp', _ytArgs, { shell: false });
@@ -2373,6 +2376,7 @@ client.on('message_create', async (msg) => {
                     try {
                         await msg.reply(media, undefined, { sendMediaAsDocument: asDoc });
                     } catch (e1) {
+                        console.error('[!] Falló envío como video (posible codec/dimensión). Fallback a documento:', e1.message);
                         if (!asDoc) {
                             await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: '🎬 *Kingbot:* Video' });
                         } else {
@@ -4117,8 +4121,9 @@ _Use !bot desprogramar <índice>_`;
                             const newIdx = tareasProgramadas.length - 1;
                             const job = cron.schedule(cronExpr, async () => {
                                 if (!botGlobalmenteActivo) return;
+                                const promptText = tagAccion.toLowerCase().startsWith('!bot') ? tagAccion : `!bot ${tagAccion}`;
                                 const fakeMsg = {
-                                    body: tagAccion,
+                                    body: promptText,
                                     from: adminChatId,
                                     to: adminChatId,
                                     fromMe: true,
