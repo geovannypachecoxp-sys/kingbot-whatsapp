@@ -65,7 +65,7 @@ function guardarKeysYCuotas() {
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
 }
 
-const MODELS = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+const MODELS = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
@@ -2332,9 +2332,9 @@ client.on('message_create', async (msg) => {
                     videoUrl
                 ];
             } else if (_isTikTok) {
-                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', 'User-Agent:' + ua, '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl];
+                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', 'User-Agent:' + ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl];
             } else {
-                _ytArgs = ['--user-agent', ua, '-o', outputFile, videoUrl];
+                _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl];
             }
             
             const child = spawn('yt-dlp', _ytArgs, { shell: false });
@@ -3990,11 +3990,11 @@ _Use !bot desprogramar <índice>_`;
                             if (_isYouTube) {
                                 _ytArgs = ['--user-agent', ua, '-f', 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]/worst', '--max-filesize', '60m', '-o', outputFile, urlStr];
                             } else if (_isTikTok) {
-                                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', `User-Agent:${ua}`, '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
+                                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', `User-Agent:${ua}`, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
                             } else if (_isInstagram) {
-                                _ytArgs = ['--add-header', `User-Agent:${ua}`, '--add-header', 'Referer:https://www.instagram.com/', '-o', outputFile, urlStr];
+                                _ytArgs = ['--add-header', `User-Agent:${ua}`, '--add-header', 'Referer:https://www.instagram.com/', '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
                             } else {
-                                _ytArgs = ['--user-agent', ua, '-o', outputFile, urlStr];
+                                _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
                             }
                                 
                             const child = spawn('yt-dlp', _ytArgs, { shell: false });
