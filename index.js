@@ -1146,6 +1146,13 @@ client.on('message_create', async (msg) => {
         try {
             return await originalReply(...args);
         } catch (e) {
+            console.error("[msg.reply fallback] Error:", e.message);
+            try {
+                const dest = msg.fromMe ? msg.to : msg.from;
+                return await client.sendMessage(dest, args[0]);
+            } catch(e2) {
+                console.error("[msg.reply fallback] Falló:", e2.message);
+            }
             if (e && e.message && (e.message.includes('endsWith') || e.message.includes('not a function'))) {
                 return { fake: true, message: 'Swallowed endsWith error' };
             }
@@ -1916,7 +1923,12 @@ client.on('message_create', async (msg) => {
     if (comando === 'seradmin') {
         adminChatId = chatId;
         guardarAdminJson();
-        return msg.reply("S& *Kingbot:* Te he reconocido como el Administrador Principal. De ahora en adelante, me activaré de forma automática y conversacional solo contigo en privado.");
+        try {
+            await client.sendMessage(chatId, "👑 *Kingbot:* Te he reconocido como el Administrador Principal. De ahora en adelante, me activaré de forma automática y conversacional solo contigo en privado.");
+        } catch (e) {
+            console.error("Error al enviar mensaje de seradmin:", e.message);
+        }
+        return;
     }
 
         if (!msg.hasMedia) {
