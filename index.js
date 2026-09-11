@@ -2919,7 +2919,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 return msg.reply("❌ *Kingbot:* El tipo de comando debe ser *texto*, *ia* o *codigo*.");
             }
             
-            const comandosSistema = ['reiniciar', 'ayuda', 'menu', 'help', 'comandos', 'musica', 'audio', 'video', 'decir', 'tts', 'foto', 'camara', 'grabar', 'escuchar', 'bateria', 'estado', 'sistema', 'hardware', 'qr', 'recordar', 'recordatorio', 'nota', 'guardarnota', 'notas', 'borrarnota', 'buscar', 'google', 'agente', 'agentes', 'agregarclave', 'addkey', 'claves', 'listkeys', 'restaurarclaves', 'resetkeys', 'comandocrear', 'comandoborrar', 'comandoslista', 'setcanal', 'canal', 'agregarcanal', 'listacanal', 'canales', 'borrarcanal', 'eliminarcanal', 'clima', 'imagina', 'dibuja', 'crear', 'stickercrear', 'traducir', 'calcular', 'resumir'];
+            const comandosSistema = ['reiniciar', 'ayuda', 'menu', 'help', 'comandos', 'musica', 'audio', 'video', 'decir', 'tts', 'foto', 'camara', 'grabar', 'escuchar', 'bateria', 'estado', 'sistema', 'hardware', 'qr', 'recordar', 'recordatorio', 'nota', 'guardarnota', 'notas', 'borrarnota', 'buscar', 'google', 'agente', 'agentes', 'agregarclave', 'addkey', 'claves', 'listkeys', 'restaurarclaves', 'resetkeys', 'borrarclaves', 'clearkeys', 'comandocrear', 'comandoborrar', 'comandoslista', 'setcanal', 'canal', 'agregarcanal', 'listacanal', 'canales', 'borrarcanal', 'eliminarcanal', 'clima', 'imagina', 'dibuja', 'crear', 'stickercrear', 'traducir', 'calcular', 'resumir'];
             if (comandosSistema.includes(nombre)) {
                 return msg.reply(`❌ *Kingbot:* El nombre *"${nombre}"* está reservado para el sistema principal.`);
             }
@@ -3687,6 +3687,15 @@ _Use !bot desprogramar <índice>_`;
             currentKeyIndex =  0; currentModelIndex =  0;
             guardarKeysYCuotas();
             return msg.reply("S& *Kingbot:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
+        }
+        if (comando === 'borrarclaves' || comando === 'clearkeys') {
+            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            API_KEYS.length = 0;
+            keyStatus.length = 0;
+            currentKeyIndex = 0;
+            currentModelIndex = 0;
+            guardarKeysYCuotas();
+            return msg.reply("🗑️ *Kingbot:* Todas las claves API han sido eliminadas permanentemente. El sistema ahora no tiene llaves. Usa `!bot addkey <llave>` para agregar nuevas.");
         }
 
         // --- INTERCEPTOR DE DOCUMENTOS FINANCIEROS (PDF/IMAGEN) ---
