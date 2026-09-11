@@ -33,7 +33,7 @@ const isTermux = process.platform === 'android' || !!process.env.PREFIX;
 // ---------------------------------------------------------
 const DEFAULT_KEYS = [];
 let API_KEYS = [...DEFAULT_KEYS];
-let keyStatus = {};
+let keyStatus = [];
 let currentKeyIndex =  0;
 
 // Cargar keys persistidas
@@ -51,6 +51,9 @@ if (fs.existsSync('cuotas.json')) {
     try {
         keyStatus = JSON.parse(fs.readFileSync('cuotas.json', 'utf8'));
     } catch (e) { console.error("No se pudo cargar cuotas.json"); }
+}
+if (!Array.isArray(keyStatus)) {
+    keyStatus = [];
 }
 
 // Inicializar estado para keys
@@ -3690,8 +3693,12 @@ _Use !bot desprogramar <índice>_`;
         }
         if (comando === 'borrarclaves' || comando === 'clearkeys') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
-            API_KEYS.length = 0;
-            keyStatus.length = 0;
+            API_KEYS.splice(0, API_KEYS.length);
+            if (Array.isArray(keyStatus)) {
+                keyStatus.splice(0, keyStatus.length);
+            } else {
+                keyStatus = [];
+            }
             currentKeyIndex = 0;
             currentModelIndex = 0;
             guardarKeysYCuotas();
