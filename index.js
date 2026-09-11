@@ -2357,7 +2357,8 @@ client.on('message_create', async (msg) => {
             if (_isYouTube) {
                 _ytArgs = [
                     '--user-agent', ua,
-                    '-f', '18/b[height<=480][ext=mp4]/b[ext=mp4]/worst',
+                    '-f', 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best',
+                    '--merge-output-format', 'mp4',
                     '--max-filesize', '60m',
                     '-o', outputFile,
                     videoUrl
@@ -2378,7 +2379,7 @@ client.on('message_create', async (msg) => {
             child.on('close', async (code) => {
                 if (code !== 0) {
                     if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-                    return msg.reply("❌ *Kingbot:* Error al descargar el video. Si es YouTube, el video puede ser muy largo o estar restringido.");
+                    return msg.reply("❌ *Kingbot:* Error al descargar el video.\n\n*NOTA PARA TERMUX:* YouTube eliminó el soporte para videos directos. Ahora es OBLIGATORIO tener ffmpeg. Ve a Termux y escribe:\n*pkg install ffmpeg*");
                 }
                 try {
                     const stats = fs.statSync(outputFile);
