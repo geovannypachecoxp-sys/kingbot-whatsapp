@@ -65,7 +65,7 @@ function guardarKeysYCuotas() {
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
 }
 
-const MODELS = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+const MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
@@ -120,15 +120,26 @@ async function ejecutarGeminiConRetries(callback) {
                 if (keyStatus[currentKeyIndex]) {
                     keyStatus[currentKeyIndex].status = 'Agotada';
                 }
-            }
-            
-            rotarApiKey();
-            keysTriedForCurrentModel++;
-
-            if (keysTriedForCurrentModel >= API_KEYS.length) {
+                rotarApiKey();
+                keysTriedForCurrentModel++;
+                if (keysTriedForCurrentModel >= API_KEYS.length) {
+                    keysTriedForCurrentModel = 0;
+                    currentModelIndex = (currentModelIndex + 1) % MODELS.length;
+                    console.log(`[!] Todos los keys fallaron para este modelo. Rotando al modelo: ${MODELS[currentModelIndex]}`);
+                }
+            } else if (error.message.includes('503') || error.message.includes('500') || error.message.includes('overloaded')) {
+                currentModelIndex = (currentModelIndex + 1) % MODELS.length;
                 keysTriedForCurrentModel = 0;
-                currentModelIndex =  (currentModelIndex + 1) % MODELS.length;
-                console.log(`[!] Todos los keys fallaron para este modelo. Rotando al modelo: ${MODELS[currentModelIndex]}`);
+                console.log(`[!] Modelo saturado (503). Rotando directamente al modelo: ${MODELS[currentModelIndex]}`);
+                // Optional: slight delay to avoid spamming the same endpoint
+                await new Promise(r => setTimeout(r, 1000));
+            } else {
+                rotarApiKey();
+                keysTriedForCurrentModel++;
+                if (keysTriedForCurrentModel >= API_KEYS.length) {
+                    keysTriedForCurrentModel = 0;
+                    currentModelIndex = (currentModelIndex + 1) % MODELS.length;
+                }
             }
         }
     }
