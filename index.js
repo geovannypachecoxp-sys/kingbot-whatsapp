@@ -1377,7 +1377,7 @@ client.on('message_create', async (msg) => {
                     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
                     const tmpVideo = path.join(tmpDir, 'dl_' + Date.now() + '.mp4');
                     const ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15";
-                    let _ytArgs = ['--user-agent', ua, '-f', 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]/worst', '--max-filesize', '60m', '-o', tmpVideo, urlDescargar];
+                    let _ytArgs = ['--user-agent', ua, '-f', '18/b[height<=480][ext=mp4]/b[ext=mp4]/worst', '--max-filesize', '60m', '-o', tmpVideo, urlDescargar];
                     if (_isTikTok) _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', `User-Agent:${ua}`, '-f', 'best[ext=mp4]/best', '-o', tmpVideo, urlDescargar];
                     
                     await new Promise((resolve, reject) => {
@@ -2340,8 +2340,7 @@ client.on('message_create', async (msg) => {
             if (_isYouTube) {
                 _ytArgs = [
                     '--user-agent', ua,
-                    '-f', 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]/worst',
-                    '--merge-output-format', 'mp4',
+                    '-f', '18/b[height<=480][ext=mp4]/b[ext=mp4]/worst',
                     '--max-filesize', '60m',
                     '-o', outputFile,
                     videoUrl
@@ -4004,7 +4003,7 @@ _Use !bot desprogramar <índice>_`;
                             let _ytArgs;
                             
                             if (_isYouTube) {
-                                _ytArgs = ['--user-agent', ua, '-f', 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]/worst', '--max-filesize', '60m', '-o', outputFile, urlStr];
+                                _ytArgs = ['--user-agent', ua, '-f', '18/b[height<=480][ext=mp4]/b[ext=mp4]/worst', '--max-filesize', '60m', '-o', outputFile, urlStr];
                             } else if (_isTikTok) {
                                 _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', `User-Agent:${ua}`, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
                             } else if (_isInstagram) {
@@ -4265,7 +4264,7 @@ _Use !bot desprogramar <índice>_`;
                         
                         const outputVideo = 'video_' + Date.now() + '.mp4';
                         const searchArgs = [
-                            '-f', 'best[height<=480][ext=mp4]/best[height<=480]/worst[ext=mp4]/worst',
+                            '-f', '18/b[height<=480][ext=mp4]/b[ext=mp4]/worst',
                             '--max-filesize', '60m',
                             '-o', outputVideo,
                             `ytsearch1:${query}`
