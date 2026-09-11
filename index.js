@@ -1195,8 +1195,11 @@ client.on('message_create', async (msg) => {
     }
 
     if (lowerBody.startsWith('!bot addkey')) {
-        const newKey = textoOriginal.substring('!bot addkey'.length).trim();
-        if (newKey.length < 20) {
+        let newKey = textoOriginal.substring('!bot addkey'.length).trim();
+        if (newKey.startsWith(':')) {
+            newKey = newKey.substring(1).trim();
+        }
+        if (newKey.length < 20 || (!newKey.startsWith('AIzaSy') && !newKey.startsWith('AQ.'))) {
             await msg.reply("❌ Inválido. Usa: !bot addkey <TU_API_KEY>");
             return;
         }
