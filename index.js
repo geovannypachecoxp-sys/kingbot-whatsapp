@@ -71,18 +71,32 @@ API_KEYS.forEach((k, idx) => {
     }
 });
 
+// Si todas las keys están marcadas como Agotada al iniciar, reactivarlas
+if (keyStatus.length > 0 && keyStatus.every(k => k && k.status === 'Agotada')) {
+    console.log('[!] Todas las keys estaban marcadas como Agotadas en cuotas.json. Reactivando todas a Activa.');
+    keyStatus.forEach(k => { if (k) { k.status = 'Activa'; k.requestsToday = 0; } });
+    guardarKeysYCuotas();
+}
+
 function guardarKeysYCuotas() {
     fs.writeFileSync('keys.json', JSON.stringify(API_KEYS, null, 2));
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
 }
 
-const MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+const MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-2.5-flash'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
+    if (!API_KEYS || API_KEYS.length === 0) {
+        throw new Error("No hay API Keys configuradas");
+    }
+    if (currentKeyIndex >= API_KEYS.length) {
+        currentKeyIndex = 0;
+    }
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAIInstance = new GoogleGenerativeAI(API_KEYS[currentKeyIndex]);
-    return genAIInstance.getGenerativeModel({ model: modelName || MODELS[currentModelIndex] });
+    const modelo = modelName || MODELS[currentModelIndex] || 'gemini-3.6-flash';
+    return genAIInstance.getGenerativeModel({ model: modelo });
 }
 
 function rotarApiKey() {
@@ -109,7 +123,18 @@ function rotarApiKey() {
 
 // Función resiliente con reintentos y fallback de modelos
 async function ejecutarGeminiConRetries(callback) {
-    let totalIntentos = API_KEYS.length * MODELS.length;
+    if (!API_KEYS || API_KEYS.length === 0) {
+        throw new Error("No hay ninguna API Key registrada. Usa !bot addkey <TU_API_KEY>");
+    }
+
+    // Si todas las keys están agotadas, reactivarlas para no quedar bloqueados
+    if (keyStatus.length > 0 && keyStatus.every(k => k && k.status === 'Agotada')) {
+        console.log('[!] Todas las keys estaban marcadas como Agotadas. Restableciendo estado a Activa.');
+        keyStatus.forEach(k => { if (k) k.status = 'Activa'; });
+        guardarKeysYCuotas();
+    }
+
+    let totalIntentos = Math.max(API_KEYS.length * MODELS.length, 3);
     let keysTriedForCurrentModel = 0;
 
     for (let intento = 0; intento < totalIntentos; intento++) {
@@ -127,7 +152,11 @@ async function ejecutarGeminiConRetries(callback) {
         } catch (error) {
             console.error(`[!] Error en Key ${currentKeyIndex + 1} usando ${MODELS[currentModelIndex]}:`, error.message);
             
-            if (error.message.includes('429') || error.message.includes('403') || error.message.includes('quota') || error.message.includes('limit')) {
+            if (error.message.includes('404') || error.message.includes('not found') || error.message.includes('no longer available')) {
+                console.log(`[!] Modelo ${MODELS[currentModelIndex]} no disponible (404). Rotando inmediatamente al siguiente modelo.`);
+                currentModelIndex = (currentModelIndex + 1) % MODELS.length;
+                keysTriedForCurrentModel = 0;
+            } else if (error.message.includes('429') || error.message.includes('403') || error.message.includes('quota') || error.message.includes('limit')) {
                 if (keyStatus[currentKeyIndex]) {
                     keyStatus[currentKeyIndex].status = 'Agotada';
                 }
@@ -142,7 +171,6 @@ async function ejecutarGeminiConRetries(callback) {
                 currentModelIndex = (currentModelIndex + 1) % MODELS.length;
                 keysTriedForCurrentModel = 0;
                 console.log(`[!] Modelo saturado (503). Rotando directamente al modelo: ${MODELS[currentModelIndex]}`);
-                // Optional: slight delay to avoid spamming the same endpoint
                 await new Promise(r => setTimeout(r, 1000));
             } else {
                 rotarApiKey();
@@ -1191,14 +1219,29 @@ client.on('message_create', async (msg) => {
     const lowerBody = textoOriginal.toLowerCase();
 
     // --- COMANDOS DE YT Y KEYS ---
-    if (lowerBody.startsWith('!bot keys')) {
-        let reply = "🔑 *Estado de las API Keys (Gemini)*\n\n";
+    if (lowerBody.startsWith('!bot keys') || lowerBody.startsWith('!bot claves')) {
+        let reply = `🔑 *Estado de las API Keys (Gemini)*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
         API_KEYS.forEach((key, idx) => {
             const status = keyStatus[idx] || { status: 'Desconocido', requestsToday: 0 };
             const isCurrent = idx === currentKeyIndex ? '📍 (Actual)' : '';
             reply += `[${idx + 1}] ${key.substring(0, 8)}... ${isCurrent}\nEstado: ${status.status} | Peticiones hoy: ${status.requestsToday}\n\n`;
         });
+        reply += "_Usa *!bot addkey <clave>* para agregar o reactivar una llave._\n_Usa *!bot resetkeys* para reactivar todas las llaves._";
         await msg.reply(reply);
+        return;
+    }
+
+    if (lowerBody.startsWith('!bot resetkeys') || lowerBody.startsWith('!bot restaurarclaves')) {
+        API_KEYS.forEach((key, idx) => {
+            if (keyStatus[idx]) {
+                keyStatus[idx].status = 'Activa';
+                keyStatus[idx].requestsToday = 0;
+            }
+        });
+        currentKeyIndex = 0;
+        currentModelIndex = 0;
+        guardarKeysYCuotas();
+        await msg.reply(`✅ Todas las API Keys (${API_KEYS.length}) han sido restablecidas a *Activa*.`);
         return;
     }
 
@@ -1211,14 +1254,21 @@ client.on('message_create', async (msg) => {
             await msg.reply("❌ Inválido. Usa: !bot addkey <TU_API_KEY>");
             return;
         }
-        if (API_KEYS.includes(newKey)) {
-            await msg.reply("⚠️ Esa API Key ya está registrada.");
+        const existingIdx = API_KEYS.indexOf(newKey);
+        if (existingIdx !== -1) {
+            keyStatus[existingIdx] = { status: 'Activa', requestsToday: 0, lastRequest: new Date().toISOString() };
+            currentKeyIndex = existingIdx;
+            currentModelIndex = 0;
+            guardarKeysYCuotas();
+            await msg.reply(`✅ La API Key ya estaba registrada y ha sido *reactivada* con éxito como clave actual (Clave #${existingIdx + 1}).`);
             return;
         }
         API_KEYS.push(newKey);
         keyStatus.push({ status: 'Activa', requestsToday: 0, lastRequest: null });
+        currentKeyIndex = API_KEYS.length - 1;
+        currentModelIndex = 0;
         guardarKeysYCuotas();
-        await msg.reply(`✅ API Key agregada correctamente. Ahora tienes ${API_KEYS.length} llaves.`);
+        await msg.reply(`✅ API Key agregada y activada correctamente. Ahora tienes ${API_KEYS.length} llaves.`);
         return;
     }
 
@@ -3635,20 +3685,29 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             return msg.reply("❌ *Kingbot:* No se pudo leer el texto de la imagen.");
         }
 
-        // --- GESTIN DE CLAVES API DINÁMICAS ---
+        // --- GESTI N DE CLAVES API DINÁMICAS ---
         if (comando === 'agregarclave' || comando === 'addkey') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             if (!argumento || (!argumento.startsWith('AIzaSy') && !argumento.startsWith('AQ.'))) return msg.reply("❌ *Kingbot:* Proporcione una clave API de Gemini válida.");
-            if (API_KEYS.includes(argumento)) return msg.reply("a *Kingbot:* Esa clave ya se encuentra registrada.");
+            const existingIdx = API_KEYS.indexOf(argumento);
+            if (existingIdx !== -1) {
+                keyStatus[existingIdx] = { status: 'Activa', requestsToday: 0, lastRequest: new Date().toISOString() };
+                currentKeyIndex = existingIdx;
+                currentModelIndex = 0;
+                guardarKeysYCuotas();
+                return msg.reply(`✅ *Kingbot:* La clave API ya existía y ha sido *reactivada* (Clave #${existingIdx + 1}).`);
+            }
             API_KEYS.push(argumento);
             const newIdxK = API_KEYS.length - 1;
             keyStatus[newIdxK] = { status: 'Activa', requestsToday: 0, lastRequest: null };
+            currentKeyIndex = newIdxK;
+            currentModelIndex = 0;
             guardarKeysYCuotas();
-            return msg.reply("S& *Kingbot:* Clave API agregada. Total: " + API_KEYS.length);
+            return msg.reply("✅ *Kingbot:* Clave API agregada y activada. Total: " + API_KEYS.length);
         }
         if (comando === 'claves' || comando === 'listkeys') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
-            let listK = "🔑 *ESTADO DE CLAVES API GEMINI:*\n\n";
+            let listK = `🔑 *ESTADO DE CLAVES API GEMINI:*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
             API_KEYS.forEach((key, idx) => {
                 const mask = key.substring(0, 10) + '...' + key.substring(key.length - 4);
                 const st = keyStatus[idx]?.status === 'Activa' ? '✅ Activa' : '❌ Agotada';
@@ -3664,7 +3723,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             API_KEYS.forEach((key, idx) => { if (keyStatus[idx]) { keyStatus[idx].status = 'Activa'; keyStatus[idx].requestsToday = 0; } });
             currentKeyIndex =  0; currentModelIndex =  0;
             guardarKeysYCuotas();
-            return msg.reply("S& *Kingbot:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
+            return msg.reply("✅ *Kingbot:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
         }
         if (comando === 'borrarclaves' || comando === 'clearkeys') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
