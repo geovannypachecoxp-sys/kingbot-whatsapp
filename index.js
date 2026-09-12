@@ -28,6 +28,14 @@ const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
 const isTermux = process.platform === 'android' || !!process.env.PREFIX;
 
+const getYtDlpBinary = () => {
+    const winBinary = path.join(__dirname, 'yt-dlp.exe');
+    if (process.platform === 'win32' && fs.existsSync(winBinary)) {
+        return winBinary;
+    }
+    return 'yt-dlp';
+};
+
 // ---------------------------------------------------------
 // CONFIGURACIN DE MULTI-API KEYS Y MODELOS (GEMINI)
 // ---------------------------------------------------------
@@ -68,7 +76,7 @@ function guardarKeysYCuotas() {
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
 }
 
-const MODELS = ['gemini-3.8-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+const MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
@@ -1096,7 +1104,7 @@ client.on('ready', () => {
     
     // Inicializar Tareas Programadas
     global.activeCronJobs = new Map();
-    const inicializarTareas = () => {
+    global.inicializarTareas = () => {
         tareasProgramadas.forEach((tarea, index) => {
             if (global.activeCronJobs.has(index)) {
                 global.activeCronJobs.get(index).stop();
@@ -1133,7 +1141,7 @@ client.on('ready', () => {
             }
         });
     };
-    inicializarTareas();
+    global.inicializarTareas();
 
     cron.schedule('0 9 * * *', async () => {
 
@@ -1398,7 +1406,7 @@ client.on('message_create', async (msg) => {
                     if (_isTikTok) _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', `User-Agent:${ua}`, '-f', 'best[ext=mp4]/best', '-o', tmpVideo, urlDescargar];
                     
                     await new Promise((resolve, reject) => {
-                        const child = spawn('yt-dlp', _ytArgs, { shell: false });
+                        const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
                         child.on('close', code => {
                             if (code === 0 && fs.existsSync(tmpVideo)) resolve();
                             else reject(new Error('Fallo al descargar video de la URL proporcionada.'));
@@ -2126,7 +2134,7 @@ client.on('message_create', async (msg) => {
             }
             let lista = `✔️  *CANALES DE YOUTUBE EN SEGUIMIENTO:*\n\n`;
             canalesYoutube.forEach((c, index) => {
-                lista += `${inde+ 1}. *${c.nombre}*\n   ID: \`${c.id}\`\n`;
+                lista += `${index + 1}. *${c.nombre}*\n   ID: \`${c.id}\`\n`;
             });
             lista += `\n_Para eliminar un canal use *!bot borrarcanal <número>*_`;
             return msg.reply(lista);
@@ -2253,7 +2261,7 @@ client.on('message_create', async (msg) => {
                 '-o', outputAudio,
                 `ytsearch1:${queryFull}`
             ];
-            const child = spawn('yt-dlp', searchArgs, { shell: false });
+            const child = spawn(getYtDlpBinary(), searchArgs, { shell: false });
             child.on('error', () => msg.reply('❌ *Kingbot:* yt-dlp no disponible. Instala con: pip install yt-dlp').catch(()=>{}));
             child.on('close', async (code) => {
                 const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3','') + '.mp3';
@@ -2284,7 +2292,7 @@ client.on('message_create', async (msg) => {
             await msg.reply(' *Kingbot:* Procesando y extrayendo audio de alta fidelidad, un momento...');
             const outputFile = 'audio_' + Date.now() + '.mp3';
             
-            const child = spawn('yt-dlp', ['-x', '--audio-format', 'mp3', '-o', outputFile, argumento], { shell: false });
+            const child = spawn(getYtDlpBinary(), ['-x', '--audio-format', 'mp3', '-o', outputFile, argumento], { shell: false });
             
             child.on('error', (err) => {
                 console.error('[!] Error en yt-dlp:', err);
@@ -2369,7 +2377,7 @@ client.on('message_create', async (msg) => {
                 _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '--merge-output-format', 'mp4', '-o', outputFile, videoUrl];
             }
             
-            const child = spawn('yt-dlp', _ytArgs, { shell: false });
+            const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
             
             child.on('error', (err) => {
                 console.error('[!] Error en yt-dlp:', err);
@@ -2447,7 +2455,7 @@ client.on('message_create', async (msg) => {
             const npmRes = await runUpd('npm', ['update', '--save']);
             updateLog.push((npmRes.code === 0 ? 'S&' : 'a') + ' npm update: ' + (npmRes.code === 0 ? 'OK' : 'Error/Advertencia'));
             
-            const ytdlpRes = await runUpd('yt-dlp', ['-U']);
+            const ytdlpRes = await runUpd(getYtDlpBinary(), ['-U']);
             updateLog.push((ytdlpRes.code === 0 ? 'S&' : 'a') + ' yt-dlp: ' + (ytdlpRes.out.includes('up-to-date') || ytdlpRes.out.includes('Updated') ? 'Actualizado' : 'Error/No disponible'));
             
             const pipRes = await runUpd('pip', ['install', '--upgrade', 'yt-dlp', '--quiet']);
@@ -2808,8 +2816,8 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
 
         if (comando === 'borrarnota') {
             if (!argumento) return msg.reply("❌ *Kingbot:* Especifique el número de la nota que desea eliminar. Use *!bot notas* para ver la lista.");
-            const inde= parseInt(argumento) - 1;
-            if (isNaN(index) || inde< 0 || inde>= notasGuardadas.length) {
+            const index = parseInt(argumento) - 1;
+            if (isNaN(index) || index < 0 || index >= notasGuardadas.length) {
                 return msg.reply("❌ *Kingbot:* Número de nota inválido.");
             }
             const eliminada = notasGuardadas.splice(index, 1)[0];
@@ -2981,25 +2989,25 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             }
             alarmasGuardadas.push({ hora, mensaje: msgAlarma, chatId, recurrente, fecha: getFechaObjetivoAlarma(hora) });
             guardarAlarmas();
-            return msg.reply(` *Kingbot:* Alarma establecida con éxito a las ${hora} para: _"${msgAlarma}"_ ${recurrente ? '(Diaria x)' : '(Una vez x")'}.`);
+            return msg.reply(` *Kingbot:* Alarma establecida con éxito a las ${hora} para: _"${msgAlarma}"_ ${recurrente ? '(Diaria x )' : '(Una vez x" )'}.`);
         }
 
         if (comando === 'alarmas') {
             if (alarmasGuardadas.length === 0) {
-                return msg.reply(" *Kingbot:* No hay alarmas programadas.");
+                return msg.reply("  *Kingbot:* No hay alarmas programadas.");
             }
             let list = ` *ALARMAS CONFIGURADAS:*\n\n`;
             alarmasGuardadas.forEach((al, idx) => {
-                const recurrenceType = al.recurrente ? 'x Diaria' : 'x" Una vez';
-                list += `${id+ 1}. [${al.hora}] ${al.mensaje} _(${recurrenceType})_\n`;
+                const recurrenceType = al.recurrente ? 'x  Diaria' : 'x"  Una vez';
+                list += `${idx + 1}. [${al.hora}] ${al.mensaje} _(${recurrenceType})_\n`;
             });
             list += `\n_Para borrar use: *!bot alarmaborrar <índice>*_`;
             return msg.reply(list);
         }
 
         if (comando === 'alarmaborrar') {
-            const inde= parseInt(argumento) - 1;
-            if (isNaN(index) || inde< 0 || inde>= alarmasGuardadas.length) {
+            const index = parseInt(argumento) - 1;
+            if (isNaN(index) || index < 0 || index >= alarmasGuardadas.length) {
                 return msg.reply("❌ *Kingbot:* Índice de alarma no válido. Escriba *!bot alarmas* para ver la lista.");
             }
             const borrada = alarmasGuardadas.splice(index, 1)[0];
@@ -3214,15 +3222,11 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             if (tareasProgramadas.length === 0) {
                 return msg.reply("❌ *Kingbot:* No hay tareas programadas.");
             }
-            let list = `📅 *TAREAS PROGRAMADAS:*
-
-`;
+            let list = `📅 *TAREAS PROGRAMADAS:*\n\n`;
             tareasProgramadas.forEach((t, i) => {
-                list += `*${i}*. [ ${t.cron} ] - ${t.descripcion}
-`;
+                list += `*${i}*. [ ${t.cron} ] - ${t.descripcion}\n`;
             });
-            list += `
-_Use !bot desprogramar <índice>_`;
+            list += `\n_Use !bot desprogramar <índice>_`;
             return msg.reply(list);
         }
 
@@ -3238,51 +3242,18 @@ _Use !bot desprogramar <índice>_`;
                 global.activeCronJobs.delete(index);
             }
             // Re-init to fix indices
-            if (typeof inicializarTareas !== 'undefined') inicializarTareas();
-            return msg.reply(`✔️ *Kingbot:* Tarea desprogramada: "${eliminada.descripcion}"`);
-        }
-
-        
-        if (comando === 'programados') {
-            if (tareasProgramadas.length === 0) {
-                return msg.reply("❌ *Kingbot:* No hay tareas programadas.");
-            }
-            let list = `📅 *TAREAS PROGRAMADAS:*
-
-`;
-            tareasProgramadas.forEach((t, i) => {
-                list += `*${i}*. [ ${t.cron} ] - ${t.descripcion}
-`;
-            });
-            list += `
-_Use !bot desprogramar <índice>_`;
-            return msg.reply(list);
-        }
-
-        if (comando === 'desprogramar') {
-            const index = parseInt(argumento, 10);
-            if (isNaN(index) || index < 0 || index >= tareasProgramadas.length) {
-                return msg.reply("❌ *Kingbot:* Índice no válido.");
-            }
-            const eliminada = tareasProgramadas.splice(index, 1)[0];
-            fs.writeFileSync('tareas_programadas.json', JSON.stringify(tareasProgramadas, null, 2));
-            if (global.activeCronJobs && global.activeCronJobs.has(index)) {
-                global.activeCronJobs.get(index).stop();
-                global.activeCronJobs.delete(index);
-            }
-            // Re-init to fix indices
-            if (typeof inicializarTareas !== 'undefined') inicializarTareas();
+            if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
             return msg.reply(`✔️ *Kingbot:* Tarea desprogramada: "${eliminada.descripcion}"`);
         }
 
         if (comando === 'tareas') {
             if (tareasGuardadas.length === 0) {
-                return msg.reply(" *Kingbot:* No hay tareas pendientes.");
+                return msg.reply("  *Kingbot:* No hay tareas pendientes.");
             }
-            let list = `x9 *LISTA DE TAREAS PENDIENTES:*\n\n`;
+            let list = `x 9 *LISTA DE TAREAS PENDIENTES:*\n\n`;
             tareasGuardadas.forEach((t, idx) => {
                 const mark = t.completada ? 'S&' : 'S';
-                list += `${id+ 1}. ${mark} ${t.texto} _(${t.fecha})_\n`;
+                list += `${idx + 1}. ${mark} ${t.texto} _(${t.fecha})_\n`;
             });
             list += `\n_Para completar: *!bot tareacompletar <índice>*_`;
             list += `\n_Para borrar: *!bot tareaborrar <índice>*_`;
@@ -3290,8 +3261,8 @@ _Use !bot desprogramar <índice>_`;
         }
 
         if (comando === 'tareacompletar' || comando === 'completartarea') {
-            const inde= parseInt(argumento) - 1;
-            if (isNaN(index) || inde< 0 || inde>= tareasGuardadas.length) {
+            const index = parseInt(argumento) - 1;
+            if (isNaN(index) || index < 0 || index >= tareasGuardadas.length) {
                 return msg.reply("❌ *Kingbot:* Índice de tarea no válido.");
             }
             const completada = tareasGuardadas.splice(index, 1)[0];
@@ -3300,13 +3271,13 @@ _Use !bot desprogramar <índice>_`;
         }
 
         if (comando === 'tareaborrar' || comando === 'borrartarea') {
-            const inde= parseInt(argumento) - 1;
-            if (isNaN(index) || inde< 0 || inde>= tareasGuardadas.length) {
+            const index = parseInt(argumento) - 1;
+            if (isNaN(index) || index < 0 || index >= tareasGuardadas.length) {
                 return msg.reply("❌ *Kingbot:* Índice de tarea no válido.");
             }
             const borrada = tareasGuardadas.splice(index, 1)[0];
             guardarTareas();
-            return msg.reply(`x *Kingbot:* Tarea eliminada de la lista: _"${borrada.texto}"_.`);
+            return msg.reply(`x   *Kingbot:* Tarea eliminada de la lista: _"${borrada.texto}"_.`);
         }
 
         // 3. Ficha de Películas y Series (IMDb/TMDB fallback)
@@ -3503,14 +3474,14 @@ _Use !bot desprogramar <índice>_`;
 
         // 9. Noticias RSS (BBC)
         if (comando === 'noticias' || comando === 'news') {
-            await msg.reply("x *Kingbot:* Extrayendo los titulares y noticias internacionales más recientes...");
+            await msg.reply("x  *Kingbot:* Extrayendo los titulares y noticias internacionales más recientes...");
             try {
-                const feed = await rssParser.parseURL('https://feeds.bbci.co.uk/mundo/rss/xml');
+                const feed = await rssParser.parseURL('https://www.bbc.com/mundo/index.xml');
                 if (feed.items && feed.items.length > 0) {
-                    let newsReport = `x *PRINCIPALES NOTICIAS DEL DÍA (BBC Mundo):*\n\n`;
+                    let newsReport = `x  *PRINCIPALES NOTICIAS DEL DÍA (BBC Mundo):*\n\n`;
                     const items = feed.items.slice(0, 5);
                     items.forEach((item, idx) => {
-                        newsReport += `${id+ 1}. *${item.title}*\n   _${item.contentSnippet || item.content || ''}_\n   x ${item.link}\n\n`;
+                        newsReport += `${idx + 1}. *${item.title}*\n   _${item.contentSnippet || item.content || ''}_\n   x   ${item.link}\n\n`;
                     });
                     return msg.reply(newsReport);
                 }
@@ -3574,7 +3545,7 @@ _Use !bot desprogramar <índice>_`;
                     }
                     let report = "x *aLTIMOS SMS RECIBIDOS:*\n\n";
                     dataSMS.forEach((sms, idx) => {
-                        report += (id+ 1) + ". *De:* " + sms.number + "\n   *Fecha:* " + sms.received + "\n   *Mensaje:* " + sms.body + "\n\n";
+                        report += (idx + 1) + ". *De:* " + sms.number + "\n   *Fecha:* " + sms.received + "\n   *Mensaje:* " + sms.body + "\n\n";
                     });
                     await msg.reply(report);
                 } catch (e) {
@@ -3677,13 +3648,13 @@ _Use !bot desprogramar <índice>_`;
         }
         if (comando === 'claves' || comando === 'listkeys') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
-            let listK = "x *ESTADO DE CLAVES API GEMINI:*\n\n";
+            let listK = "🔑 *ESTADO DE CLAVES API GEMINI:*\n\n";
             API_KEYS.forEach((key, idx) => {
                 const mask = key.substring(0, 10) + '...' + key.substring(key.length - 4);
-                const st = keyStatus[idx]?.status === 'Activa' ? 'S& Activa' : '❌ Agotada';
+                const st = keyStatus[idx]?.status === 'Activa' ? '✅ Activa' : '❌ Agotada';
                 const cnt = keyStatus[idx]?.requestsToday || 0;
-                const am = id=== currentKeyInde? ' x (En uso)' : '';
-                listK += (id+ 1) + ". `" + mask + "`\n   Estado: " + st + "\n   Consultas hoy: " + cnt + am + "\n\n";
+                const am = idx === currentKeyIndex ? ' 📍 (En uso)' : '';
+                listK += (idx + 1) + ". `" + mask + "`\n   Estado: " + st + "\n   Consultas hoy: " + cnt + am + "\n\n";
             });
             listK += "_Para agregar: *!bot agregarclave <clave>*_\n_Para restaurar: *!bot restaurarclaves*_";
             return msg.reply(listK);
@@ -3929,11 +3900,11 @@ _Use !bot desprogramar <índice>_`;
                 if (respuestaTexto.includes('[ACTION_NOTE_LIST]')) {
                     let lista = "";
                     if (notasGuardadas.length === 0) {
-                        lista = "\n\nx 9 *Bloc de notas vacío.*";
+                        lista = "\n\n📝 *Bloc de notas vacío.*";
                     } else {
-                        lista = `\n\nx 9 *SUS NOTAS ARCHIVADAS:*\n`;
+                        lista = `\n\n📝 *SUS NOTAS ARCHIVADAS:*\n`;
                         notasGuardadas.forEach((n, index) => {
-                            lista += `${inde+ 1}. [${n.fecha}] ${n.texto}\n`;
+                            lista += `${index + 1}. [${n.fecha}] ${n.texto}\n`;
                         });
                     }
                     respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', lista).trim();
@@ -3944,13 +3915,13 @@ _Use !bot desprogramar <índice>_`;
                     const match = respuestaTexto.match(/\[ACTION_NOTE_DELETE:\s*([^\]]+)\]/);
                     if (match) {
                         const argBorrar = match[1].trim();
-                        const inde= parseInt(argBorrar) - 1;
+                        const index = parseInt(argBorrar) - 1;
                         let notaEliminada = null;
-                        if (!isNaN(index) && inde>= 0 && inde< notasGuardadas.length) {
+                        if (!isNaN(index) && index >= 0 && index < notasGuardadas.length) {
                             notaEliminada = notasGuardadas.splice(index, 1)[0];
                         } else {
-                            const id= notasGuardadas.findIndex(n => n.texto.toLowerCase().includes(argBorrar.toLowerCase()));
-                            if (id!== -1) notaEliminada = notasGuardadas.splice(idx, 1)[0];
+                            const idx = notasGuardadas.findIndex(n => n.texto.toLowerCase().includes(argBorrar.toLowerCase()));
+                            if (idx !== -1) notaEliminada = notasGuardadas.splice(idx, 1)[0];
                         }
                         if (notaEliminada) {
                             fs.writeFileSync('notas.json', JSON.stringify(notasGuardadas, null, 2));
@@ -3991,7 +3962,7 @@ _Use !bot desprogramar <índice>_`;
                 // Video Download - Universal (Agentic) - handles ACTION_DOWNLOAD and legacy ACTION_TIKTOK
                 const _agVideoTag = respuestaTexto.includes('[ACTION_DOWNLOAD:') ? '[ACTION_DOWNLOAD:' : (respuestaTexto.includes('[ACTION_TIKTOK:') ? '[ACTION_TIKTOK:' : null);
                 if (_agVideoTag) {
-                    const _agVidRege= _agVideoTag === '[ACTION_DOWNLOAD:' ? /\[ACTION_DOWNLOAD:\s*([^\]]+)\]/ : /\[ACTION_TIKTOK:\s*([^\]]+)\]/;
+                    const _agVidRegex = _agVideoTag === '[ACTION_DOWNLOAD:' ? /\[ACTION_DOWNLOAD:\s*([^\]]+)\]/ : /\[ACTION_TIKTOK:\s*([^\]]+)\]/;
                     const match = respuestaTexto.match(_agVidRegex);
                     if (match) {
                         // Smart URL extraction   remove any text before/after the URL
@@ -4043,7 +4014,7 @@ _Use !bot desprogramar <índice>_`;
                                 _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
                             }
                                 
-                            const child = spawn('yt-dlp', _ytArgs, { shell: false });
+                            const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
                             
                             child.on('error', (err) => {
                                 console.error('[!] Error en yt-dlp agentic:', err);
@@ -4101,7 +4072,7 @@ _Use !bot desprogramar <índice>_`;
                         ];
                         
                         const { spawn } = require('child_process');
-                        const child = spawn('yt-dlp', searchArgs, { shell: false });
+                        const child = spawn(getYtDlpBinary(), searchArgs, { shell: false });
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de música agentic URL:', err);
@@ -4193,7 +4164,7 @@ _Use !bot desprogramar <índice>_`;
                             `ytsearch1:${query}`
                         ];
                         
-                        const child = spawn('yt-dlp', searchArgs, { shell: false });
+                        const child = spawn(getYtDlpBinary(), searchArgs, { shell: false });
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de música agentic:', err);
@@ -4301,7 +4272,7 @@ _Use !bot desprogramar <índice>_`;
                             `ytsearch1:${query}`
                         ];
                         
-                        const child = spawn('yt-dlp', searchArgs, { shell: false });
+                        const child = spawn(getYtDlpBinary(), searchArgs, { shell: false });
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de video agentic:', err);
@@ -4375,13 +4346,13 @@ _Use !bot desprogramar <índice>_`;
                     const match = respuestaTexto.match(/\[ACTION_ALARM_DELETE:\s*([^\]]+)\]/);
                     if (match) {
                         const argBorrar = match[1].trim();
-                        const inde= parseInt(argBorrar) - 1;
+                        const index = parseInt(argBorrar) - 1;
                         let borrada = null;
-                        if (!isNaN(index) && inde>= 0 && inde< alarmasGuardadas.length) {
+                        if (!isNaN(index) && index >= 0 && index < alarmasGuardadas.length) {
                             borrada = alarmasGuardadas.splice(index, 1)[0];
                         } else {
-                            const id= alarmasGuardadas.findIndex(al => al.hora === argBorrar || al.mensaje.toLowerCase().includes(argBorrar.toLowerCase()));
-                            if (id!== -1) borrada = alarmasGuardadas.splice(idx, 1)[0];
+                            const idx = alarmasGuardadas.findIndex(al => al.hora === argBorrar || al.mensaje.toLowerCase().includes(argBorrar.toLowerCase()));
+                            if (idx !== -1) borrada = alarmasGuardadas.splice(idx, 1)[0];
                         }
                         if (borrada) {
                             guardarAlarmas();

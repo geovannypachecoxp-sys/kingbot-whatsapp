@@ -3,5 +3,7 @@ node_modules/
 .wwebjs_cache/
 keys.json
 serviceAccount.json
+admin.json
+*.exe
 *.session
 *.log
