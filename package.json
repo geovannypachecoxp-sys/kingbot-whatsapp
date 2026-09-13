@@ -5,6 +5,7 @@
     "@wppconnect/wa-version": "^1.5.4368",
     "debug": "^4.4.3",
     "firebase-admin": "^13.10.0",
+    "msedge-tts": "^2.0.7",
     "node-cron": "^4.2.1",
     "qrcode-terminal": "^0.12.0",
     "rss-parser": "^3.13.0",

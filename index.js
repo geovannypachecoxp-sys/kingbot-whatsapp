@@ -289,6 +289,7 @@ let firebaseUid = "De3SAQbP7kbq9N2o31AEnIJuPlf1"; // UID por defecto de Geovanny
 let ultimoChequeoVencimientos = null;
 let telegramBotToken = null;
 let openaiApiKey = null;
+let vozDefault = 'hombre'; // 'hombre' o 'mujer'
 if (fs.existsSync('admin.json')) {
     try {
         const data = JSON.parse(fs.readFileSync('admin.json', 'utf8'));
@@ -297,11 +298,12 @@ if (fs.existsSync('admin.json')) {
         if (data.ultimoChequeoVencimientos) ultimoChequeoVencimientos = data.ultimoChequeoVencimientos;
         if (data.telegramBotToken) telegramBotToken = data.telegramBotToken;
         if (data.openaiApiKey) openaiApiKey = data.openaiApiKey;
+        if (data.vozDefault) vozDefault = data.vozDefault;
     } catch (e) { console.error("No se pudo cargar admin.json"); }
 }
 
 function guardarAdminJson() {
-    fs.writeFileSync('admin.json', JSON.stringify({ adminChatId, firebaseUid, ultimoChequeoVencimientos, telegramBotToken, openaiApiKey }, null, 2));
+    fs.writeFileSync('admin.json', JSON.stringify({ adminChatId, firebaseUid, ultimoChequeoVencimientos, telegramBotToken, openaiApiKey, vozDefault }, null, 2));
 }
 
 // Inicialización dinámica de Firebase Admin SDK
@@ -791,18 +793,87 @@ function obtenerFechaContexto() {
     return `Fecha y hora actual del sistema (El Salvador, UTC-6): ${diaSemana}, ${dia} de ${mes} de ${anio}, ${hora}:${minuto}. Contexto temporal de base: El año actual es 2026, y el presidente actual de los Estados Unidos es Donald Trump (quien asumió el cargo el 20 de enero de 2025).`;
 }
 
-async function generarAudioTTS(texto, msg) {
+let MsEdgeTTSModule = null;
+try {
+    MsEdgeTTSModule = require('msedge-tts');
+} catch (e) {
+    console.warn("[TTS] msedge-tts no disponible directamente, se usarán fallbacks web.");
+}
+
+async function obtenerAudioBufferTTS(texto, genero = 'hombre') {
+    const esHombre = !(/^(mujer|m|femenino|female)$/i.test(genero));
+
+    // 1. Intentar Microsoft Edge Neural TTS (Máxima calidad de voz humana, 100% gratis)
+    if (MsEdgeTTSModule && MsEdgeTTSModule.MsEdgeTTS) {
+        try {
+            const tts = new MsEdgeTTSModule.MsEdgeTTS();
+            const vozPrincipal = esHombre ? 'es-SV-RodrigoNeural' : 'es-SV-LorenaNeural';
+            await tts.setMetadata(vozPrincipal, MsEdgeTTSModule.OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+            const { audioStream } = tts.toStream(texto);
+
+            const buffer = await new Promise((resolve, reject) => {
+                const chunks = [];
+                const timeout = setTimeout(() => reject(new Error('Timeout Edge TTS')), 12000);
+                audioStream.on('data', c => chunks.push(c));
+                audioStream.on('end', () => {
+                    clearTimeout(timeout);
+                    resolve(Buffer.concat(chunks));
+                });
+                audioStream.on('error', err => {
+                    clearTimeout(timeout);
+                    reject(err);
+                });
+            });
+
+            if (buffer && buffer.length > 300) {
+                return buffer;
+            }
+        } catch (e) {
+            console.error("[TTS] Edge Neural TTS falló, intentando proveedor alternativo:", e.message);
+        }
+    }
+
+    // 2. Intentar TikTok TTS (Voz masculina 'es_male_m3' o femenina 'es_002')
+    try {
+        const voiceId = esHombre ? 'es_male_m3' : 'es_002';
+        const res = await fetch('https://tiktok-tts.weilnet.workers.dev/api/generation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: texto, voice: voiceId })
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+            return Buffer.from(data.data, 'base64');
+        }
+    } catch (e) {
+        console.error("[TTS] TikTok TTS falló:", e.message);
+    }
+
+    // 3. Fallback: Google Translate TTS (Voz estándar)
     try {
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=es&client=tw-ob&q=${encodeURIComponent(texto)}`;
-        const response = await fetch(url);
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        const arrayBuffer = await response.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const media = new MessageMedia('audio/mpeg', base64, 'tts.mp3');
-        await msg.reply(media, undefined, { sendAudioAsVoice: true });
-        return true;
+        const res = await fetch(url);
+        if (res.ok) {
+            const ab = await res.arrayBuffer();
+            return Buffer.from(ab);
+        }
+    } catch (e) {
+        console.error("[TTS] Google Translate TTS falló:", e.message);
+    }
+
+    return null;
+}
+
+async function generarAudioTTS(texto, msg, generoDeseado = null) {
+    try {
+        const genero = generoDeseado || vozDefault || 'hombre';
+        const buffer = await obtenerAudioBufferTTS(texto, genero);
+        if (buffer && buffer.length > 0) {
+            const base64 = buffer.toString('base64');
+            const media = new MessageMedia('audio/mpeg', base64, 'tts.mp3');
+            await msg.reply(media, undefined, { sendAudioAsVoice: true });
+            return true;
+        }
     } catch (e) {
         console.error("Error en helper TTS:", e);
     }
@@ -2661,8 +2732,9 @@ function obtenerDetalleAyuda(opcionRaw) {
 • \`!bot buscar <consulta>\` - Búsqueda web en vivo con datos actualizados.`;
     }
 
-    if (opcion === '7' || opcion === 'ajustes' || opcion === 'configuracion' || opcion === 'sistema' || opcion === 'conexiones') {
+    if (opcion === '7' || opcion === 'ajustes' || opcion === 'configuracion' || opcion === 'sistema' || opcion === 'conexiones' || opcion === 'voz') {
         return `🔧 *7. AJUSTES, CONEXIONES Y SERVIDOR:*
+• \`!bot voz <hombre / mujer>\` - Configura la voz por defecto del bot (Masculina 👨 o Femenina 👩).
 • \`!bot settelegram <token>\` - Vincula tu bot de Telegram con token de @BotFather.
 • \`!bot telegram\` - Estado de la conexión con Telegram.
 • \`!bot setopenai <key>\` - Registra tu clave de OpenAI para ChatGPT y DALL-E.
@@ -2677,6 +2749,10 @@ function obtenerDetalleAyuda(opcionRaw) {
 
     if (opcion === '8' || opcion === 'utilidades' || opcion === 'herramientas' || opcion === 'varios') {
         return `🛠️ *8. UTILIDADES Y HERRAMIENTAS:*
+• \`!bot decir <texto>\` (o \`!bot tts <texto>\`) - Dicta audio con la voz activa actual.
+• \`!bot decir hombre <texto>\` (o \`!bot decir h <texto>\`) - Dicta con voz masculina 👨.
+• \`!bot decir mujer <texto>\` (o \`!bot decir m <texto>\`) - Dicta con voz femenina 👩.
+• \`!bot voz\` - Muestra el estado de la voz y cómo configurarla.
 • \`!bot tarea agregar <texto>\` - Agrega un pendiente personal.
 • \`!bot tareas\` - Muestra la lista de pendientes.
 • \`!bot tareacompletar <número>\` - Marca una tarea como completada.
@@ -2684,8 +2760,7 @@ function obtenerDetalleAyuda(opcionRaw) {
 • \`!bot clima <ciudad>\` - Consulta el pronóstico del clima.
 • \`!bot qr <texto o enlace>\` - Genera un código QR de alta resolución.
 • \`!bot divisas <monto> <moneda1> a <moneda2>\` - Conversor de divisas (ej. \`!bot divisas 50 USD a EUR\`).
-• \`!bot calcular <operación>\` - Calculadora matemática rápida (ej. \`!bot calcular 1500 * 0.13\`).
-• \`!bot decir <texto>\` (o \`!bot tts <texto>\`) - Dicta el texto con voz de audio.`;
+• \`!bot calcular <operación>\` - Calculadora matemática rápida (ej. \`!bot calcular 1500 * 0.13\`).`;
     }
 
     return null;
@@ -3449,13 +3524,73 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
 
-        // --- M\u00d3DULO S\u00cdNTESIS DE VOZ MASCULINA (TTS) ---
-        if (comando === 'decir' || comando === 'tts') {
-            if (!argumento) return msg.reply("\u274c *Kingbot:* Especifique el texto que desea que dicte.");
-            await msg.reply("\uD83C\uDF99 *Kingbot:* Generando modulaci\u00f3n de voz masculina...");
-            const ttsExito = await generarAudioTTS(argumento, msg);
+        // --- MÓDULO CONFIGURACIÓN DE VOZ (TTS) ---
+        if (comando === 'voz' || comando === 'setvoz') {
+            const arg = (argumento || '').toLowerCase().trim();
+            if (!arg) {
+                const nombreVozActual = vozDefault === 'mujer' ? 'Femenina 👩 (Lorena Neural)' : 'Masculina 👨 (Rodrigo Neural)';
+                return msg.reply(`🎙️ *CONFIGURACIÓN DE VOZ KINGBOT:*
+• *Voz predeterminada actual:* ${nombreVozActual}
+
+*¿Cómo cambiar la voz por defecto?*
+• \`!bot voz hombre\` - Establece voz masculina por defecto.
+• \`!bot voz mujer\` - Establece voz femenina por defecto.
+
+*¿Cómo dictar audios eligiendo la voz al instante?*
+• \`!bot decir hombre <texto>\` (o \`!bot decir h <texto>\`)
+• \`!bot decir mujer <texto>\` (o \`!bot decir m <texto>\`)
+• \`!bot decir <texto>\` (usa la voz predeterminada actual)`);
+            }
+
+            if (/^(hombre|h|masculino|male)$/i.test(arg)) {
+                vozDefault = 'hombre';
+                guardarAdminJson();
+                return msg.reply("✅ *Kingbot:* Voz predeterminada configurada en *Masculina* 👨 (Rodrigo Neural).");
+            } else if (/^(mujer|m|femenino|female)$/i.test(arg)) {
+                vozDefault = 'mujer';
+                guardarAdminJson();
+                return msg.reply("✅ *Kingbot:* Voz predeterminada configurada en *Femenina* 👩 (Lorena Neural).");
+            } else {
+                return msg.reply("❌ *Kingbot:* Opción no válida. Escriba *!bot voz hombre* o *!bot voz mujer*.");
+            }
+        }
+
+        // --- MÓDULO SÍNTESIS DE VOZ (TTS DUAL: HOMBRE / MUJER) ---
+        if (comando === 'decir' || comando === 'tts' || comando === 'decirhombre' || comando === 'decirmujer') {
+            if (!argumento) {
+                return msg.reply("❌ *Kingbot:* Especifique el texto que desea que dicte.\n\n_Ejemplos:_\n• `!bot decir hombre Buenos días a todos`\n• `!bot decir mujer Buenos días a todos`\n• `!bot decir Buenos días` (usa la voz activa)");
+            }
+
+            let textoFinal = argumento.trim();
+            let generoVoz = vozDefault || 'hombre';
+
+            if (comando === 'decirhombre') {
+                generoVoz = 'hombre';
+            } else if (comando === 'decirmujer') {
+                generoVoz = 'mujer';
+            } else {
+                const matchPrefijo = textoFinal.match(/^(?:voz\s*(?:de\s*)?)?(hombre|masculino|h|mujer|femenino|m|-h|-m)[:\s]+([\s\S]+)$/i);
+                if (matchPrefijo) {
+                    const selector = matchPrefijo[1].toLowerCase().replace('-', '');
+                    if (/^(h|hombre|masculino)$/.test(selector)) {
+                        generoVoz = 'hombre';
+                        textoFinal = matchPrefijo[2].trim();
+                    } else if (/^(m|mujer|femenino)$/.test(selector)) {
+                        generoVoz = 'mujer';
+                        textoFinal = matchPrefijo[2].trim();
+                    }
+                }
+            }
+
+            if (!textoFinal) {
+                return msg.reply("❌ *Kingbot:* Especifique el texto que desea que dicte.");
+            }
+
+            const etiquetaVoz = generoVoz === 'mujer' ? 'femenina 👩' : 'masculina 👨';
+            await msg.reply(`🎙️ *Kingbot:* Generando modulación de voz ${etiquetaVoz}...`);
+            const ttsExito = await generarAudioTTS(textoFinal, msg, generoVoz);
             if (!ttsExito) {
-                return msg.reply("\u274c *Kingbot:* Error interno en el m\u00f3dulo de sintetizaci\u00f3n de audio.");
+                return msg.reply("❌ *Kingbot:* Error interno en el módulo de sintetización de audio.");
             }
             return;
         }
