@@ -288,6 +288,7 @@ let firebaseUid = "De3SAQbP7kbq9N2o31AEnIJuPlf1"; // UID por defecto de Geovanny
 // Cargar admin.json persistido (adminChatId y firebaseUid)
 let ultimoChequeoVencimientos = null;
 let telegramBotToken = null;
+let openaiApiKey = null;
 if (fs.existsSync('admin.json')) {
     try {
         const data = JSON.parse(fs.readFileSync('admin.json', 'utf8'));
@@ -295,11 +296,12 @@ if (fs.existsSync('admin.json')) {
         if (data.firebaseUid) firebaseUid = data.firebaseUid;
         if (data.ultimoChequeoVencimientos) ultimoChequeoVencimientos = data.ultimoChequeoVencimientos;
         if (data.telegramBotToken) telegramBotToken = data.telegramBotToken;
+        if (data.openaiApiKey) openaiApiKey = data.openaiApiKey;
     } catch (e) { console.error("No se pudo cargar admin.json"); }
 }
 
 function guardarAdminJson() {
-    fs.writeFileSync('admin.json', JSON.stringify({ adminChatId, firebaseUid, ultimoChequeoVencimientos, telegramBotToken }, null, 2));
+    fs.writeFileSync('admin.json', JSON.stringify({ adminChatId, firebaseUid, ultimoChequeoVencimientos, telegramBotToken, openaiApiKey }, null, 2));
 }
 
 // Inicialización dinámica de Firebase Admin SDK
@@ -2800,11 +2802,89 @@ client.on('message_create', async (msg) => {
             }
         }
 
+        if (comando === 'canva' || comando === 'flyer' || comando === 'banner') {
+            if (!argumento) return msg.reply("❌ *Kingbot:* Indique el tema o producto para el flyer. Ejemplo: `!bot flyer tarjeta de credito dorada para redes sociales`");
+            await msg.reply("🎨 *Kingbot:* Diseñando propuesta publicitaria y buscando plantillas profesionales de Canva...");
+            try {
+                const promptDesign = `Eres un Director Creativo y Diseñador Publicitario de primer nivel.
+Crea una propuesta completa y profesional de flyer / banner para redes sociales sobre: "${argumento}".
+
+Estructura tu respuesta exactamente así:
+🎯 *TITULAR GANCHO:* (Titular llamativo de alto impacto para captar clientes)
+✨ *SUBTÍTULO / PROPUESTA DE VALOR:* (1 frase clara y persuasiva)
+📌 *BENEFICIOS CLAVE:*
+• (Beneficio 1)
+• (Beneficio 2)
+• (Beneficio 3)
+🚀 *LLAMADO A LA ACCIÓN (CTA):* (Ej: "¡Solicítala hoy con 0% de interés!", "Pídela aquí", etc.)
+🎨 *DISEÑO & ESTILO RECOMENDADO:*
+• Paleta de colores sugerida: (Colores armónicos y modernos)
+• Tipografía: (Sans-Serif, Negrita, Elegante)
+• Elementos visuales: (Qué foto o fondo usar)`;
+
+                const copyText = await ejecutarGeminiConRetries(async (model) => {
+                    const result = await model.generateContent([promptDesign]);
+                    return result.response.text();
+                });
+
+                const queryCanva = encodeURIComponent(argumento + " flyer banner");
+                const queryCanvaInstagram = encodeURIComponent(argumento + " instagram post");
+                const canvaUrl1 = `https://www.canva.com/templates/?query=${queryCanva}`;
+                const canvaUrl2 = `https://www.canva.com/templates/?query=${queryCanvaInstagram}`;
+
+                let respuestaCompleta = `🎨 *PROPUESTA DE DISEÑO & FLYER PUBLICITARIO* 🎨\n\n`;
+                respuestaCompleta += copyText.trim() + `\n\n`;
+                respuestaCompleta += `━━━━━━━━━━━━━━━━━━━━━\n`;
+                respuestaCompleta += `🖌️ *PLANTILLAS PROFESIONALES DE CANVA:*\n`;
+                respuestaCompleta += `Abre estos enlaces para seleccionar y personalizar tu plantilla:\n\n`;
+                respuestaCompleta += `📱 *Posts de Instagram:* ${canvaUrl2}\n`;
+                respuestaCompleta += `📄 *Flyers / Banners:* ${canvaUrl1}\n\n`;
+                respuestaCompleta += `_💡 Consejo: Copia los textos sugeridos arriba y pégalos en la plantilla de Canva para tener un diseño listo en 2 minutos._`;
+
+                return msg.reply(respuestaCompleta);
+            } catch (e) {
+                return msg.reply(`❌ *Kingbot:* Error al estructurar la propuesta de diseño: ${e.message}`);
+            }
+        }
+
         if (comando === 'imagina' || comando === 'dibuja' || comando === 'crear') {
             if (!argumento) return msg.reply("❌ *Kingbot:* Dígame qué desea dibujar, Señor.");
-            await msg.reply(" *Kingbot:* Diseñando el concepto artístico con IA, por favor espere...");
+            await msg.reply("🎨 *Kingbot:* Diseñando el concepto artístico con IA, por favor espere...");
             try {
-                const promptExpansion = `Expand the following image prompt into a detailed, highly aesthetic, and descriptive English prompt for an AI image generator (like Midjourney or FLUX). The prompt must produce a masterpiece: state-of-the-art visuals, cinematic and dramatic lighting (like volumetric dust, neon glow, or soft golden hour), ultra-high-definition details, rich textures, and professional composition. Describe style, artistic medium, lighting, camera lens details, and high-quality elements. Respond ONLY with the expanded English prompt, no introduction, no quotes, no explanations:\n\n${argumento}`;
+                // 1. Si hay clave de OpenAI configurada, intentar primero con OpenAI
+                if (openaiApiKey) {
+                    try {
+                        const openAiRes = await fetch("https://api.openai.com/v1/images/generations", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${openaiApiKey}`
+                            },
+                            body: JSON.stringify({
+                                model: "chatgpt-image-latest",
+                                prompt: argumento,
+                                n: 1,
+                                size: "1024x1024"
+                            })
+                        });
+                        const openAiData = await openAiRes.json();
+                        if (openAiData.data && openAiData.data[0] && openAiData.data[0].url) {
+                            const imgResp = await fetch(openAiData.data[0].url);
+                            const imgBuf = await imgResp.arrayBuffer();
+                            const media = new MessageMedia('image/png', Buffer.from(imgBuf).toString('base64'), 'imagen_chatgpt.png');
+                            return msg.reply(media, undefined, { caption: `🤖 *Imagen generada con ChatGPT (OpenAI)*\n✨ _Prompt: ${argumento}_` });
+                        }
+                    } catch (errOpenAi) {
+                        console.log("[!] OpenAI falló o sin saldo. Usando motor FLUX:", errOpenAi.message);
+                    }
+                }
+
+                // 2. Motor FLUX con prompt publicitario hiperrealista de Gemini
+                const promptExpansion = `Expand the following image prompt into a detailed, highly aesthetic, commercial product photography and advertising English prompt for an AI image generator (FLUX):
+"""${argumento}"""
+
+Create a visually stunning commercial product photograph: clean composition, studio lighting, golden accents, 8k resolution, elegant textures, photorealistic octane render. Respond ONLY with the expanded English prompt, no introduction, no quotes:`;
+                
                 let promptMejorado = argumento;
                 try {
                     const resultText = await ejecutarGeminiConRetries(async (model) => {
@@ -2813,18 +2893,19 @@ client.on('message_create', async (msg) => {
                     });
                     if (resultText && resultText.trim()) {
                         promptMejorado = resultText.trim();
-                        console.log(`[ Prompt Expandido]: ${promptMejorado}`);
+                        console.log(`[🎨 Prompt Expandido]: ${promptMejorado}`);
                     }
                 } catch (e) {
                     console.error("No se pudo expandir el prompt con Gemini, usando original:", e);
                 }
 
-                const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(promptMejorado) + '?width=1024&height=1024&nologo=true&model=flux';
+                const seed = Math.floor(Math.random() * 99999);
+                const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(promptMejorado) + `?width=1024&height=1024&nologo=true&model=flux&seed=${seed}`;
                 const response = await fetch(url);
                 const arrayBuffer = await response.arrayBuffer();
                 const base64 = Buffer.from(arrayBuffer).toString('base64');
                 const media = new MessageMedia('image/jpeg', base64, 'imagen.jpg');
-                return msg.reply(media);
+                return msg.reply(media, undefined, { caption: `✨ *Concepto visual generado por IA:*\n"${argumento}"\n\n_Tip: Para crear un flyer con textos y plantillas de diseño, usa: !bot flyer <tema>_` });
             } catch (e) { return msg.reply("❌ *Kingbot:* Fallo en el renderizado de los servidores gráficos."); }
         }
 
@@ -4043,6 +4124,26 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             const estado = telegramPollingActive ? "✅ Activo y escuchando" : "⚠️ Detenido";
             const mask = telegramBotToken.substring(0, 8) + '...' + telegramBotToken.substring(telegramBotToken.length - 5);
             return msg.reply(`📲 *ESTADO DE TELEGRAM (Finanzas King):*\n\n• Token: \`${mask}\`\n• Estado: *${estado}*\n\nPuedes enviar estados de cuenta (PDF o foto), comprobantes o tickets directamente a tu bot de Telegram y se sincronizarán automáticamente con Finanzas King.`);
+        }
+
+        if (comando === 'setopenai' || comando === 'setopenaikey' || comando === 'openaikey') {
+            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            const keyInput = argumento.trim();
+            if (!keyInput) {
+                return msg.reply("❌ *Kingbot:* Proporcione su clave de OpenAI (comienza con `sk-...`).");
+            }
+            openaiApiKey = keyInput;
+            guardarAdminJson();
+            return msg.reply(`✅ *Kingbot:* Clave de OpenAI registrada exitosamente.`);
+        }
+
+        if (comando === 'openai' || comando === 'estadoopenai') {
+            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (!openaiApiKey) {
+                return msg.reply("ℹ️ *Kingbot:* OpenAI no está configurado actualmente.\nPara activarlo escribe: `!bot setopenai <TU_API_KEY>`");
+            }
+            const mask = openaiApiKey.substring(0, 7) + '...' + openaiApiKey.substring(openaiApiKey.length - 4);
+            return msg.reply(`🤖 *ESTADO DE OPENAI (ChatGPT):*\n\n• Clave: \`${mask}\`\n• Estado: *Configurada*\n\nLas imágenes con \`!bot imagina\` intentarán usar los modelos oficiales de OpenAI si la clave tiene saldo prepagado.`);
         }
 
         if (comando === 'tarjetas' || comando === 'finanzas') {
