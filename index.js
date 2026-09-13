@@ -933,39 +933,141 @@ Responde ÚNICAMENTE con el objeto JSON limpio. Sin markdown ni texto adicional.
             return false; // No es un documento financiero, seguir el flujo normal
         }
 
-        const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
-        const cardsSnap = await cardsRef.get();
+        return await aplicarOperacionFinanciera(data, msg);
+    } catch (e) {
+        console.error("Error al procesar documento financiero:", e);
+        await msg.reply(`❌ *Kingbot:* Ocurrió un error al procesar el documento: ${e.message}`);
+        return true;
+    }
+}
 
-        // Helper para localizar tarjeta por last4 o nombre
-        function buscarTarjeta(last4, cardName) {
-            let encontrada = null;
-            if (last4) {
-                cardsSnap.forEach(doc => {
-                    const c = doc.data();
-                    if (c.last4 && String(c.last4).trim() === String(last4).trim()) {
-                        encontrada = { id: doc.id, ...c };
-                    }
-                });
-            }
-            if (!encontrada && cardName) {
-                const q = cardName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                cardsSnap.forEach(doc => {
-                    const c = doc.data();
-                    const cName = (c.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    if (cName.includes(q) || q.includes(cName)) {
-                        encontrada = { id: doc.id, ...c };
-                    }
-                });
-            }
-            return encontrada;
+// ---------------------------------------------------------
+// PROCESADOR DE TEXTO FINANCIERO (CORREOS, NOTIFICACIONES BANCARIAS, SMS)
+// ---------------------------------------------------------
+async function procesarTextoFinanciero(texto, msg) {
+    if (!dbFirebase) inicializarFirebase();
+    if (!dbFirebase || !firebaseUid) return false;
+
+    const tLower = texto.toLowerCase();
+    const palabrasClave = ['pago', 'abono', 'transferencia', 'comprobante', 'recibo', 'factura', 'compra', 'tarjeta', 'saldo', 'deuda', 'corte', 'banco', 'bac', 'davivienda', 'agricola', 'promerica', 'fedecredito', 'usd', '$'];
+    const tieneTerminos = palabrasClave.some(w => tLower.includes(w));
+    if (!tieneTerminos) return false;
+
+    try {
+        const prompt = `Analiza el siguiente texto (puede ser una notificación de correo bancario, SMS, o confirmación de pago/transferencia/compra).
+Texto a analizar:
+"""
+${texto}
+"""
+
+Determina con precisión si corresponde a:
+1. Un COMPROBANTE DE ABONO, PAGO DE TARJETA O TRANSFERENCIA BANCARIA (Payment Voucher / Pago de tarjeta):
+{
+    "is_financial": true,
+    "doc_type": "payment",
+    "amount": number (monto abonado o pagado),
+    "date": "YYYY-MM-DD" (fecha de la operación o null si no se especifica),
+    "concept": String "Abono / Pago de Tarjeta...",
+    "card_name": String "Nombre de la tarjeta o banco destino",
+    "last4": String "últimos 4 dígitos de la tarjeta o cuenta destino (o null)",
+    "reference": String "número de referencia o autorización (o null)"
+}
+
+2. Un ESTADO DE CUENTA de tarjeta de crédito:
+{
+    "is_financial": true,
+    "doc_type": "statement",
+    "pay_goal": number (pago de contado / para no generar intereses),
+    "cutoff_balance": number (deuda al corte),
+    "pay_date": "YYYY-MM-DD",
+    "cutoff_date": "YYYY-MM-DD",
+    "last4": String,
+    "card_name": String
+}
+
+3. Un TICKET / RECIBO / FACTURA de compra o consumo personal:
+{
+    "is_financial": true,
+    "doc_type": "expense",
+    "amount": number,
+    "date": "YYYY-MM-DD",
+    "concept": String,
+    "category": "Supermercado, Comida, Transporte, Hormiga, Servicios, Compras, Salud, Educación",
+    "last4": String,
+    "card_name": String
+}
+
+4. Si NO describe ninguna operación financiera real, responde:
+{"is_financial": false}
+
+Responde ÚNICAMENTE con el objeto JSON limpio.`;
+
+        const respuesta = await ejecutarGeminiConRetries(async (model) => {
+            const result = await model.generateContent([prompt]);
+            return result.response.text();
+        });
+
+        let cleanJSON = respuesta.replace(/```json|```/g, '').trim();
+        const jsonMatch = respuesta.match(/\{[\s\S]*\}/);
+        if (jsonMatch) cleanJSON = jsonMatch[0];
+
+        let data;
+        try {
+            data = JSON.parse(cleanJSON);
+        } catch (e) {
+            return false;
         }
 
-        // 1. ESTADO DE CUENTA
-        if (data.doc_type === 'statement' || data.is_statement) {
-            const matchingCard = buscarTarjeta(data.last4, data.card_name);
+        if (!data.is_financial) return false;
 
-            if (!matchingCard) {
-                await msg.reply(`📄 *Estado de Cuenta Detectado:*
+        return await aplicarOperacionFinanciera(data, msg);
+    } catch (e) {
+        console.error("Error al procesar texto financiero:", e);
+        return false;
+    }
+}
+
+// ---------------------------------------------------------
+// MOTOR CENTRAL DE APLICACIÓN FINANCIERA EN FIRESTORE
+// ---------------------------------------------------------
+async function aplicarOperacionFinanciera(data, msg) {
+    if (!dbFirebase) inicializarFirebase();
+    if (!dbFirebase || !firebaseUid) return false;
+    if (!data || !data.is_financial) return false;
+
+    const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
+    const cardsSnap = await cardsRef.get();
+
+    // Helper para localizar tarjeta por last4 o nombre
+    function buscarTarjeta(last4, cardName) {
+        let encontrada = null;
+        if (last4) {
+            cardsSnap.forEach(doc => {
+                const c = doc.data();
+                if (c.last4 && String(c.last4).trim() === String(last4).trim()) {
+                    encontrada = { id: doc.id, ...c };
+                }
+            });
+        }
+        if (!encontrada && cardName) {
+            const q = cardName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            cardsSnap.forEach(doc => {
+                const c = doc.data();
+                const cName = (c.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if (cName.includes(q) || q.includes(cName)) {
+                    encontrada = { id: doc.id, ...c };
+                }
+            });
+        }
+        return encontrada;
+    }
+
+    // 1. ESTADO DE CUENTA
+    if (data.doc_type === 'statement' || data.is_statement) {
+        const matchingCard = buscarTarjeta(data.last4, data.card_name);
+
+        if (!matchingCard) {
+            await msg.reply(`📄 *Estado de Cuenta Detectado:*
 💳 *Tarjeta/Banco:* ${data.card_name || 'Desconocido'}
 🔢 *Terminación:* ${data.last4 || 'N/A'}
 🎯 *Pago p/no generar intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}
@@ -973,170 +1075,165 @@ Responde ÚNICAMENTE con el objeto JSON limpio. Sin markdown ni texto adicional.
 📅 *Fecha límite:* ${data.pay_date || 'N/A'}
 
 ⚠️ *Aviso:* No se encontró ninguna tarjeta en Firestore que coincida con "${data.last4 || ''}" o "${data.card_name || ''}". Regístrala en la PWA primero.`);
-                return true;
-            }
-
-            let payDay = matchingCard.payDay;
-            if (data.pay_date) {
-                const parts = data.pay_date.split('-');
-                if (parts.length === 3) payDay = String(parseInt(parts[2]));
-            }
-
-            let cutDay = matchingCard.cutDay;
-            if (data.cutoff_date) {
-                const parts = data.cutoff_date.split('-');
-                if (parts.length === 3) cutDay = String(parseInt(parts[2]));
-            }
-
-            const updatePayload = {
-                balance: parseFloat(data.cutoff_balance || 0),
-                payGoal: parseFloat(data.pay_goal || 0)
-            };
-            if (payDay) updatePayload.payDay = payDay;
-            if (cutDay) updatePayload.cutDay = cutDay;
-            if (data.last4 && !matchingCard.last4) updatePayload.last4 = data.last4;
-
-            await cardsRef.doc(matchingCard.id).update(updatePayload);
-
-            let confirmMsg = `💳 *ESTADO DE CUENTA PROCESADO (Finanzas King)* 💳\n\n`;
-            confirmMsg += `📌 *Tarjeta:* ${matchingCard.name}\n`;
-            confirmMsg += `💰 *Deuda al Corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}\n`;
-            confirmMsg += `🎯 *Pago p/no intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}\n`;
-            confirmMsg += `📅 *Fecha Límite:* ${data.pay_date || 'No especificada'} (Día ${payDay})\n`;
-            confirmMsg += `✂️ *Fecha de Corte:* ${data.cutoff_date || 'No especificada'} (Día ${cutDay})\n\n`;
-            confirmMsg += `✅ *¡Finanzas King actualizado con éxito!* Se programaron los recordatorios automáticos.`;
-
-            await msg.reply(confirmMsg);
             return true;
         }
 
-        // 2. COMPROBANTE DE ABONO O PAGO A TARJETA
-        if (data.doc_type === 'payment') {
-            const amt = parseFloat(data.amount || 0);
-            if (isNaN(amt) || amt <= 0) {
-                await msg.reply(`⚠️ *Comprobante de Abono Detectado:* Monto inválido ($${data.amount}).`);
-                return true;
-            }
-
-            const matchingCard = buscarTarjeta(data.last4, data.card_name);
-            const batch = dbFirebase.batch();
-            const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
-
-            let cardIdVal = "";
-            let cardNameVal = data.card_name || "Tarjeta de Crédito";
-            let newBal = 0;
-
-            if (matchingCard) {
-                cardIdVal = matchingCard.id;
-                cardNameVal = matchingCard.name;
-                const oldBal = parseFloat(matchingCard.balance || 0);
-                newBal = Math.max(0, oldBal - amt);
-                batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
-            }
-
-            let tDate = new Date();
-            if (data.date) {
-                const parts = data.date.split('-');
-                if (parts.length === 3) {
-                    tDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                }
-            }
-
-            const payload = {
-                amount: amt,
-                type: 'payment',
-                cardId: cardIdVal,
-                cardName: cardNameVal,
-                concept: data.concept || `Abono a ${cardNameVal}`,
-                category: '💵 Abono Capital',
-                date: adminFirebase.firestore.Timestamp.fromDate(tDate)
-            };
-            if (data.reference) payload.reference = String(data.reference);
-
-            batch.set(expRef, payload);
-            await batch.commit();
-
-            let confirmMsg = `💵 *COMPROBANTE DE ABONO PROCESADO (Finanzas King)* 💵\n\n`;
-            confirmMsg += `💳 *Tarjeta:* ${cardNameVal}\n`;
-            confirmMsg += `💰 *Monto Abonado:* $${amt.toFixed(2)}\n`;
-            if (matchingCard) {
-                confirmMsg += `📉 *Nueva Deuda:* $${newBal.toFixed(2)}\n`;
-            }
-            confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n`;
-            if (data.reference) confirmMsg += `🔢 *Referencia:* ${data.reference}\n`;
-            confirmMsg += `\n✅ *¡Abono registrado en Finanzas King con éxito!*`;
-
-            await msg.reply(confirmMsg);
-            return true;
+        let payDay = matchingCard.payDay;
+        if (data.pay_date) {
+            const parts = data.pay_date.split('-');
+            if (parts.length === 3) payDay = String(parseInt(parts[2]));
         }
 
-        // 3. TICKET O FACTURA DE COMPRA (GASTO)
-        if (data.doc_type === 'expense' || !data.doc_type) {
-            const amt = parseFloat(data.amount || 0);
-            const concept = data.concept || 'Gasto registrado';
-            const category = data.category || '📦 Compras';
-
-            if (isNaN(amt) || amt <= 0) {
-                await msg.reply(`⚠️ *Ticket Detectado:* Importe no válido ($${data.amount}).`);
-                return true;
-            }
-
-            const matchingCard = buscarTarjeta(data.last4, data.card_name);
-            const batch = dbFirebase.batch();
-            const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
-
-            let cardIdVal = "";
-            let cardNameVal = "Efectivo";
-            let newBal = 0;
-
-            if (matchingCard) {
-                cardIdVal = matchingCard.id;
-                cardNameVal = matchingCard.name;
-                newBal = parseFloat(matchingCard.balance || 0) + amt;
-                batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
-            }
-
-            let tDate = new Date();
-            if (data.date) {
-                const parts = data.date.split('-');
-                if (parts.length === 3) {
-                    tDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                }
-            }
-
-            const payload = {
-                amount: amt,
-                type: 'expense',
-                cardId: cardIdVal,
-                cardName: cardNameVal,
-                concept,
-                category,
-                date: adminFirebase.firestore.Timestamp.fromDate(tDate)
-            };
-
-            batch.set(expRef, payload);
-            await batch.commit();
-
-            let confirmMsg = `🧾 *TICKET / COMPRA PROCESADA (Finanzas King)* 🧾\n\n`;
-            confirmMsg += `💰 *Monto:* $${amt.toFixed(2)}\n`;
-            confirmMsg += `📌 *Concepto:* ${concept}\n`;
-            confirmMsg += `🏷️ *Categoría:* ${category}\n`;
-            confirmMsg += `💳 *Método de Pago:* ${cardNameVal}\n`;
-            if (matchingCard) {
-                confirmMsg += `📈 *Deuda Actualizada:* $${newBal.toFixed(2)}\n`;
-            }
-            confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n\n`;
-            confirmMsg += `✅ *¡Movimiento guardado con éxito!*`;
-
-            await msg.reply(confirmMsg);
-            return true;
+        let cutDay = matchingCard.cutDay;
+        if (data.cutoff_date) {
+            const parts = data.cutoff_date.split('-');
+            if (parts.length === 3) cutDay = String(parseInt(parts[2]));
         }
 
-    } catch (e) {
-        console.error("Error al procesar documento financiero:", e);
-        await msg.reply(`❌ *Kingbot:* Ocurrió un error al procesar el documento: ${e.message}`);
+        const updatePayload = {
+            balance: parseFloat(data.cutoff_balance || 0),
+            payGoal: parseFloat(data.pay_goal || 0)
+        };
+        if (payDay) updatePayload.payDay = payDay;
+        if (cutDay) updatePayload.cutDay = cutDay;
+        if (data.last4 && !matchingCard.last4) updatePayload.last4 = data.last4;
+
+        await cardsRef.doc(matchingCard.id).update(updatePayload);
+
+        let confirmMsg = `💳 *ESTADO DE CUENTA PROCESADO (Finanzas King)* 💳\n\n`;
+        confirmMsg += `📌 *Tarjeta:* ${matchingCard.name}\n`;
+        confirmMsg += `💰 *Deuda al Corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}\n`;
+        confirmMsg += `🎯 *Pago p/no intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}\n`;
+        confirmMsg += `📅 *Fecha Límite:* ${data.pay_date || 'No especificada'} (Día ${payDay})\n`;
+        confirmMsg += `✂️ *Fecha de Corte:* ${data.cutoff_date || 'No especificada'} (Día ${cutDay})\n\n`;
+        confirmMsg += `✅ *¡Finanzas King actualizado con éxito!* Se programaron los recordatorios automáticos.`;
+
+        await msg.reply(confirmMsg);
         return true;
     }
+
+    // 2. COMPROBANTE DE ABONO O PAGO A TARJETA
+    if (data.doc_type === 'payment') {
+        const amt = parseFloat(data.amount || 0);
+        if (isNaN(amt) || amt <= 0) {
+            await msg.reply(`⚠️ *Comprobante de Abono Detectado:* Monto inválido ($${data.amount}).`);
+            return true;
+        }
+
+        const matchingCard = buscarTarjeta(data.last4, data.card_name);
+        const batch = dbFirebase.batch();
+        const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
+
+        let cardIdVal = "";
+        let cardNameVal = data.card_name || "Tarjeta de Crédito";
+        let newBal = 0;
+
+        if (matchingCard) {
+            cardIdVal = matchingCard.id;
+            cardNameVal = matchingCard.name;
+            const oldBal = parseFloat(matchingCard.balance || 0);
+            newBal = Math.max(0, oldBal - amt);
+            batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
+        }
+
+        let tDate = new Date();
+        if (data.date) {
+            const parts = data.date.split('-');
+            if (parts.length === 3) {
+                tDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            }
+        }
+
+        const payload = {
+            amount: amt,
+            type: 'payment',
+            cardId: cardIdVal,
+            cardName: cardNameVal,
+            concept: data.concept || `Abono a ${cardNameVal}`,
+            category: '💵 Abono Capital',
+            date: adminFirebase.firestore.Timestamp.fromDate(tDate)
+        };
+        if (data.reference) payload.reference = String(data.reference);
+
+        batch.set(expRef, payload);
+        await batch.commit();
+
+        let confirmMsg = `💵 *COMPROBANTE DE ABONO PROCESADO (Finanzas King)* 💵\n\n`;
+        confirmMsg += `💳 *Tarjeta:* ${cardNameVal}\n`;
+        confirmMsg += `💰 *Monto Abonado:* $${amt.toFixed(2)}\n`;
+        if (matchingCard) {
+            confirmMsg += `📉 *Nueva Deuda:* $${newBal.toFixed(2)}\n`;
+        }
+        confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n`;
+        if (data.reference) confirmMsg += `🔢 *Referencia:* ${data.reference}\n`;
+        confirmMsg += `\n✅ *¡Abono registrado en Finanzas King con éxito!*`;
+
+        await msg.reply(confirmMsg);
+        return true;
+    }
+
+    // 3. TICKET O FACTURA DE COMPRA (GASTO)
+    if (data.doc_type === 'expense' || !data.doc_type) {
+        const amt = parseFloat(data.amount || 0);
+        const concept = data.concept || 'Gasto registrado';
+        const category = data.category || '📦 Compras';
+
+        if (isNaN(amt) || amt <= 0) {
+            await msg.reply(`⚠️ *Ticket Detectado:* Importe no válido ($${data.amount}).`);
+            return true;
+        }
+
+        const matchingCard = buscarTarjeta(data.last4, data.card_name);
+        const batch = dbFirebase.batch();
+        const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
+
+        let cardIdVal = "";
+        let cardNameVal = "Efectivo";
+        let newBal = 0;
+
+        if (matchingCard) {
+            cardIdVal = matchingCard.id;
+            cardNameVal = matchingCard.name;
+            newBal = parseFloat(matchingCard.balance || 0) + amt;
+            batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
+        }
+
+        let tDate = new Date();
+        if (data.date) {
+            const parts = data.date.split('-');
+            if (parts.length === 3) {
+                tDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            }
+        }
+
+        const payload = {
+            amount: amt,
+            type: 'expense',
+            cardId: cardIdVal,
+            cardName: cardNameVal,
+            concept,
+            category,
+            date: adminFirebase.firestore.Timestamp.fromDate(tDate)
+        };
+
+        batch.set(expRef, payload);
+        await batch.commit();
+
+        let confirmMsg = `🧾 *TICKET / COMPRA PROCESADA (Finanzas King)* 🧾\n\n`;
+        confirmMsg += `💰 *Monto:* $${amt.toFixed(2)}\n`;
+        confirmMsg += `📌 *Concepto:* ${concept}\n`;
+        confirmMsg += `🏷️ *Categoría:* ${category}\n`;
+        confirmMsg += `💳 *Método de Pago:* ${cardNameVal}\n`;
+        if (matchingCard) {
+            confirmMsg += `📈 *Deuda Actualizada:* $${newBal.toFixed(2)}\n`;
+        }
+        confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n\n`;
+        confirmMsg += `✅ *¡Movimiento guardado con éxito!*`;
+
+        await msg.reply(confirmMsg);
+        return true;
+    }
+    return false;
 }
 
 async function chequearVencimientosYNotificar(force = false) {
@@ -1420,6 +1517,24 @@ async function procesarMensajeTelegram(msgTeg) {
                 await enviarMensajeTelegram(tChatId, `❌ Error verificando vencimientos: ${e.message}`);
                 return;
             }
+        }
+
+        // Si es un texto (notificación de banco, cuerpo de correo reenviado, comprobante en texto)
+        if (txt.length > 15) {
+            const replicaMsg = {
+                reply: async (text) => {
+                    if (tChatId) {
+                        await enviarMensajeTelegram(tChatId, text);
+                    }
+                    if (adminChatId) {
+                        try {
+                            await client.sendMessage(adminChatId, `📲 *[Telegram -> Finanzas King]*\n\n${text}`);
+                        } catch (errWp) {}
+                    }
+                }
+            };
+            const procesado = await procesarTextoFinanciero(msgTeg.text, replicaMsg);
+            if (procesado) return;
         }
     }
 
@@ -4669,6 +4784,12 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             }
         }
         if (esDocumentoFinanciero) return;
+
+        // Interceptor de texto financiero directo (ej. notificaciones bancarias reenviadas a WhatsApp)
+        if (!isGroup && chatId === adminChatId && !mensajeAProcesar.hasMedia && textoLimpio && textoLimpio.length > 20) {
+            const esTextoFinanciero = await procesarTextoFinanciero(textoLimpio, msg);
+            if (esTextoFinanciero) return;
+        }
 
         // INTELIGENCIA ARTIFICIAL GEMINI
         const _chatTyp = await msg.getChat();
