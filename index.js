@@ -2602,79 +2602,101 @@ client.on('message_create', async (msg) => {
             }
         }
     }
-    const isOptionNumber = /^[1-6]$/.test(textoOriginal);
+function obtenerDetalleAyuda(opcionRaw) {
+    const opcion = (opcionRaw || '').toLowerCase().trim();
+
+    if (opcion === '1' || opcion === 'finanzas' || opcion === 'tarjetas') {
+        return `💳 *1. FINANZAS KING & TARJETAS:*
+• \`!bot tarjetas\` - Resumen global de tus 14 tarjetas, endeudamiento y saldo disponible.
+• \`!bot tarjetas <nombre>\` - Consulta el detalle de una tarjeta (ej. \`!bot tarjetas bac\`).
+• \`!bot vencimientos\` - Chequea qué tarjetas vencen hoy, mañana o en los próximos días.
+• \`!bot telegram\` - Estado de la conexión y sincronización con Telegram.
+• *Estados de Cuenta y Comprobantes:* Envía cualquier PDF o foto de estado de cuenta bancario, comprobante de abono o ticket de compra y se actualizará automáticamente en https://finanzaskingapp.netlify.app/`;
+    }
+
+    if (opcion === '2' || opcion === 'flyers' || opcion === 'canva' || opcion === 'imagenes' || opcion === 'diseño' || opcion === 'diseno') {
+        return `🎨 *2. FLYERS, CANVA & DISEÑO:*
+• \`!bot flyer <tema>\` (o \`!bot canva <tema>\`) - Genera el copy publicitario persuasivo y enlaces directos a plantillas profesionales en Canva.
+• \`!bot imagina <idea>\` (o \`!bot dibuja <idea>\`) - Genera una imagen artística en alta resolución con IA (ChatGPT / FLUX).
+• \`!bot stickercrear <idea>\` - Crea un sticker vectorizado para WhatsApp a partir de tu idea.`;
+    }
+
+    if (opcion === '3' || opcion === 'memoria' || opcion === 'conocimiento' || opcion === 'recordar') {
+        return `🧠 *3. MEMORIA Y BASE DE DATOS PERSONAL:*
+• \`!bot guardar <tema> : <información>\` - Guarda datos personales, contraseñas, tallas o notas (ej. \`!bot guardar Talla : Camisa M, Calzado 42\`).
+• \`!bot memoria\` - Lista todo lo que Kingbot tiene guardado sobre ti.
+• \`!bot olvidar <tema o número>\` - Elimina un registro de la memoria.
+• \`!bot memoria buscar <texto>\` - Busca datos específicos en tu base de conocimiento.
+• *Conversacional:* Puedes pedirle directamente: _"Recuerda que mi comida favorita es sushi"_ o preguntarle _"¿Qué datos tienes guardados sobre mí?"_.`;
+    }
+
+    if (opcion === '4' || opcion === 'programar' || opcion === 'cron' || opcion === 'alarmas' || opcion === 'programados') {
+        return `⏰ *4. TAREAS PROGRAMADAS Y RECORDATORIOS:*
+• \`!bot programar <HH:MM> | <instrucción>\` - Programa un mensaje automático diario (ej. \`!bot programar 05:00 | Frase motivacional\`).
+• \`!bot programados\` - Muestra todas las tareas programadas activas con su horario.
+• \`!bot desprogramar <número>\` - Cancela y borra una tarea programada.
+• *Lenguaje Natural:* Puedes pedirle: _"Programa para que a las 8 am me busques las noticias de fútbol todos los días"_.`;
+    }
+
+    if (opcion === '5' || opcion === 'youtube' || opcion === 'musica' || opcion === 'video' || opcion === 'descargas') {
+        return `📢 *5. YOUTUBE Y DESCARGAS MULTIMEDIA:*
+• \`!bot videos\` - Consulta los últimos videos publicados por los canales a los que estás suscrito.
+• \`!bot videos <nombre>\` - Consulta los videos recientes de un canal específico (ej. \`!bot videos mrbeast\`).
+• \`!bot agregarcanal <enlace / @usuario>\` - Agrega un canal para monitoreo automático de videos.
+• \`!bot canales\` - Lista tus canales de YouTube registrados.
+• \`!bot borrarcanal <número>\` - Elimina un canal de la lista.
+• \`!bot musica <enlace>\` - Descarga audio MP3 (YouTube, TikTok, Instagram, X/Twitter).
+• \`!bot video <enlace>\` - Descarga video MP4 en alta definición.`;
+    }
+
+    if (opcion === '6' || opcion === 'agentes' || opcion === 'ia' || opcion === 'inteligencia') {
+        return `⚡ *6. AGENTES DE IA Y CONVERSACIÓN:*
+• \`!iniciarbot <agente>\` - Inicia chat privado continuo con un agente (ej. \`!iniciarbot programador\`).
+• \`!botgrupal <agente>\` - Inicia modo agente dentro de un grupo de WhatsApp.
+• \`!finalizarbot\` - Cierra la conversación continua del agente.
+• \`!bot agentes\` - Lista todos los perfiles de agentes disponibles.
+• \`!bot agente crear <nombre> <prompt>\` - Crea un agente con personalidad propia.
+• \`!bot traducir <idioma> <texto>\` - Traductor en tiempo real (ej. \`!bot traducir ingles Buen día\`).
+• \`!bot resumir <enlace o responde a PDF>\` - Resume artículos web o documentos extensos.
+• \`!bot buscar <consulta>\` - Búsqueda web en vivo con datos actualizados.`;
+    }
+
+    if (opcion === '7' || opcion === 'ajustes' || opcion === 'configuracion' || opcion === 'sistema' || opcion === 'conexiones') {
+        return `🔧 *7. AJUSTES, CONEXIONES Y SERVIDOR:*
+• \`!bot settelegram <token>\` - Vincula tu bot de Telegram con token de @BotFather.
+• \`!bot telegram\` - Estado de la conexión con Telegram.
+• \`!bot setopenai <key>\` - Registra tu clave de OpenAI para ChatGPT y DALL-E.
+• \`!bot openai\` - Estado de la clave de OpenAI.
+• \`!bot addkey <clave>\` - Agrega una nueva clave API de Google Gemini.
+• \`!bot claves\` - Muestra el estado y consumo de tus claves Gemini.
+• \`!bot resetkeys\` - Reactiva todas las claves marcadas como agotadas.
+• \`!bot bateria\` - Consulta batería, temperatura y estado de carga (Termux).
+• \`!bot sistema\` - Telemetría del servidor (RAM, CPU, tiempo encendido).
+• \`!bot apagar\` / \`!bot encender\` - Pausa o reactiva el bot.`;
+    }
+
+    if (opcion === '8' || opcion === 'utilidades' || opcion === 'herramientas' || opcion === 'varios') {
+        return `🛠️ *8. UTILIDADES Y HERRAMIENTAS:*
+• \`!bot tarea agregar <texto>\` - Agrega un pendiente personal.
+• \`!bot tareas\` - Muestra la lista de pendientes.
+• \`!bot tareacompletar <número>\` - Marca una tarea como completada.
+• \`!bot alarma <HH:MM> <mensaje>\` - Programa una alarma sonora/notificación.
+• \`!bot clima <ciudad>\` - Consulta el pronóstico del clima.
+• \`!bot qr <texto o enlace>\` - Genera un código QR de alta resolución.
+• \`!bot divisas <monto> <moneda1> a <moneda2>\` - Conversor de divisas (ej. \`!bot divisas 50 USD a EUR\`).
+• \`!bot calcular <operación>\` - Calculadora matemática rápida (ej. \`!bot calcular 1500 * 0.13\`).
+• \`!bot decir <texto>\` (o \`!bot tts <texto>\`) - Dicta el texto con voz de audio.`;
+    }
+
+    return null;
+}
+
+    const isOptionNumber = /^[1-8]$/.test(textoOriginal);
     if (esperandoAyudaOpcion.has(chatId)) {
         if (isOptionNumber) {
             esperandoAyudaOpcion.delete(chatId);
-
-            const opcion = textoOriginal;
-
-            if (opcion === '1') {
-                return msg.reply(`\u26A1 *1. AGENTES DE IA Y MODOS:*
-\u2022 \`!iniciarbot <agente>\` - Inicia conversaci\u00f3n privada (ej. programador).
-\u2022 \`!botgrupal <agente>\` - Inicia conversaci\u00f3n en grupo con un agente.
-\u2022 \`!finalizarbot\` - Desactiva el modo conversaci\u00f3n en el chat.
-\u2022 \`!bot agentes\` - Muestra todos los agentes configurados en el sistema.
-\u2022 \`!bot agente crear <nombre> <prompt>\` - Crea un nuevo agente.
-\u2022 \`!bot agente borrar <nombre>\` - Elimina un agente creado.`);
-            }
-            if (opcion === '2') {
-                return msg.reply(`\uD83D\uDCE5 *2. MULTIMEDIA Y DESCARGAS:*
-\u2022 \`!bot musica <enlace>\` - Descarga audio MP3 (YouTube, TikTok, Instagram, Twitter/X).
-\u2022 \`!bot video <enlace>\` - Descarga video MP4 (YouTube, TikTok, Instagram, Twitter/X).`);
-            }
-            if (opcion === '3') {
-                return msg.reply(`\uD83C\uDF10 *3. SENSORES Y TELEMETR\u00cdA:*
-\u2022 \`!bot decir <texto>\` o \`!bot tts <texto>\` - Dicta un audio con voz masculina.
-\u2022 \`!bot foto\` o \`!bot camara\` - Toma una foto con la c\u00e1mara trasera (Solo Termux).
-\u2022 \`!bot grabar <segundos>\` - Graba sonido ambiental del micr\u00f3fono (Solo Termux).
-\u2022 \`!bot bateria\` - Consulta el estado de carga y temperatura.
-\u2022 \`!bot sistema\` - Muestra la telemetr\u00eda del servidor (RAM, CPU, Uptime).`);
-            }
-            if (opcion === '4') {
-                return msg.reply(`\uD83C\uDF10 *4. IA Y UTILIDADES:*
-\u2022 \`!bot stickercrear <idea>\` - Crea un sticker vectorizado de tu idea con IA.
-\u2022 \`!bot imagina <idea>\` o \`!bot dibuja <idea>\` - Dibuja una ilustraci\u00f3n art\u00edstica premium.
-\u2022 \`!bot buscar <consulta>\` - Realiza una b\u00fasqueda web en tiempo real.
-\u2022 \`!bot traducir <idioma> <texto>\` - Traduce texto instant\u00e1neamente.
-\u2022 \`!bot calcular <operaci\u00f3n>\` - Eval\u00faa expresiones matem\u00e1ticas de forma segura.
-\u2022 \`!bot resumir <enlace>\` - Resume art\u00edculos o webs usando Gemini.
-\u2022 \`!bot clima <ciudad>\` - Consulta condiciones meteorol\u00f3gicas.
-\u2022 \`!bot qr <texto/enlace>\` - Genera un c\u00f3digo QR de alta resoluci\u00f3n.
-\u2022 \`!bot recordar <minutos> <mensaje>\` - Agenda un aviso temporal.`);
-            }
-            if (opcion === '5') {
-                return msg.reply(`📢 *5. GESTIÓN YOUTUBE Y CANALES:*
-• \`!bot videos\` (o \`!bot ultimosvideos\`) - Consulta los videos más recientes de tus canales y envía los enlaces.
-• \`!bot agregarcanal <enlace / @usuario / nombre>\` - Registra un canal para seguimiento.
-• \`!bot canales\` - Muestra el listado de canales bajo seguimiento.
-• \`!bot borrarcanal <índice>\` - Elimina un canal de la lista.`);
-            }
-            if (opcion === '6') {
-                return msg.reply(`🛠️ *6. INTEGRACIONES DIVERSAS:*
-• \`!bot alarma <HH:MM> <mensaje>\` - Programa alarma diaria persistente.
-• \`!bot alarmas\` - Lista alarmas activas.
-• \`!bot alarmaborrar <índice>\` - Elimina alarma.
-• \`!bot tarea agregar <desc>\` - Agrega tarea pendiente.
-• \`!bot tareas\` - Lista tareas pendientes.
-• \`!bot tareacompletar <índice>\` - Marca la tarea como hecha.
-• \`!bot info <película/serie>\` - Puntuación y trailer.
-• \`!bot meme <idea>\` - Genera un meme.
-• \`!bot transcribir\` - Transcribe audios (respondiendo a ellos).
-• \`!bot ocr\` - Lee el texto de una imagen.
-• \`!bot acortar <enlace>\` - Acorta enlace web.
-• \`!bot divisas <cantidad> <mon1> a <mon2>\` - Conversor divisas.
-• \`!bot noticias\` - Titulares internacionales.
-• \`!bot deportes <consulta>\` - Resultados deportivos.
-• \`!bot cmd <comando>\` - Consola remota.
-• \`!bot juego trivia\` - Juego interactivo.`);
-            }
-            if (opcion === '7') {
-                return msg.reply(`⏰ *7. TAREAS PROGRAMADAS (CRON):*
-• \`!bot programar\` - Programa acciones usando IA automáticamente (ej. "dile al bot que descargue noticias a las 8 AM todos los días").
-• \`!bot programados\` - Lista de tareas programadas activas.
-• \`!bot desprogramar <índice>\` - Elimina una tarea programada.`);
-            }
+            const detalle = obtenerDetalleAyuda(textoOriginal);
+            if (detalle) return msg.reply(detalle);
         } else {
             esperandoAyudaOpcion.delete(chatId);
         }
@@ -3438,99 +3460,32 @@ Create a visually stunning commercial product photograph: clean composition, stu
             return;
         }
 
-        // --- COMANDO DE AYUDA / MENa INTERACTIVO ---
+        // --- COMANDO DE AYUDA / MENÚ INTERACTIVO ---
         if (comando === 'ayuda' || comando === 'menu' || comando === 'help' || comando === 'comandos') {
-            const opcion = argumento.toLowerCase().trim();
-            
-            if (opcion === '1' || opcion === 'agentes') {
-                return msg.reply(`\u26A1 *1. AGENTES DE IA Y MODOS:*
-\u2022 \`!iniciarbot <agente>\` - Inicia conversaci\u00f3n privada (ej. programador).
-\u2022 \`!botgrupal <agente>\` - Inicia conversaci\u00f3n en grupo con un agente.
-\u2022 \`!finalizarbot\` - Desactiva el modo conversaci\u00f3n en el chat.
-\u2022 \`!bot agentes\` - Muestra todos los agentes configurados en el sistema.
-\u2022 \`!bot agente crear <nombre> <prompt>\` - Crea un nuevo agente.
-\u2022 \`!bot agente borrar <nombre>\` - Elimina un agente creado.`);
-            }
-            
-            if (opcion === '2' || opcion === 'descargas') {
-                return msg.reply(`\uD83D\uDCE5 *2. MULTIMEDIA Y DESCARGAS:*
-\u2022 \`!bot musica <enlace>\` - Descarga audio MP3 (YouTube, TikTok, Instagram, Twitter/X).
-\u2022 \`!bot video <enlace>\` - Descarga video MP4 (YouTube, TikTok, Instagram, Twitter/X).`);
-            }
-            
-            if (opcion === '3' || opcion === 'sensores') {
-                return msg.reply(`\uD83C\uDF99 *3. SENSORES Y TELEMETR\u00cdA:*
-\u2022 \`!bot decir <texto>\` o \`!bot tts <texto>\` - Dicta un audio con voz masculina.
-\u2022 \`!bot foto\` o \`!bot camara\` - Toma una foto con la c\u00e1mara trasera (Solo Termux).
-\u2022 \`!bot grabar <segundos>\` - Graba sonido ambiental del micr\u00f3fono (Solo Termux).
-\u2022 \`!bot bateria\` - Consulta el estado de carga y temperatura.
-\u2022 \`!bot sistema\` - Muestra la telemetr\u00eda del servidor (RAM, CPU, Uptime).`);
-            }
-            
-            if (opcion === '4' || opcion === 'ia' || opcion === 'utilidades') {
-                return msg.reply(`\uD83C\uDF10 *4. IA Y UTILIDADES:*
-\u2022 \`!bot stickercrear <idea>\` - Crea un sticker vectorizado de tu idea con IA.
-\u2022 \`!bot imagina <idea>\` o \`!bot dibuja <idea>\` - Dibuja una ilustraci\u00f3n art\u00edstica premium.
-\u2022 \`!bot buscar <consulta>\` - Realiza una b\u00fasqueda web en tiempo real.
-\u2022 \`!bot traducir <idioma> <texto>\` - Traduce texto instant\u00e1neamente.
-\u2022 \`!bot calcular <operaci\u00f3n>\` - Eval\u00faa expresiones matem\u00e1ticas de forma segura.
-\u2022 \`!bot resumir <enlace>\` - Resume art\u00edculos o webs usando Gemini.
-\u2022 \`!bot clima <ciudad>\` - Consulta condiciones meteorol\u00f3gicas.
-\u2022 \`!bot qr <texto/enlace>\` - Genera un c\u00f3digo QR de alta resoluci\u00f3n.
-\u2022 \`!bot recordar <minutos> <mensaje>\` - Agenda un aviso temporal.`);
-            }
-            
-            if (opcion === '5' || opcion === 'rss' || opcion === 'canales') {
-                return msg.reply(`📢 *5. GESTIÓN YOUTUBE Y CANALES:*
-• \`!bot videos\` (o \`!bot ultimosvideos\`) - Consulta los videos más recientes de tus canales y envía los enlaces.
-• \`!bot agregarcanal <enlace / @usuario / nombre>\` - Registra un canal para seguimiento.
-• \`!bot canales\` - Muestra el listado de canales bajo seguimiento.
-• \`!bot borrarcanal <índice>\` - Elimina un canal de la lista.`);
-            }
-            if (opcion === '6' || opcion === 'nuevas' || opcion === 'integraciones') {
-                return msg.reply(`🛠️ *6. INTEGRACIONES DIVERSAS:*
-• \`!bot alarma <HH:MM> <mensaje>\` - Programa alarma diaria persistente.
-• \`!bot alarmas\` - Lista alarmas activas.
-• \`!bot alarmaborrar <índice>\` - Elimina alarma.
-• \`!bot tarea agregar <desc>\` - Agrega tarea pendiente.
-• \`!bot tareas\` - Lista tareas pendientes.
-• \`!bot tareacompletar <índice>\` - Marca la tarea como hecha.
-• \`!bot info <película/serie>\` - Puntuación y trailer.
-• \`!bot meme <idea>\` - Genera un meme.
-• \`!bot transcribir\` - Transcribe audios (respondiendo a ellos).
-• \`!bot ocr\` - Lee el texto de una imagen.
-• \`!bot acortar <enlace>\` - Acorta enlace web.
-• \`!bot divisas <cantidad> <mon1> a <mon2>\` - Conversor divisas.
-• \`!bot noticias\` - Titulares internacionales.
-• \`!bot deportes <consulta>\` - Resultados deportivos.
-• \`!bot cmd <comando>\` - Consola remota.
-• \`!bot juego trivia\` - Juego interactivo.`);
-            }
-            if (opcion === '7' || opcion === 'programacion' || opcion === 'cron') {
-                return msg.reply(`⏰ *7. TAREAS PROGRAMADAS (CRON):*
-• \`!bot programar\` - Programa acciones usando IA automáticamente (ej. "dile al bot que descargue noticias a las 8 AM todos los días").
-• \`!bot programados\` - Lista de tareas programadas activas.
-• \`!bot desprogramar <índice>\` - Elimina una tarea programada.`);
+            if (argumento) {
+                const detalle = obtenerDetalleAyuda(argumento);
+                if (detalle) return msg.reply(detalle);
             }
 
-                        esperandoAyudaOpcion.set(chatId, true);
-            const menuMenu = `🤖 *CENTRO DE SERVICIO KINGBOT v5.0*
-            
-Señor Geovanny, seleccione una de las siguientes opciones numéricas para desplegar sus comandos asociados:
+            esperandoAyudaOpcion.set(chatId, true);
+            const menuMenu = `🤖 *CENTRO DE CONTROL KINGBOT v6.0*
 
-1️⃣ *Agentes* (Conversación y perfiles de IA)
-2️⃣ *Descargas* (Descarga de música y videos)
-3️⃣ *Sensores* (Control de hardware y telemetría)
-4️⃣ *IA y Utilidades* (Stickers, traducción, búsquedas)
-5️⃣ *RSS y Canales* (Gestión del notificador de YouTube)
-6️⃣ *Integraciones Diversas* (Alarmas, juegos, noticias)
-7️⃣ *Tareas Programadas* (Sistema Cron e IA)
+Señor Geovanny, seleccione una de las siguientes opciones respondiendo con el *número (1-8)* o usando \`!bot ayuda <número>\`:
 
-🔌 *Energía:*
-• \`!bot apagar\` - Entrar en reposo global.
-• \`!bot encender\` - Reactivar todas las funciones.
+1️⃣ 💳 *Finanzas King & Tarjetas* (Saldos, tarjetas, vencimientos, estados de cuenta)
+2️⃣ 🎨 *Flyers, Canva & Diseño* (Plantillas Canva, imágenes IA, stickers)
+3️⃣ 🧠 *Memoria y Base Personal* (Guardar notas, datos personales, memoria)
+4️⃣ ⏰ *Tareas y Recordatorios* (Programar acciones automáticas, alarmas)
+5️⃣ 📢 *YouTube y Descargas* (Seguimiento de canales, descargar MP3 y MP4)
+6️⃣ ⚡ *Agentes de IA y Chat* (Modos de asistente, traductor, búsquedas)
+7️⃣ 🔧 *Ajustes y Conexiones* (Telegram, OpenAI, Gemini API, batería, servidor)
+8️⃣ 🛠️ *Utilidades y Herramientas* (Tareas pendientes, clima, QR, divisas, calculadora)
 
-_Escriba el número (1-7) para desplegar los comandos directamente._`;
+🔌 *Control de Energía:*
+• \`!bot apagar\` - Pausar respuestas automáticas.
+• \`!bot encender\` - Reactivar el bot.
+
+_💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             return msg.reply(menuMenu);
         }
 
