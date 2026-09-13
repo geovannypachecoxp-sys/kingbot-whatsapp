@@ -290,6 +290,7 @@ let ultimoChequeoVencimientos = null;
 let telegramBotToken = null;
 let openaiApiKey = null;
 let vozDefault = 'hombre'; // 'hombre' o 'mujer'
+let botPausado = false; // Estado de energía del bot (apagar / encender)
 if (fs.existsSync('admin.json')) {
     try {
         const data = JSON.parse(fs.readFileSync('admin.json', 'utf8'));
@@ -2787,6 +2788,9 @@ function obtenerDetalleAyuda(opcionRaw) {
     if (primerPalabra === '!iniciarbot' || primerPalabra === '!botgrupal') {
         if (primerPalabra === '!iniciarbot' && isGroup) return msg.reply("❌ Usa *!botgrupal* en grupos.");
         if (primerPalabra === '!botgrupal' && !isGroup) return msg.reply("❌ Usa *!iniciarbot* en privado.");
+        if (primerPalabra === '!iniciarbot' && !isGroup && chatId !== adminChatId) {
+            return; // Solo el Administrador puede activar modo conversacional en privado
+        }
 
         const partsInit = textoOriginal.split(' ');
         const nombreAgente = partsInit[1]?.toLowerCase() || 'kinbot';
@@ -2808,26 +2812,41 @@ function obtenerDetalleAyuda(opcionRaw) {
             { role: "model", parts: [{ text: `Entendido. Protocolo del Agente "${nombreAgente}" activado y en línea.` }] }
         ]);
 
-        return msg.reply(isGroup ? `x  *Modo conversacional grupal ACTIVADO (Agente: ${nombreAgente}).*` : `x  *Modo conversacional ACTIVADO (Agente: ${nombreAgente}).*`);
+        return msg.reply(isGroup ? `🤖 *Modo conversacional grupal ACTIVADO (Agente: ${nombreAgente}).*` : `🤖 *Modo conversacional ACTIVADO (Agente: ${nombreAgente}).*`);
     }
 
     if (primerPalabra === '!finalizarbot') {
         chatsActivos.delete(chatId);
         sesionesChat.delete(chatId);
-        return msg.reply("  *Modo conversacional DESACTIVADO.*");
+        return msg.reply("💤 *Modo conversacional DESACTIVADO.*");
     }
 
     const usaPrefijo = textoOriginal.toLowerCase().startsWith('!bot');
     const esAdminPrivado = !isGroup && chatId === adminChatId;
     if (!chatsActivos.has(chatId) && !usaPrefijo && !esAdminPrivado) return;
 
-
-
     let textoLimpio = usaPrefijo ? textoOriginal.substring(4).trim() : textoOriginal;
     let comando = textoLimpio.split(' ')[0]?.toLowerCase() || '';
     comando = comando.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     let argumento = textoLimpio.substring(comando.length).trim();
+
+    // --- CONTROL DE ENERGÍA Y REPOSO (APAGAR / ENCENDER) ---
+    if (comando === 'apagar' || comando === 'dormir' || comando === 'suspender') {
+        if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+        botPausado = true;
+        return msg.reply("🔌 *Kingbot:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
+    }
+
+    if (comando === 'encender' || comando === 'activar' || comando === 'despertar') {
+        if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+        botPausado = false;
+        return msg.reply("⚡ *Kingbot:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
+    }
+
+    if (botPausado) {
+        return; // Silencio total si el bot está apagado
+    }
 
     // Alias handlers for common spacing mistakes
     if (comando === 'borrar' && argumento.toLowerCase().startsWith('canal ')) {
@@ -5476,14 +5495,18 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 if (respuestaTexto.includes('[ACTION_MEMORY_SAVE:')) {
                     const match = respuestaTexto.match(/\[ACTION_MEMORY_SAVE:\s*([^|]+)\|([^\]]+)\]/);
                     if (match) {
-                        const clave = match[1].trim();
-                        const valor = match[2].trim();
-                        const resultado = guardarDatoEnMemoria(clave, valor);
-                        const confirmacion = resultado && resultado.accion === 'actualizado'
-                            ? `\n\n🧠 *Memoria actualizada con éxito:*\n📌 *${clave}*: ${valor}`
-                            : `\n\n🧠 *Dato guardado en memoria con éxito:*\n📌 *${clave}*: ${valor}`;
-                        respuestaTexto = respuestaTexto.replace(match[0], confirmacion).trim();
-                        console.log(`[🧠 Memoria] Dato guardado (${resultado?.accion}): "${clave}" = "${valor}"`);
+                        if (chatId !== adminChatId) {
+                            respuestaTexto = respuestaTexto.replace(match[0], '').trim();
+                        } else {
+                            const clave = match[1].trim();
+                            const valor = match[2].trim();
+                            const resultado = guardarDatoEnMemoria(clave, valor);
+                            const confirmacion = resultado && resultado.accion === 'actualizado'
+                                ? `\n\n🧠 *Memoria actualizada con éxito:*\n📌 *${clave}*: ${valor}`
+                                : `\n\n🧠 *Dato guardado en memoria con éxito:*\n📌 *${clave}*: ${valor}`;
+                            respuestaTexto = respuestaTexto.replace(match[0], confirmacion).trim();
+                            console.log(`[🧠 Memoria] Dato guardado (${resultado?.accion}): "${clave}" = "${valor}"`);
+                        }
                     }
                 }
 
@@ -5491,28 +5514,36 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 if (respuestaTexto.includes('[ACTION_MEMORY_DELETE:')) {
                     const match = respuestaTexto.match(/\[ACTION_MEMORY_DELETE:\s*([^\]]+)\]/);
                     if (match) {
-                        const target = match[1].trim();
-                        const eliminado = eliminarDatoDeMemoria(target);
-                        if (eliminado) {
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Dato eliminado de la memoria:* "${eliminado.clave}" (${eliminado.valor})`).trim();
+                        if (chatId !== adminChatId) {
+                            respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         } else {
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No encontré ningún dato en memoria que coincida con "${target}".`).trim();
+                            const target = match[1].trim();
+                            const eliminado = eliminarDatoDeMemoria(target);
+                            if (eliminado) {
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Dato eliminado de la memoria:* "${eliminado.clave}" (${eliminado.valor})`).trim();
+                            } else {
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No encontré ningún dato en memoria que coincida con "${target}".`).trim();
+                            }
                         }
                     }
                 }
 
                 // ACTION_MEMORY_LIST (Ver datos guardados)
                 if (respuestaTexto.includes('[ACTION_MEMORY_LIST]')) {
-                    if (memoriaGlobal.length === 0) {
-                        respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', `\n\n🧠 *No tienes datos guardados en la memoria actualmente.*`).trim();
+                    if (chatId !== adminChatId) {
+                        respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', '').trim();
                     } else {
-                        let listStr = `\n\n🧠 *DATOS GUARDADOS EN MEMORIA:*\n\n`;
-                        memoriaGlobal.forEach((m, idx) => {
-                            const f = m.fecha ? ` _(${m.fecha})_` : '';
-                            listStr += `*${idx + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
-                        });
-                        listStr += `_Para borrar un dato:_ \`!bot olvidar <número o tema>\``;
-                        respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', listStr).trim();
+                        if (memoriaGlobal.length === 0) {
+                            respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', `\n\n🧠 *No tienes datos guardados en la memoria actualmente.*`).trim();
+                        } else {
+                            let listStr = `\n\n🧠 *DATOS GUARDADOS EN MEMORIA:*\n\n`;
+                            memoriaGlobal.forEach((m, idx) => {
+                                const f = m.fecha ? ` _(${m.fecha})_` : '';
+                                listStr += `*${idx + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
+                            });
+                            listStr += `_Para borrar un dato:_ \`!bot olvidar <número o tema>\``;
+                            respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', listStr).trim();
+                        }
                     }
                 }
 
@@ -5654,40 +5685,52 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 if (respuestaTexto.includes('[ACTION_NOTE_ADD:')) {
                     const match = respuestaTexto.match(/\[ACTION_NOTE_ADD:\s*([^\]]+)\]/);
                     if (match) {
-                        const noteText = match[1].trim();
-                        notasGuardadas.push(noteText);
-                        guardarNotas();
-                        console.log(`[🤖 Agentic Note Add]: ${noteText}`);
-                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n📝 *Nota guardada:* "${noteText}"`).trim();
+                        if (chatId !== adminChatId) {
+                            respuestaTexto = respuestaTexto.replace(match[0], '').trim();
+                        } else {
+                            const noteText = match[1].trim();
+                            notasGuardadas.push(noteText);
+                            guardarNotas();
+                            console.log(`[🤖 Agentic Note Add]: ${noteText}`);
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n📝 *Nota guardada:* "${noteText}"`).trim();
+                        }
                     }
                 }
                 
                 if (respuestaTexto.includes('[ACTION_NOTE_LIST]')) {
-                    if (notasGuardadas.length === 0) {
-                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n📝 *No tienes notas guardadas.*`).trim();
+                    if (chatId !== adminChatId) {
+                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', '').trim();
                     } else {
-                        let listStr = `\n\n📝 *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
-                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', listStr).trim();
+                        if (notasGuardadas.length === 0) {
+                            respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n📝 *No tienes notas guardadas.*`).trim();
+                        } else {
+                            let listStr = `\n\n📝 *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
+                            respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', listStr).trim();
+                        }
                     }
                 }
                 
                 if (respuestaTexto.includes('[ACTION_NOTE_DELETE:')) {
                     const match = respuestaTexto.match(/\[ACTION_NOTE_DELETE:\s*([^\]]+)\]/);
                     if (match) {
-                        const argBorrar = match[1].trim();
-                        const noteIndex = parseInt(argBorrar) - 1;
-                        let borrada = null;
-                        if (!isNaN(noteIndex) && noteIndex >= 0 && noteIndex < notasGuardadas.length) {
-                            borrada = notasGuardadas.splice(noteIndex, 1)[0];
+                        if (chatId !== adminChatId) {
+                            respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         } else {
-                            const idx = notasGuardadas.findIndex(n => n.toLowerCase().includes(argBorrar.toLowerCase()));
-                            if (idx !== -1) borrada = notasGuardadas.splice(idx, 1)[0];
-                        }
-                        if (borrada) {
-                            guardarNotas();
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Nota eliminada:* "${borrada}"`).trim();
-                        } else {
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
+                            const argBorrar = match[1].trim();
+                            const noteIndex = parseInt(argBorrar) - 1;
+                            let borrada = null;
+                            if (!isNaN(noteIndex) && noteIndex >= 0 && noteIndex < notasGuardadas.length) {
+                                borrada = notasGuardadas.splice(noteIndex, 1)[0];
+                            } else {
+                                const idx = notasGuardadas.findIndex(n => n.toLowerCase().includes(argBorrar.toLowerCase()));
+                                if (idx !== -1) borrada = notasGuardadas.splice(idx, 1)[0];
+                            }
+                            if (borrada) {
+                                guardarNotas();
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Nota eliminada:* "${borrada}"`).trim();
+                            } else {
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
+                            }
                         }
                     }
                 }
