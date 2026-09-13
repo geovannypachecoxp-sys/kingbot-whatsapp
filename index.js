@@ -312,7 +312,7 @@ let canalesYoutube = [
 ];
 
 let agentesCustom = {
-    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *YouTube:* !bot videos (ultimos videos de tus canales), !bot agregarcanal <enlace/canal>, !bot canales, !bot borrarcanal <n>\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Consultar últimos videos de YouTube de canales: [ACTION_YOUTUBE_CHECK] o [ACTION_YOUTUBE_CHECK: nombre_o_canal]\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc. Ej: [ACTION_SCHEDULE: 05:00 | diaria | Dame una frase motivacional poderosa e inspiradora | Frase motivacional diaria] o [ACTION_SCHEDULE: 08:00 | diaria | Busca las noticias de futbol más importantes de hoy | Noticias futbol diarias])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
+    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Memoria y Datos:* !bot memoria (ver datos guardados), !bot guardar <tema> : <info>, !bot olvidar <tema/n>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *YouTube:* !bot videos (ultimos videos de tus canales), !bot agregarcanal <enlace/canal>, !bot canales, !bot borrarcanal <n>\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar dato en memoria permanente: [ACTION_MEMORY_SAVE: tema | informacion_completa] (Úsalo cuando el usuario te pida guardar, recordar o almacenar cualquier dato personal, contraseña, preferencia, contacto o información)\n- Olvidar dato de memoria: [ACTION_MEMORY_DELETE: tema_o_numero]\n- Listar datos de memoria: [ACTION_MEMORY_LIST]\n- Guardar nota rápida: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Consultar últimos videos de YouTube de canales: [ACTION_YOUTUBE_CHECK] o [ACTION_YOUTUBE_CHECK: nombre_o_canal]\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc. Ej: [ACTION_SCHEDULE: 05:00 | diaria | Dame una frase motivacional poderosa e inspiradora | Frase motivacional diaria] o [ACTION_SCHEDULE: 08:00 | diaria | Busca las noticias de futbol más importantes de hoy | Noticias futbol diarias])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
 };
 
 let botGlobalmenteActivo = true;
@@ -358,6 +358,85 @@ if (fs.existsSync('notas.json')) {
     try {
         notasGuardadas = JSON.parse(fs.readFileSync('notas.json', 'utf8'));
     } catch (e) { console.error("No se pudo cargar notas.json"); }
+}
+
+// Cargar memoria persistente (Base de datos de conocimiento y recuerdos del usuario)
+let memoriaGlobal = [];
+if (fs.existsSync('memoria.json')) {
+    try {
+        memoriaGlobal = JSON.parse(fs.readFileSync('memoria.json', 'utf8'));
+    } catch (e) {
+        console.error("No se pudo cargar memoria.json:", e.message);
+    }
+}
+
+function guardarMemoria() {
+    try {
+        fs.writeFileSync('memoria.json', JSON.stringify(memoriaGlobal, null, 2));
+    } catch (e) {
+        console.error("Error al guardar memoria.json:", e.message);
+    }
+}
+
+function guardarDatoEnMemoria(clave, valor) {
+    if (!clave || !valor) return null;
+    clave = clave.trim();
+    valor = valor.trim();
+    const hoy = new Date().toLocaleDateString('es-ES');
+
+    const idx = memoriaGlobal.findIndex(m => m.clave.toLowerCase() === clave.toLowerCase());
+    if (idx !== -1) {
+        memoriaGlobal[idx].valor = valor;
+        memoriaGlobal[idx].fecha = hoy;
+        guardarMemoria();
+        return { accion: 'actualizado', item: memoriaGlobal[idx] };
+    } else {
+        const nuevo = {
+            id: Date.now(),
+            clave: clave,
+            valor: valor,
+            fecha: hoy
+        };
+        memoriaGlobal.push(nuevo);
+        guardarMemoria();
+        return { accion: 'creado', item: nuevo };
+    }
+}
+
+function eliminarDatoDeMemoria(criterio) {
+    if (!criterio) return null;
+    const str = String(criterio).trim().toLowerCase();
+    const num = parseInt(str, 10) - 1;
+    let eliminado = null;
+
+    if (!isNaN(num) && num >= 0 && num < memoriaGlobal.length) {
+        eliminado = memoriaGlobal.splice(num, 1)[0];
+    } else {
+        const idx = memoriaGlobal.findIndex(m => 
+            m.clave.toLowerCase().includes(str) || 
+            m.valor.toLowerCase().includes(str)
+        );
+        if (idx !== -1) {
+            eliminado = memoriaGlobal.splice(idx, 1)[0];
+        }
+    }
+
+    if (eliminado) {
+        guardarMemoria();
+    }
+    return eliminado;
+}
+
+function formatearMemoriaParaPrompt() {
+    if (!memoriaGlobal || memoriaGlobal.length === 0) return "";
+    let texto = "\n\n--- BASE DE CONOCIMIENTO Y DATOS GUARDADOS POR EL USUARIO (MEMORIA PERSISTENTE) ---\n";
+    texto += "El Señor Geovanny te ha pedido explícitamente guardar y recordar los siguientes datos. Utilízalos automáticamente cuando te pregunte por ellos o cuando el contexto lo requiera, respondiendo con absoluta certeza y elegancia:\n";
+    memoriaGlobal.forEach((item, i) => {
+        const fechaStr = item.fecha ? ` [Guardado: ${item.fecha}]` : '';
+        texto += `${i + 1}. [${item.clave}]: ${item.valor}${fechaStr}\n`;
+    });
+    texto += "--------------------------------------------------------------------------------------\n";
+    return texto;
 }
 
 // Cargar comandos personalizados
@@ -3236,23 +3315,121 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             return;
         }
 
+        // --- BASE DE CONOCIMIENTO Y MEMORIA PERSISTENTE ---
+        if (comando === 'memoria' || comando === 'datos' || comando === 'recuerdos') {
+            if (isGroup || (adminChatId && chatId !== adminChatId)) {
+                return msg.reply("❌ Comando restringido al administrador en chat privado.");
+            }
+
+            if (argumento) {
+                const parts = argumento.split(' ');
+                const subCmd = parts[0].toLowerCase();
+                const subArg = parts.slice(1).join(' ').trim();
+
+                if (subCmd === 'guardar' || subCmd === 'add' || subCmd === 'set') {
+                    if (!subArg) {
+                        return msg.reply("❌ *Uso correcto:* `!bot memoria guardar <tema> : <información>`\n_Ejemplo:_ `!bot memoria guardar Wifi Casa : MiClave1234`");
+                    }
+                    let clave = 'Dato';
+                    let valor = subArg;
+                    if (subArg.includes(':')) {
+                        const s = subArg.split(':');
+                        clave = s[0].trim();
+                        valor = s.slice(1).join(':').trim();
+                    } else if (subArg.includes('=')) {
+                        const s = subArg.split('=');
+                        clave = s[0].trim();
+                        valor = s.slice(1).join('=').trim();
+                    }
+                    const res = guardarDatoEnMemoria(clave, valor);
+                    const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
+                    return msg.reply(`🧠 *Kingbot:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede consultármelo cuando lo desee hablando normalmente por chat._`);
+                }
+
+                if (subCmd === 'borrar' || subCmd === 'del' || subCmd === 'olvidar') {
+                    if (!subArg) return msg.reply("❌ Especifique el número o tema a borrar: `!bot memoria borrar <número/tema>`");
+                    const el = eliminarDatoDeMemoria(subArg);
+                    if (el) return msg.reply(`🗑️ *Kingbot:* He borrado de mi memoria: *${el.clave}* (${el.valor})`);
+                    return msg.reply(`⚠️ *Kingbot:* No encontré ningún dato en memoria que coincida con "${subArg}".`);
+                }
+
+                if (subCmd === 'buscar' || subCmd === 'find') {
+                    if (!subArg) return msg.reply("❌ Especifique qué buscar: `!bot memoria buscar <palabra>`");
+                    const q = subArg.toLowerCase();
+                    const encontrados = memoriaGlobal.filter(m => m.clave.toLowerCase().includes(q) || m.valor.toLowerCase().includes(q));
+                    if (encontrados.length === 0) return msg.reply(`🔍 *Kingbot:* No encontré ningún dato guardado sobre "${subArg}".`);
+                    let r = `🔍 *RESULTADOS EN MEMORIA PARA "${subArg}":*\n\n`;
+                    encontrados.forEach((m, i) => {
+                        const f = m.fecha ? ` _(${m.fecha})_` : '';
+                        r += `*${i + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
+                    });
+                    return msg.reply(r);
+                }
+            }
+
+            if (memoriaGlobal.length === 0) {
+                return msg.reply("🧠 *Kingbot:* No tengo datos guardados en mi memoria actualmente.\n\n_Puedes guardar información hablándome con naturalidad:_\n• _\"Guarda que mi talla de camisa es M\"_\n• _\"Acuérdate de que la clave del wifi es 1234\"_\n• O con comando: `!bot guardar <tema> : <información>`");
+            }
+
+            let lista = `🧠 *BASE DE DATOS Y MEMORIA PERSISTENTE:*\n\n`;
+            memoriaGlobal.forEach((m, idx) => {
+                const f = m.fecha ? ` _(${m.fecha})_` : '';
+                lista += `*${idx + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
+            });
+            lista += `_Para guardar un dato:_ \`!bot guardar <tema> : <información>\`\n_Para borrar un dato:_ \`!bot olvidar <número o tema>\`\n_O simplemente pregúntame cualquier dato en este chat._`;
+            return msg.reply(lista);
+        }
+
+        if (comando === 'guardar' || comando === 'guardardato') {
+            if (isGroup || (adminChatId && chatId !== adminChatId)) {
+                return msg.reply("❌ Comando restringido al administrador en chat privado.");
+            }
+            if (!argumento) {
+                return msg.reply("❌ *Uso correcto:* `!bot guardar <tema> : <información>`\n\n*Ejemplos prácticos:*\n• `!bot guardar Talla de camisa : M`\n• `!bot guardar Wifi Oficina : ClaveSegura2026!`\n• `!bot guardar Cumpleaños : 15 de marzo`\n• `!bot guardar Cliente Juan : Tel 7777-8888, interesado en producto B`");
+            }
+            let clave = 'Dato Personal';
+            let valor = argumento.trim();
+            if (argumento.includes(':')) {
+                const parts = argumento.split(':');
+                clave = parts[0].trim();
+                valor = parts.slice(1).join(':').trim();
+            } else if (argumento.includes('=')) {
+                const parts = argumento.split('=');
+                clave = parts[0].trim();
+                valor = parts.slice(1).join('=').trim();
+            }
+            const res = guardarDatoEnMemoria(clave, valor);
+            const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
+            return msg.reply(`🧠 *Kingbot:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede preguntarme sobre este tema cuando lo desee en la conversación._`);
+        }
+
+        if (comando === 'olvidar' || comando === 'olvidardato') {
+            if (isGroup || (adminChatId && chatId !== adminChatId)) {
+                return msg.reply("❌ Comando restringido al administrador en chat privado.");
+            }
+            if (!argumento) return msg.reply("❌ Especifique el número o tema del dato que desea olvidar:\n`!bot olvidar <número o tema>`\n_Usa *!bot memoria* para ver la lista._");
+            const el = eliminarDatoDeMemoria(argumento);
+            if (el) return msg.reply(`🗑️ *Kingbot:* He eliminado de mi memoria el dato sobre *${el.clave}* (${el.valor}).`);
+            return msg.reply(`⚠️ *Kingbot:* No encontré ningún dato en memoria que coincida con "${argumento}".`);
+        }
+
         // --- BLOC DE NOTAS ---
         if (comando === 'nota' || comando === 'guardarnota') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido al administrador");
+            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply("❌ Comando restringido al administrador");
             if (!argumento) return msg.reply("❌ *Kingbot:* Ingrese el texto de la nota que desea guardar.");
-            notasGuardadas.push({ texto: argumento, fecha: new Date().toLocaleDateString() });
-            fs.writeFileSync('notas.json', JSON.stringify(notasGuardadas, null, 2));
-            return msg.reply(`x  *Kingbot:* Nota guardada con éxito, Señor.`);
+            notasGuardadas.push({ texto: argumento, fecha: new Date().toLocaleDateString('es-ES') });
+            guardarNotas();
+            return msg.reply(`📝 *Kingbot:* Nota guardada con éxito, Señor.`);
         }
 
         if (comando === 'notas') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido al administrador");
+            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply("❌ Comando restringido al administrador");
             if (notasGuardadas.length === 0) {
-                return msg.reply("  *Kingbot:* No tiene notas archivadas.");
+                return msg.reply("📝 *Kingbot:* No tiene notas archivadas.");
             }
-            let lista = `x  *SUS NOTAS ARCHIVADAS:*\n\n`;
+            let lista = `📝 *SUS NOTAS ARCHIVADAS:*\n\n`;
             notasGuardadas.forEach((n, index) => {
-                lista += `${index + 1}. [${n.fecha}] ${n.texto}\n`;
+                lista += `${index + 1}. [${n.fecha || ''}] ${n.texto || n}\n`;
             });
             lista += `\n_Para eliminar una nota, use *!bot borrarnota <número>*_`;
             return msg.reply(lista);
@@ -3265,8 +3442,8 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 return msg.reply("❌ *Kingbot:* Número de nota inválido.");
             }
             const eliminada = notasGuardadas.splice(index, 1)[0];
-            fs.writeFileSync('notas.json', JSON.stringify(notasGuardadas, null, 2));
-            return msg.reply(`S& *Kingbot:* Nota "${eliminada.texto}" eliminada.`);
+            guardarNotas();
+            return msg.reply(`🗑️ *Kingbot:* Nota "${eliminada.texto || eliminada}" eliminada.`);
         }
 
         // --- BaSQUEDA WEB INTELIGENTE ---
@@ -4227,7 +4404,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         try {
             let isConversational = chatsActivos.has(chatId) && sesionesChat.has(chatId);
-            if (!isConversational && !isGroup && chatId === adminChatId) {
+            if (!isConversational && !isGroup && (!adminChatId || chatId === adminChatId)) {
                 chatsActivos.add(chatId);
                 const systemPromptFluid = agentesCustom["kingbot"];
                 sesionesChat.set(chatId, [
@@ -4239,12 +4416,13 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             const historial = isConversational ? sesionesChat.get(chatId) : null;
             let partsGuardar = [];
             const fechaContexto = obtenerFechaContexto();
+            const memoriaContexto = (!isGroup && (!adminChatId || chatId === adminChatId)) ? formatearMemoriaParaPrompt() : '';
 
             if (isConversational) {
-                let entradaMessage = `[${fechaContexto}]\n${textoParaGemini}`;
+                let entradaMessage = `[${fechaContexto}]${memoriaContexto}\n${textoParaGemini}`;
                 if (mensajeAProcesar.hasMedia && downloadedMedia && downloadedMedia.data) {
                     let partsUsuario = [];
-                    partsUsuario.push({ text: `[${fechaContexto}]\n${textoParaGemini || 'Analiza esta imagen.'}` });
+                    partsUsuario.push({ text: `[${fechaContexto}]${memoriaContexto}\n${textoParaGemini || 'Analiza esta imagen.'}` });
                     partsUsuario.push({ inlineData: { data: downloadedMedia.data, mimeType: downloadedMedia.mimetype } });
                     entradaMessage = partsUsuario;
                 }
@@ -4263,9 +4441,9 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } else {
                 respuestaTexto = await ejecutarGeminiConRetries(async (model) => {
                     let contenidoCopia = [...contenido];
-                    let promptStr = `Eres Kingbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar los últimos videos de YouTube de sus canales o de un canal en específico, programar o borrar alarmas, programar tareas recurrentes diarias (ej. frases motivacionales cada mañana, noticias diarias, etc.), ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Si el usuario te pide revisar o verificar los últimos videos de YouTube, USA [ACTION_YOUTUBE_CHECK] (o [ACTION_YOUTUBE_CHECK: nombre_canal]). Si el usuario pide programar cosas para que todos los días o a cierta hora se dispare una acción (ej: 'todos los días a las 5 am dame una frase motivacional', 'a las 8 am busca noticias de futbol', etc.), USA OBLIGATORIAMENTE [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot videos, !bot programar <HH:MM> | <instruccion>, !bot programados, !bot desprogramar, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir ÚNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}`;
+                    let promptStr = `Eres Kingbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar los últimos videos de YouTube de sus canales o de un canal en específico, guardar o recordar datos en memoria permanente, olvidar datos, programar o borrar alarmas, programar tareas recurrentes diarias (ej. frases motivacionales cada mañana, noticias diarias, etc.), ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Si el usuario te pide guardar o recordar cualquier dato, contraseña, información, contacto o preferencia (ej. 'guarda que mi talla de camisa es M', 'recuerda que la clave del wifi es 1234', 'acuérdate de que mi cumpleaños es...', etc.), USA OBLIGATORIAMENTE: [ACTION_MEMORY_SAVE: tema | informacion]. Si te pide olvidar o borrar un dato guardado, usa [ACTION_MEMORY_DELETE: tema_o_numero]. Si te pide ver qué datos tienes guardados, puedes listarlos directamente usando tu memoria o usar [ACTION_MEMORY_LIST]. Si te pide revisar o verificar videos de YouTube, usa [ACTION_YOUTUBE_CHECK]. Si el usuario pide programar cosas para que todos los días o a cierta hora se dispare una acción, usa [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot memoria, !bot guardar <tema> : <info>, !bot olvidar <tema/n>, !bot videos, !bot programar <HH:MM> | <instruccion>, !bot programados, !bot desprogramar, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir ÚNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}${memoriaContexto}`;
                     if (isGroup || (adminChatId && chatId !== adminChatId)) {
-                        promptStr += "\n\n(ADVERTENCIA: EL USUARIO ACTUAL NO ES GEOVANNY PACHECO O ESTÁS EN UN GRUPO. Tienes ESTRICTAMENTE PROHIBIDO usar tags de notas, finanzas, recordatorios, tareas programadas o alarmas. Tampoco debes mencionar los intereses personales de Geovanny. Comportate como un asistente útil y neutral.)";
+                        promptStr += "\n\n(ADVERTENCIA: EL USUARIO ACTUAL NO ES GEOVANNY PACHECO O ESTÁS EN UN GRUPO. Tienes ESTRICTAMENTE PROHIBIDO usar tags de notas, finanzas, recordatorios, tareas programadas, memoria o alarmas. Tampoco debes mencionar los intereses personales de Geovanny. Comportate como un asistente útil y neutral.)";
                     }
                     contenidoCopia.unshift(promptStr);
                     const result = await model.generateContent(contenidoCopia);
@@ -4668,6 +4846,50 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                         }
 
                         respuestaTexto = respuestaTexto.replace(match[0], `\n\n${videosReporte}`).trim();
+                    }
+                }
+
+                // ACTION_MEMORY_SAVE (Guardar datos en memoria permanente)
+                if (respuestaTexto.includes('[ACTION_MEMORY_SAVE:')) {
+                    const match = respuestaTexto.match(/\[ACTION_MEMORY_SAVE:\s*([^|]+)\|([^\]]+)\]/);
+                    if (match) {
+                        const clave = match[1].trim();
+                        const valor = match[2].trim();
+                        const resultado = guardarDatoEnMemoria(clave, valor);
+                        const confirmacion = resultado && resultado.accion === 'actualizado'
+                            ? `\n\n🧠 *Memoria actualizada con éxito:*\n📌 *${clave}*: ${valor}`
+                            : `\n\n🧠 *Dato guardado en memoria con éxito:*\n📌 *${clave}*: ${valor}`;
+                        respuestaTexto = respuestaTexto.replace(match[0], confirmacion).trim();
+                        console.log(`[🧠 Memoria] Dato guardado (${resultado?.accion}): "${clave}" = "${valor}"`);
+                    }
+                }
+
+                // ACTION_MEMORY_DELETE (Olvidar / borrar dato de memoria)
+                if (respuestaTexto.includes('[ACTION_MEMORY_DELETE:')) {
+                    const match = respuestaTexto.match(/\[ACTION_MEMORY_DELETE:\s*([^\]]+)\]/);
+                    if (match) {
+                        const target = match[1].trim();
+                        const eliminado = eliminarDatoDeMemoria(target);
+                        if (eliminado) {
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Dato eliminado de la memoria:* "${eliminado.clave}" (${eliminado.valor})`).trim();
+                        } else {
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No encontré ningún dato en memoria que coincida con "${target}".`).trim();
+                        }
+                    }
+                }
+
+                // ACTION_MEMORY_LIST (Ver datos guardados)
+                if (respuestaTexto.includes('[ACTION_MEMORY_LIST]')) {
+                    if (memoriaGlobal.length === 0) {
+                        respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', `\n\n🧠 *No tienes datos guardados en la memoria actualmente.*`).trim();
+                    } else {
+                        let listStr = `\n\n🧠 *DATOS GUARDADOS EN MEMORIA:*\n\n`;
+                        memoriaGlobal.forEach((m, idx) => {
+                            const f = m.fecha ? ` _(${m.fecha})_` : '';
+                            listStr += `*${idx + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
+                        });
+                        listStr += `_Para borrar un dato:_ \`!bot olvidar <número o tema>\``;
+                        respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', listStr).trim();
                     }
                 }
 
