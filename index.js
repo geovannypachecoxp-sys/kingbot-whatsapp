@@ -268,10 +268,10 @@ async function ejecutarGeminiConRetries(callback) {
     throw new Error("Todos los intentos con todas las llaves y modelos de Gemini fallaron.");
 }
 
-// CONFIGURACIN DE YOUTUBE Y ESTADOS
+// CONFIGURACIÓN DE YOUTUBE Y ESTADOS
 const rssParser = new Parser();
 let adminChatId = null;
-let firebaseUid = null;
+let firebaseUid = "De3SAQbP7kbq9N2o31AEnIJuPlf1"; // UID por defecto de Geovanny Pacheco (Finanzas King)
 
 // Cargar admin.json persistido (adminChatId y firebaseUid)
 let ultimoChequeoVencimientos = null;
@@ -294,25 +294,35 @@ function guardarAdminJson() {
 let adminFirebase = null;
 let dbFirebase = null;
 
-if (fs.existsSync('serviceAccount.json')) {
-    try {
-        adminFirebase = require('firebase-admin');
-        const serviceAccount = require('./serviceAccount.json');
-        adminFirebase.initializeApp({
-            credential: adminFirebase.credential.cert(serviceAccount)
-        });
-        dbFirebase = adminFirebase.firestore();
-        console.log('[x  Firebase] Conectado exitosamente con la base de datos finanzaqa.');
-    } catch (e) {
-        console.error('[x  Firebase] Error al inicializar firebase-admin:', e.message);
+function inicializarFirebase() {
+    if (dbFirebase) return true;
+    if (fs.existsSync('serviceAccount.json')) {
+        try {
+            adminFirebase = require('firebase-admin');
+            const serviceAccount = JSON.parse(fs.readFileSync('serviceAccount.json', 'utf8'));
+            if (!adminFirebase.apps.length) {
+                adminFirebase.initializeApp({
+                    credential: adminFirebase.credential.cert(serviceAccount)
+                });
+            }
+            dbFirebase = adminFirebase.firestore();
+            console.log('[🔥 Firebase] Conectado exitosamente con la base de datos finanzaqa.');
+            return true;
+        } catch (e) {
+            console.error('[❌ Firebase] Error al inicializar firebase-admin:', e.message);
+        }
+    } else {
+        console.log('[ℹ️ Firebase] Archivo serviceAccount.json no encontrado en el directorio actual.');
     }
+    return false;
 }
+inicializarFirebase();
 let canalesYoutube = [
     { id: 'UCBJycsmduvYEL83R_U4JriQ', nombre: 'Geovanny Pacheco', ultimoVideo: '' }
 ];
 
 let agentesCustom = {
-    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Memoria y Datos:* !bot memoria (ver datos guardados), !bot guardar <tema> : <info>, !bot olvidar <tema/n>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *YouTube:* !bot videos (ultimos videos de tus canales), !bot agregarcanal <enlace/canal>, !bot canales, !bot borrarcanal <n>\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar dato en memoria permanente: [ACTION_MEMORY_SAVE: tema | informacion_completa] (Úsalo cuando el usuario te pida guardar, recordar o almacenar cualquier dato personal, contraseña, preferencia, contacto o información)\n- Olvidar dato de memoria: [ACTION_MEMORY_DELETE: tema_o_numero]\n- Listar datos de memoria: [ACTION_MEMORY_LIST]\n- Guardar nota rápida: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Consultar últimos videos de YouTube de canales: [ACTION_YOUTUBE_CHECK] o [ACTION_YOUTUBE_CHECK: nombre_o_canal]\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc. Ej: [ACTION_SCHEDULE: 05:00 | diaria | Dame una frase motivacional poderosa e inspiradora | Frase motivacional diaria] o [ACTION_SCHEDULE: 08:00 | diaria | Busca las noticias de futbol más importantes de hoy | Noticias futbol diarias])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
+    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Memoria y Datos:* !bot memoria (ver datos guardados), !bot guardar <tema> : <info>, !bot olvidar <tema/n>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *YouTube:* !bot videos (ultimos videos de tus canales), !bot agregarcanal <enlace/canal>, !bot canales, !bot borrarcanal <n>\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (Finanzas King PWA):* !bot tarjetas [tarjeta], !bot vencimientos, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar dato en memoria permanente: [ACTION_MEMORY_SAVE: tema | informacion_completa] (Úsalo cuando el usuario te pida guardar, recordar o almacenar cualquier dato personal, contraseña, preferencia, contacto o información)\n- Olvidar dato de memoria: [ACTION_MEMORY_DELETE: tema_o_numero]\n- Listar datos de memoria: [ACTION_MEMORY_LIST]\n- Guardar nota rápida: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Consultar últimos videos de YouTube de canales: [ACTION_YOUTUBE_CHECK] o [ACTION_YOUTUBE_CHECK: nombre_o_canal]\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc.)\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Consultar tarjetas/finanzas: [ACTION_FINANCE_CARDS] (para ver todas las tarjetas) o [ACTION_FINANCE_CARDS: nombre_tarjeta] (para consultar una tarjeta específica como Bac Gold, Davivienda, etc., con su deuda, saldo al corte, límite y pago)\n- Consultar vencimientos de tarjetas: [ACTION_FINANCE_ALERTS] (para consultar qué tarjetas vencen hoy, mañana o en los próximos días)\n- Registrar gasto o abono a tarjeta: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment. Por ejemplo: [ACTION_FINANCE_ADD: expense | 25 | Gasolina Puma | Bac Gold | Transporte] o [ACTION_FINANCE_ADD: payment | 50 | Abono a tarjeta | Fedecrédito | Abono Capital])\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
 };
 
 let botGlobalmenteActivo = true;
@@ -811,11 +821,17 @@ function limpiarRespuestaGemini(texto) {
         .replace(/\[ACTION_NOTE_ADD:[^\]]+\]/g, '')
         .replace(/\[ACTION_NOTE_LIST\]/g, '')
         .replace(/\[ACTION_NOTE_DELETE:[^\]]+\]/g, '')
+        .replace(/\[ACTION_MEMORY_SAVE:[^\]]+\]/g, '')
+        .replace(/\[ACTION_MEMORY_DELETE:[^\]]+\]/g, '')
+        .replace(/\[ACTION_MEMORY_LIST\]/g, '')
+        .replace(/\[ACTION_YOUTUBE_CHECK(?::[^\]]+)?\]/g, '')
+        .replace(/\[ACTION_SCHEDULE:[^\]]+\]/g, '')
         .replace(/\[ACTION_REMIND:[^\]]+\]/g, '')
         .replace(/\[ACTION_AUDIO:[^\]]+\]/g, '')
         .replace(/\[ACTION_ALARM_ADD:[^\]]+\]/g, '')
         .replace(/\[ACTION_ALARM_DELETE:[^\]]+\]/g, '')
-        .replace(/\[ACTION_FINANCE_CARDS\]/g, '')
+        .replace(/\[ACTION_FINANCE_CARDS(?::[^\]]+)?\]/g, '')
+        .replace(/\[ACTION_FINANCE_ALERTS\]/g, '')
         .replace(/\[ACTION_FINANCE_ADD:[^\]]+\]/g, '')
         .trim();
         
@@ -826,43 +842,60 @@ function limpiarRespuestaGemini(texto) {
 // FUNCIONES DE CONTROL DE FINANZAS (ESTADOS DE CUENTA Y TICKETS)
 // ---------------------------------------------------------
 async function procesarDocumentoFinanciero(media, msg) {
+    if (!dbFirebase) inicializarFirebase();
     if (!dbFirebase || !firebaseUid) {
         return false; // Firebase no está configurado
     }
 
     try {
-        const prompt = `Analiza este documento. Puede ser un ticket/recibo de compra, un Estado de Cuenta Bancario, o un archivo no relacionado con finanzas.
-        
-        Si es un TICKET/RECIBO de compra, responde en formato JSON:
-        {
-            "is_financial": true,
-            "is_statement": false,
-            "amount": number (total pagado/importe),
-            "date": "YYYY-MM-DD" (fecha de emisión),
-            "concept": String "Establecimiento/Comercio",
-            "category": "Categoría sugerida de la lista: Supermercado, Comida, Transporte, Hormiga, Servicios, Compras, Salud, Educación",
-            "last4": String "altimos 4 dígitos de la tarjeta utilizada (o null si fue efectivo)",
-            "type": "expense"
-        }
+        const prompt = `Analiza este documento con sumo detalle. Puede ser:
+1. Un Estado de Cuenta Bancario de tarjeta de crédito (Account Statement).
+2. Un Comprobante de Abono, Pago de Tarjeta o Transferencia Bancaria (Payment Voucher).
+3. Un Ticket, Factura o Recibo de compra/consumo (Purchase Receipt).
+4. O un archivo no relacionado con finanzas.
 
-        Si es un ESTADO DE CUENTA (Account Statement) de tarjeta de crédito, responde en formato JSON:
-        {
-            "is_financial": true,
-            "is_statement": true,
-            "pay_goal": number (Pago para no generar intereses. ¡IGNORA el pago mínimo a menos que sea el único valor de pago!),
-            "cutoff_balance": number (Saldo al corte / Deuda total del periodo),
-            "pay_date": "YYYY-MM-DD" (Fecha límite de pago),
-            "cutoff_date": "YYYY-MM-DD" (Fecha de corte),
-            "last4": String "altimos 4 dígitos de la tarjeta (identificador)",
-            "card_name": String "Nombre de la tarjeta o banco"
-        }
+Si es un ESTADO DE CUENTA (Account Statement) de tarjeta de crédito, responde en formato JSON:
+{
+    "is_financial": true,
+    "doc_type": "statement",
+    "pay_goal": number (Pago para no generar intereses / Pago de contado. ¡IGNORA el pago mínimo a menos que sea el único valor de pago!),
+    "cutoff_balance": number (Saldo al corte / Deuda total del periodo),
+    "pay_date": "YYYY-MM-DD" (Fecha límite de pago),
+    "cutoff_date": "YYYY-MM-DD" (Fecha de corte),
+    "last4": String "últimos 4 dígitos de la tarjeta (o null)",
+    "card_name": String "Nombre de la tarjeta o banco emisor"
+}
 
-        Si NO es ninguno de los anteriores (es un meme, foto cualquiera, documento de texto general), responde:
-        {
-            "is_financial": false
-        }
+Si es un COMPROBANTE DE ABONO, PAGO DE TARJETA O TRANSFERENCIA BANCARIA (Payment Voucher / Pago de tarjeta), responde en formato JSON:
+{
+    "is_financial": true,
+    "doc_type": "payment",
+    "amount": number (monto abonado o pagado),
+    "date": "YYYY-MM-DD" (fecha de la operación),
+    "concept": String "Abono / Pago de Tarjeta...",
+    "card_name": String "Nombre de la tarjeta o banco destino",
+    "last4": String "últimos 4 dígitos de la tarjeta o cuenta destino (o null)",
+    "reference": String "número de referencia o autorización (o null)"
+}
 
-        Responde SOLO con el objeto JSON limpio. No agregues comentarios, markdown ni formato.`;
+Si es un TICKET/RECIBO/FACTURA de compra o consumo personal, responde en formato JSON:
+{
+    "is_financial": true,
+    "doc_type": "expense",
+    "amount": number (total pagado/importe),
+    "date": "YYYY-MM-DD" (fecha de emisión),
+    "concept": String "Establecimiento o Comercio",
+    "category": "Categoría sugerida de la lista: Supermercado, Comida, Transporte, Hormiga, Servicios, Compras, Salud, Educación",
+    "last4": String "últimos 4 dígitos de la tarjeta utilizada (o null si fue en efectivo)",
+    "card_name": String "Nombre de la tarjeta o banco utilizado (o null)"
+}
+
+Si NO es un documento financiero (meme, foto común, documento general), responde:
+{
+    "is_financial": false
+}
+
+Responde ÚNICAMENTE con el objeto JSON limpio. Sin markdown ni texto adicional.`;
 
         const respuesta = await ejecutarGeminiConRetries(async (model) => {
             const result = await model.generateContent([
@@ -879,39 +912,46 @@ async function procesarDocumentoFinanciero(media, msg) {
             return false; // No es un documento financiero, seguir el flujo normal
         }
 
-        if (data.is_statement) {
-            // Es un estado de cuenta!
-            const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
-            const cardsSnap = await cardsRef.get();
-            let matchingCard = null;
+        const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
+        const cardsSnap = await cardsRef.get();
 
-            cardsSnap.forEach(doc => {
-                const c = doc.data();
-                if (data.last4 && String(c.last4) === String(data.last4)) {
-                    matchingCard = { id: doc.id, ...c };
-                }
-            });
-
-            if (!matchingCard && data.card_name) {
-                const qName = data.card_name.toLowerCase();
+        // Helper para localizar tarjeta por last4 o nombre
+        function buscarTarjeta(last4, cardName) {
+            let encontrada = null;
+            if (last4) {
                 cardsSnap.forEach(doc => {
                     const c = doc.data();
-                    const cName = c.name.toLowerCase();
-                    if (cName.includes(qName) || qName.includes(cName)) {
-                        matchingCard = { id: doc.id, ...c };
+                    if (c.last4 && String(c.last4).trim() === String(last4).trim()) {
+                        encontrada = { id: doc.id, ...c };
                     }
                 });
             }
+            if (!encontrada && cardName) {
+                const q = cardName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                cardsSnap.forEach(doc => {
+                    const c = doc.data();
+                    const cName = (c.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    if (cName.includes(q) || q.includes(cName)) {
+                        encontrada = { id: doc.id, ...c };
+                    }
+                });
+            }
+            return encontrada;
+        }
+
+        // 1. ESTADO DE CUENTA
+        if (data.doc_type === 'statement' || data.is_statement) {
+            const matchingCard = buscarTarjeta(data.last4, data.card_name);
 
             if (!matchingCard) {
-                await msg.reply(`a *Estado de Cuenta Detectado:*
- *Tarjeta/Banco:* ${data.card_name || 'Desconocido'}
- *Terminación:* ${data.last4 || 'N/A'}
- *Pago p/no generar intereses:* $${data.pay_goal?.toFixed(2) || '0.00'}
- *Saldo al corte:* $${data.cutoff_balance?.toFixed(2) || '0.00'}
- *Fecha límite:* ${data.pay_date || 'N/A'}
+                await msg.reply(`📄 *Estado de Cuenta Detectado:*
+💳 *Tarjeta/Banco:* ${data.card_name || 'Desconocido'}
+🔢 *Terminación:* ${data.last4 || 'N/A'}
+🎯 *Pago p/no generar intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}
+💰 *Saldo al corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}
+📅 *Fecha límite:* ${data.pay_date || 'N/A'}
 
-R *Error:* No se encontró ninguna tarjeta en Firestore que coincida con la terminación "${data.last4 || ''}" o el nombre "${data.card_name || ''}". Regístrela en la PWA primero.`);
+⚠️ *Aviso:* No se encontró ninguna tarjeta en Firestore que coincida con "${data.last4 || ''}" o "${data.card_name || ''}". Regístrala en la PWA primero.`);
                 return true;
             }
 
@@ -937,56 +977,39 @@ R *Error:* No se encontró ninguna tarjeta en Firestore que coincida con la term
 
             await cardsRef.doc(matchingCard.id).update(updatePayload);
 
-            let confirmMsg = `x *ESTADO DE CUENTA PROCESADO (Finanzas King)* x\n\n`;
-            confirmMsg += `x *Tarjeta:* ${matchingCard.name}\n`;
-            confirmMsg += `x *Deuda al Corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}\n`;
-            confirmMsg += ` *Pago p/no generar intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}\n`;
-            confirmMsg += `x& *Fecha Límite de Pago:* ${data.pay_date || 'No especificada'} (Día ${payDay})\n`;
-            confirmMsg += `S *Fecha de Corte:* ${data.cutoff_date || 'No especificada'} (Día ${cutDay})\n\n`;
-            confirmMsg += `S& *¡Firestore actualizado con éxito!* Se enviarán recordatorios automáticos a su WhatsApp.`;
+            let confirmMsg = `💳 *ESTADO DE CUENTA PROCESADO (Finanzas King)* 💳\n\n`;
+            confirmMsg += `📌 *Tarjeta:* ${matchingCard.name}\n`;
+            confirmMsg += `💰 *Deuda al Corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}\n`;
+            confirmMsg += `🎯 *Pago p/no intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}\n`;
+            confirmMsg += `📅 *Fecha Límite:* ${data.pay_date || 'No especificada'} (Día ${payDay})\n`;
+            confirmMsg += `✂️ *Fecha de Corte:* ${data.cutoff_date || 'No especificada'} (Día ${cutDay})\n\n`;
+            confirmMsg += `✅ *¡Finanzas King actualizado con éxito!* Se programaron los recordatorios automáticos.`;
 
             await msg.reply(confirmMsg);
             return true;
-        } else {
-            // Es un ticket/recibo de compra!
-            const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
-            const cardsSnap = await cardsRef.get();
-            let matchingCard = null;
+        }
 
-            if (data.last4) {
-                cardsSnap.forEach(doc => {
-                    const c = doc.data();
-                    if (String(c.last4) === String(data.last4)) {
-                        matchingCard = { id: doc.id, ...c };
-                    }
-                });
-            }
-
+        // 2. COMPROBANTE DE ABONO O PAGO A TARJETA
+        if (data.doc_type === 'payment') {
             const amt = parseFloat(data.amount || 0);
-            const concept = data.concept || 'Gasto registrado';
-            const category = data.category || 'xS Hormiga';
-            const type = data.type || 'expense';
-
             if (isNaN(amt) || amt <= 0) {
-                await msg.reply(`a *Ticket Detectado:* Importe no válido ($${data.amount}).`);
+                await msg.reply(`⚠️ *Comprobante de Abono Detectado:* Monto inválido ($${data.amount}).`);
                 return true;
             }
 
+            const matchingCard = buscarTarjeta(data.last4, data.card_name);
             const batch = dbFirebase.batch();
             const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
-            
+
             let cardIdVal = "";
-            let cardNameVal = "Efectivo";
+            let cardNameVal = data.card_name || "Tarjeta de Crédito";
             let newBal = 0;
 
             if (matchingCard) {
                 cardIdVal = matchingCard.id;
                 cardNameVal = matchingCard.name;
-                newBal = parseFloat(matchingCard.balance || 0);
-                if (type === 'expense') newBal += amt;
-                else newBal -= amt;
-                if (newBal < 0) newBal = 0;
-
+                const oldBal = parseFloat(matchingCard.balance || 0);
+                newBal = Math.max(0, oldBal - amt);
                 batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
             }
 
@@ -1000,7 +1023,69 @@ R *Error:* No se encontró ninguna tarjeta en Firestore que coincida con la term
 
             const payload = {
                 amount: amt,
-                type,
+                type: 'payment',
+                cardId: cardIdVal,
+                cardName: cardNameVal,
+                concept: data.concept || `Abono a ${cardNameVal}`,
+                category: '💵 Abono Capital',
+                date: adminFirebase.firestore.Timestamp.fromDate(tDate)
+            };
+            if (data.reference) payload.reference = String(data.reference);
+
+            batch.set(expRef, payload);
+            await batch.commit();
+
+            let confirmMsg = `💵 *COMPROBANTE DE ABONO PROCESADO (Finanzas King)* 💵\n\n`;
+            confirmMsg += `💳 *Tarjeta:* ${cardNameVal}\n`;
+            confirmMsg += `💰 *Monto Abonado:* $${amt.toFixed(2)}\n`;
+            if (matchingCard) {
+                confirmMsg += `📉 *Nueva Deuda:* $${newBal.toFixed(2)}\n`;
+            }
+            confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n`;
+            if (data.reference) confirmMsg += `🔢 *Referencia:* ${data.reference}\n`;
+            confirmMsg += `\n✅ *¡Abono registrado en Finanzas King con éxito!*`;
+
+            await msg.reply(confirmMsg);
+            return true;
+        }
+
+        // 3. TICKET O FACTURA DE COMPRA (GASTO)
+        if (data.doc_type === 'expense' || !data.doc_type) {
+            const amt = parseFloat(data.amount || 0);
+            const concept = data.concept || 'Gasto registrado';
+            const category = data.category || '📦 Compras';
+
+            if (isNaN(amt) || amt <= 0) {
+                await msg.reply(`⚠️ *Ticket Detectado:* Importe no válido ($${data.amount}).`);
+                return true;
+            }
+
+            const matchingCard = buscarTarjeta(data.last4, data.card_name);
+            const batch = dbFirebase.batch();
+            const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
+
+            let cardIdVal = "";
+            let cardNameVal = "Efectivo";
+            let newBal = 0;
+
+            if (matchingCard) {
+                cardIdVal = matchingCard.id;
+                cardNameVal = matchingCard.name;
+                newBal = parseFloat(matchingCard.balance || 0) + amt;
+                batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
+            }
+
+            let tDate = new Date();
+            if (data.date) {
+                const parts = data.date.split('-');
+                if (parts.length === 3) {
+                    tDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                }
+            }
+
+            const payload = {
+                amount: amt,
+                type: 'expense',
                 cardId: cardIdVal,
                 cardName: cardNameVal,
                 concept,
@@ -1011,16 +1096,16 @@ R *Error:* No se encontró ninguna tarjeta en Firestore que coincida con la term
             batch.set(expRef, payload);
             await batch.commit();
 
-            let confirmMsg = `S& *TICKET PROCESADO (Finanzas King)* x\n\n`;
-            confirmMsg += ` *Monto:* $${amt.toFixed(2)}\n`;
-            confirmMsg += ` *Concepto:* ${concept}\n`;
-            confirmMsg += ` *Categoría:* ${category}\n`;
-            confirmMsg += ` *Pago:* ${cardNameVal}\n`;
+            let confirmMsg = `🧾 *TICKET / COMPRA PROCESADA (Finanzas King)* 🧾\n\n`;
+            confirmMsg += `💰 *Monto:* $${amt.toFixed(2)}\n`;
+            confirmMsg += `📌 *Concepto:* ${concept}\n`;
+            confirmMsg += `🏷️ *Categoría:* ${category}\n`;
+            confirmMsg += `💳 *Método de Pago:* ${cardNameVal}\n`;
             if (matchingCard) {
-                confirmMsg += ` *Deuda Actualizada:* $${newBal.toFixed(2)}\n`;
+                confirmMsg += `📈 *Deuda Actualizada:* $${newBal.toFixed(2)}\n`;
             }
-            confirmMsg += ` *Fecha:* ${tDate.toLocaleDateString()}\n\n`;
-            confirmMsg += `S& *¡Movimiento registrado con éxito!*`;
+            confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n\n`;
+            confirmMsg += `✅ *¡Movimiento guardado con éxito!*`;
 
             await msg.reply(confirmMsg);
             return true;
@@ -1034,9 +1119,10 @@ R *Error:* No se encontró ninguna tarjeta en Firestore que coincida con la term
 }
 
 async function chequearVencimientosYNotificar(force = false) {
+    if (!dbFirebase) inicializarFirebase();
     if (!dbFirebase || !firebaseUid || !adminChatId) {
-        console.log("[x&] Alerta omitida: Firebase o Administrador no configurado.");
-        return;
+        console.log("[ℹ️ Finanzas] Alerta omitida: Firebase o Administrador no configurado.");
+        return null;
     }
 
     try {
@@ -1045,15 +1131,15 @@ async function chequearVencimientosYNotificar(force = false) {
 
         const todayStr = today.toDateString();
         if (!force && ultimoChequeoVencimientos === todayStr) {
-            console.log("[x&] Vencimientos ya verificados hoy. Saltando.");
-            return;
+            console.log("[ℹ️ Finanzas] Vencimientos ya verificados hoy. Saltando.");
+            return null;
         }
 
         const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
         const cardsSnap = await cardsRef.get();
         if (cardsSnap.empty) {
-            if (force) await client.sendMessage(adminChatId, " *Kingbot:* No hay tarjetas de crédito registradas en Firestore.");
-            return;
+            if (force) await client.sendMessage(adminChatId, "ℹ️ *Kingbot:* No hay tarjetas de crédito registradas en Firestore.");
+            return null;
         }
 
         const cards = [];
@@ -1063,20 +1149,19 @@ async function chequearVencimientosYNotificar(force = false) {
 
         const fortyDaysAgo = new Date();
         fortyDaysAgo.setDate(fortyDaysAgo.getDate() - 40);
+        
+        // Consulta sin índice compuesto para evitar errores en Firestore
         const transRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses');
-        const transSnap = await transRef
-            .where('type', '==', 'payment')
-            .where('date', '>=', fortyDaysAgo)
-            .get();
+        const transSnap = await transRef.where('type', '==', 'payment').get();
 
         const trans = [];
         transSnap.forEach(doc => {
             const t = doc.data();
             if (t.date) {
-                trans.push({
-                    ...t,
-                    date: t.date.toDate ? t.date.toDate() : new Date(t.date)
-                });
+                const d = t.date.toDate ? t.date.toDate() : new Date(t.date);
+                if (d >= fortyDaysAgo) {
+                    trans.push({ ...t, date: d });
+                }
             }
         });
 
@@ -1087,7 +1172,9 @@ async function chequearVencimientosYNotificar(force = false) {
             if (balance <= 0) return;
 
             const payGoal = parseFloat(c.payGoal || 0);
-            if (payGoal <= 0) return;
+            // Si payGoal está en 0 o no configurado, el monto a pagar es la deuda total
+            const payTarget = payGoal > 0 ? payGoal : balance;
+            if (payTarget <= 0) return;
 
             const payDay = parseInt(c.payDay);
             const cutDay = parseInt(c.cutDay);
@@ -1114,23 +1201,23 @@ async function chequearVencimientosYNotificar(force = false) {
                 }
             });
 
-            if (paid >= payGoal) return;
+            if (paid >= payTarget) return;
 
-            const remaining = payGoal - paid;
+            const remaining = payTarget - paid;
             let msg = '';
             let shouldNotify = false;
 
             if (diffDays === 0) {
-                msg = `xa *¡PAGO HOY!* La tarjeta *${c.name}* vence *HOY*. Faltan *$${remaining.toFixed(2)}* para cubrir el pago para no generar intereses (Deuda total: *$${balance.toFixed(2)}*).`;
+                msg = `🚨 *¡PAGO HOY!* La tarjeta *${c.name}* vence *HOY* (día ${payDay}). Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
                 shouldNotify = true;
             } else if (diffDays === 1) {
-                msg = `a *¡PAGO MAANA!* La tarjeta *${c.name}* vence *mañana*. Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
+                msg = `⚠️ *¡PAGO MAÑANA!* La tarjeta *${c.name}* vence *mañana* (día ${payDay}). Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
                 shouldNotify = true;
-            } else if (diffDays > 1 && [3, 5, 7].includes(diffDays)) {
-                msg = `x& *Recordatorio:* La tarjeta *${c.name}* vence en *${diffDays} días*. Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
+            } else if (diffDays > 1 && diffDays <= 5) {
+                msg = `📅 *Recordatorio:* La tarjeta *${c.name}* vence en *${diffDays} días* (día ${payDay}). Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
                 shouldNotify = true;
-            } else if (diffDays < 0 && diffDays >= -5) {
-                msg = `x *¡PAGO VENCIDO!* La tarjeta *${c.name}* venció hace *${Math.abs(diffDays)} días*. Falta pagar *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
+            } else if (diffDays < 0 && diffDays >= -7) {
+                msg = `🔴 *¡PAGO VENCIDO!* La tarjeta *${c.name}* venció hace *${Math.abs(diffDays)} días* (día ${payDay}). Falta pagar *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
                 shouldNotify = true;
             }
 
@@ -1140,19 +1227,28 @@ async function chequearVencimientosYNotificar(force = false) {
         });
 
         if (alertMessages.length > 0) {
-            const finalMsg = `x *ALERTA DE VENCIMIENTOS (Finanzas King)* x\n\n` + alertMessages.join('\n\n');
+            const finalMsg = `💳 *ALERTA DE VENCIMIENTOS (Finanzas King)* 💳\n\n` + alertMessages.join('\n\n');
             await client.sendMessage(adminChatId, finalMsg);
+            if (!force) {
+                ultimoChequeoVencimientos = todayStr;
+                guardarAdminJson();
+            }
+            return finalMsg;
         } else if (force) {
-            await client.sendMessage(adminChatId, "S& *Kingbot:* Excelente noticia, Señor. No hay pagos pendientes próximos a vencer para sus tarjetas activas.");
+            const okMsg = "✅ *Kingbot:* Excelente noticia, Señor. No hay pagos pendientes próximos a vencer para sus tarjetas activas.";
+            await client.sendMessage(adminChatId, okMsg);
+            return okMsg;
         }
 
         if (!force) {
             ultimoChequeoVencimientos = todayStr;
             guardarAdminJson();
         }
+        return null;
     } catch (e) {
         console.error("Error al chequear vencimientos de tarjetas:", e);
         if (force) await client.sendMessage(adminChatId, `❌ *Kingbot:* Error en la verificación de vencimientos: ${e.message}`);
+        return null;
     }
 }
 
@@ -3636,17 +3732,18 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             return msg.reply(`S& *Kingbot:* Alarma de las ${borrada.hora} ("${borrada.mensaje}") eliminada.`);
         }
 
-        // --- SECCIN: FINANZAS Y TARJETAS (PWA INTEGRATION) ---
+        // --- SECCIÓN: FINANZAS Y TARJETAS (PWA INTEGRATION) ---
         if (comando === 'vencimientos' || comando === 'alertas') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
-                return msg.reply("❌ *Kingbot:* No se ha detectado el archivo `serviceAccount.json`.");
+                return msg.reply("❌ *Kingbot:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
             }
             if (!firebaseUid) {
                 return msg.reply("❌ *Kingbot:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
-            await msg.reply("x *Kingbot:* Consultando estado de vencimientos y pagos de tarjetas...");
+            await msg.reply("🔍 *Kingbot:* Consultando estado de vencimientos y pagos de tarjetas...");
             await chequearVencimientosYNotificar(true);
             return;
         }
@@ -3659,7 +3756,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             }
             firebaseUid = uidInput;
             guardarAdminJson();
-            return msg.reply(`S& *Kingbot:* UID de Firebase establecido con éxito: \`${firebaseUid}\``);
+            return msg.reply(`✅ *Kingbot:* UID de Firebase establecido con éxito: \`${firebaseUid}\``);
         }
 
         if (comando === 'settelegramtoken') {
@@ -3671,11 +3768,12 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             telegramBotToken = tokenInput;
             guardarAdminJson();
             iniciarTelegramPolling();
-            return msg.reply(`S& *Kingbot:* Token del Bot de Telegram registrado exitosamente. He iniciado el servicio de escucha.`);
+            return msg.reply(`✅ *Kingbot:* Token del Bot de Telegram registrado exitosamente. He iniciado el servicio de escucha.`);
         }
 
         if (comando === 'tarjetas' || comando === 'finanzas') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
                 return msg.reply("❌ *Kingbot:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
             }
@@ -3683,17 +3781,53 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 return msg.reply("❌ *Kingbot:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
-            await msg.reply("x *Kingbot:* Consultando su estado financiero en Firebase Firestore...");
             try {
                 const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
                 const snapshot = await cardsRef.get();
                 if (snapshot.empty) {
-                    return msg.reply(" *Kingbot:* No tiene tarjetas registradas en su base de datos de finanzas.");
+                    return msg.reply("💳 *Kingbot:* No tiene tarjetas registradas en su base de datos de finanzas.");
                 }
 
+                const cardQuery = argumento ? argumento.trim() : null;
+                if (cardQuery) {
+                    // Consulta de una tarjeta específica
+                    const q = cardQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    let matchingCard = null;
+                    snapshot.forEach(doc => {
+                        const c = doc.data();
+                        const cName = (c.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        if (cName.includes(q) || q.includes(cName)) {
+                            matchingCard = { id: doc.id, ...c };
+                        }
+                    });
+
+                    if (matchingCard) {
+                        const debt = parseFloat(matchingCard.balance || 0);
+                        const limit = parseFloat(matchingCard.limit || 0);
+                        const payGoal = parseFloat(matchingCard.payGoal || 0);
+                        const avail = limit > 0 ? (limit - debt) : 0;
+                        const pct = limit > 0 ? ((debt / limit) * 100).toFixed(0) : 0;
+
+                        let report = `💳 *DETALLE DE TARJETA: ${matchingCard.name}*\n\n`;
+                        if (matchingCard.last4) report += `🔢 *Terminación:* •••• ${matchingCard.last4}\n`;
+                        report += `💰 *Deuda Actual:* $${debt.toFixed(2)}\n`;
+                        if (payGoal > 0) report += `🎯 *Pago p/no intereses:* $${payGoal.toFixed(2)}\n`;
+                        if (limit > 0) {
+                            report += `📊 *Límite:* $${limit.toFixed(2)} | *Disponible:* $${avail.toFixed(2)} (${100 - pct}% libre)\n`;
+                        }
+                        if (matchingCard.cutDay) report += `✂️ *Día de corte:* ${matchingCard.cutDay}\n`;
+                        if (matchingCard.payDay) report += `📅 *Día de pago:* ${matchingCard.payDay}\n`;
+
+                        return msg.reply(report);
+                    } else {
+                        return msg.reply(`⚠️ *Kingbot:* No se encontró la tarjeta "${cardQuery}" en Finanzas King.`);
+                    }
+                }
+
+                // Resumen general
                 let tDebt = 0;
                 let tLimit = 0;
-                let cardsReport = `x *ESTADO DE TARJETAS (Finanzas King)* x\n\n`;
+                let cardsReport = `💳 *ESTADO DE TARJETAS (Finanzas King)* 💳\n\n`;
 
                 snapshot.forEach(doc => {
                     const c = doc.data();
@@ -3702,23 +3836,27 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                     tDebt += debt;
                     tLimit += limit;
 
-                    const avail = limit - debt;
-                    const pct = limit > 0 ? ((debt / limit) * 100).toFixed(0) : 0;
-                    
-                    cardsReport += ` *${c.name}* (corte: ${c.cutDay || '?'}, pago: ${c.payDay || '?'})\n`;
-                    cardsReport += `  Deuda: $${debt.toFixed(2)} / Límite: $${limit.toFixed(2)} (${pct}%)\n`;
-                    cardsReport += `  Disponible: $${avail.toFixed(2)}\n\n`;
+                    const avail = limit > 0 ? (limit - debt) : 0;
+                    const corteStr = c.cutDay ? `Corte: ${c.cutDay}` : '';
+                    const pagoStr = c.payDay ? `Pago: ${c.payDay}` : '';
+                    const fechas = [corteStr, pagoStr].filter(Boolean).join(' | ');
+
+                    cardsReport += `🔹 *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
+                    cardsReport += `   💰 Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
+                    if (limit > 0) cardsReport += `   💵 Disp: $${avail.toFixed(2)}\n`;
+                    if (fechas) cardsReport += `   📅 ${fechas}\n`;
+                    cardsReport += `\n`;
                 });
 
                 const ratio = tLimit > 0 ? (tDebt / tLimit) * 100 : 0;
-                cardsReport += `*Resumen Global:*\n`;
-                cardsReport += `x  Deuda Total: *$${tDebt.toFixed(2)}*\n`;
-                cardsReport += `x   Disponible Total: *$${(tLimit - tDebt).toFixed(2)}*\n`;
-                cardsReport += `x 0 Endeudamiento: *${ratio.toFixed(1)}%*\n\n`;
+                cardsReport += `📊 *Resumen Global:*\n`;
+                cardsReport += `🔴 *Deuda Total:* $${tDebt.toFixed(2)}\n`;
+                cardsReport += `🟢 *Disponible Total:* $${(tLimit - tDebt).toFixed(2)}\n`;
+                cardsReport += `📈 *Endeudamiento:* ${ratio.toFixed(1)}%\n\n`;
 
-                if (ratio < 30) cardsReport += `xEstado óptimo.`;
-                else if (ratio < 50) cardsReport += `xEstado moderado.`;
-                else cardsReport += `x Alerta: Nivel de deuda elevado.`;
+                if (ratio < 30) cardsReport += `✅ *Estado óptimo.*`;
+                else if (ratio < 50) cardsReport += `⚠️ *Estado moderado.*`;
+                else cardsReport += `🚨 *Alerta: Nivel de deuda elevado.*`;
 
                 return msg.reply(cardsReport);
             } catch (e) {
@@ -3729,6 +3867,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
 
         if (comando === 'gasto' || comando === 'abono') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
                 return msg.reply("❌ *Kingbot:* No se ha detectado el archivo `serviceAccount.json`.");
             }
@@ -3743,7 +3882,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
 
             const firstSpace = textGasto.indexOf(' ');
             if (firstSpace === -1 || !cardQuery) {
-                return msg.reply(`❌ *Kingbot:* Formato correcto:\n*!bot ${comando} <monto> <concepto> | <tarjeta> [| <categoría>]*\n\nEjemplo: *!bot gasto 15 Cena | Visa | x Comida*`);
+                return msg.reply(`❌ *Kingbot:* Formato correcto:\n*!bot ${comando} <monto> <concepto> | <tarjeta> [| <categoría>]*\n\nEjemplo: *!bot gasto 15 Cena | Bac Gold | Comida*`);
             }
 
             const amtStr = textGasto.substring(0, firstSpace);
@@ -3754,31 +3893,29 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 return msg.reply("❌ *Kingbot:* El monto y el concepto son obligatorios.");
             }
 
-            await msg.reply(` *Kingbot:* Procesando movimiento de $${amt.toFixed(2)} en la tarjeta "${cardQuery}"...`);
-
             try {
                 const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
                 const cardsSnap = await cardsRef.get();
                 let matchingCard = null;
+                const qName = cardQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 
                 cardsSnap.forEach(doc => {
                     const c = doc.data();
-                    const cName = c.name.toLowerCase();
-                    const qName = cardQuery.toLowerCase();
+                    const cName = (c.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                     if (cName.includes(qName) || qName.includes(cName)) {
                         matchingCard = { id: doc.id, ...c };
                     }
                 });
 
                 if (!matchingCard) {
-                    return msg.reply(`❌ *Kingbot:* No se encontró ninguna tarjeta registrada en la PWA que coincida con "${cardQuery}".`);
+                    return msg.reply(`❌ *Kingbot:* No se encontró ninguna tarjeta registrada en Finanzas King que coincida con "${cardQuery}".`);
                 }
 
                 const type = (comando === 'gasto') ? 'expense' : 'payment';
-                const defaultCats = [' Supermercado', 'x Comida', ': Transporte', 'xS Hormiga', 'x Servicios', 'x Compras', 'x` Salud', ' Educación'];
-                const defaultPayCats = ['x Abono Capital', 'x Sueldo/Ingreso', 'x Transferencia'];
+                const defaultCats = ['🛒 Supermercado', '🍔 Comida', '⛽ Transporte', '🐜 Hormiga', '💡 Servicios', '📦 Compras', '💊 Salud', '🎓 Educación'];
+                const defaultPayCats = ['💵 Abono Capital', '💰 Sueldo/Ingreso', '🔄 Transferencia'];
                 
-                let category = (type === 'payment') ? 'x Abono Capital' : 'xS Hormiga';
+                let category = (type === 'payment') ? '💵 Abono Capital' : '🐜 Hormiga';
 
                 if (catQuery) {
                     const cleanCat = catQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -3796,9 +3933,8 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 if (type === 'expense') {
                     newBal += amt;
                 } else {
-                    newBal -= amt;
+                    newBal = Math.max(0, newBal - amt);
                 }
-                if (newBal < 0) newBal = 0;
 
                 const batch = dbFirebase.batch();
                 const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
@@ -3816,7 +3952,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
                 await batch.commit();
 
-                return msg.reply(`S& *Kingbot:* ¡Movimiento registrado exitosamente!\n\nx *Tarjeta:* ${matchingCard.name}\nx *Monto:* $${amt.toFixed(2)}\nx *Concepto:* ${concept}\n*Categoría:* ${category}\nx *Nueva Deuda:* $${newBal.toFixed(2)}`);
+                return msg.reply(`✅ *Kingbot:* ¡Movimiento registrado exitosamente en Finanzas King!\n\n💳 *Tarjeta:* ${matchingCard.name}\n💰 *Monto:* $${amt.toFixed(2)} (${type === 'expense' ? 'Gasto' : 'Abono'})\n📌 *Concepto:* ${concept}\n🏷️ *Categoría:* ${category}\n📉 *Deuda Actualizada:* $${newBal.toFixed(2)}`);
 
             } catch (e) {
                 console.error("Error al registrar movimiento:", e);
@@ -4355,12 +4491,28 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             return msg.reply("🗑️ *Kingbot:* Todas las claves API han sido eliminadas permanentemente. El sistema ahora no tiene llaves. Usa `!bot addkey <llave>` para agregar nuevas.");
         }
 
-        // --- INTERCEPTOR DE DOCUMENTOS FINANCIEROS (PDF/IMAGEN) ---
+        // --- INTERCEPTOR DE ARCHIVOS Y DOCUMENTOS FINANCIEROS ---
         let esDocumentoFinanciero = false;
         if (!isGroup && chatId === adminChatId && mensajeAProcesar.hasMedia) {
             const media = await mensajeAProcesar.downloadMedia();
-            if (media && (media.mimetype === 'application/pdf' || media.mimetype.startsWith('image/'))) {
-                esDocumentoFinanciero = await procesarDocumentoFinanciero(media, msg);
+            if (media) {
+                // Si el usuario envía serviceAccount.json por WhatsApp
+                if ((media.filename && media.filename.toLowerCase().includes('serviceaccount')) || (media.mimetype && media.mimetype.includes('json'))) {
+                    try {
+                        const jsonText = Buffer.from(media.data, 'base64').toString('utf8');
+                        const parsed = JSON.parse(jsonText);
+                        if (parsed.project_id && parsed.private_key) {
+                            fs.writeFileSync('serviceAccount.json', jsonText, 'utf8');
+                            dbFirebase = null;
+                            adminFirebase = null;
+                            inicializarFirebase();
+                            return msg.reply("🔥 *Kingbot:* Archivo `serviceAccount.json` recibido y guardado con éxito. Conexión con Firebase Firestore (Finanzas King) activada.");
+                        }
+                    } catch (errJson) {}
+                }
+                if (media.mimetype === 'application/pdf' || media.mimetype.startsWith('image/')) {
+                    esDocumentoFinanciero = await procesarDocumentoFinanciero(media, msg);
+                }
             }
         }
         if (esDocumentoFinanciero) return;
@@ -5177,119 +5329,196 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                     }
                 }
 
-                // Finance Cards (Agentic)
-                if (respuestaTexto.includes('[ACTION_FINANCE_CARDS]')) {
-                    if (chatId !== adminChatId) {
-                        respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_CARDS]', '\n\nR Las funciones de finanzas están restringidas al Administrador.').trim();
-                    } else if (!dbFirebase || !firebaseUid) {
-                        respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_CARDS]', '\n\nR Firebase no está configurado (falta serviceAccount.json o firebaseUid).').trim();
-                    } else {
-                        try {
-                            const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
-                            const snapshot = await cardsRef.get();
-                            let cardsReport = "";
-                            if (snapshot.empty) {
-                                cardsReport = "\n\n *No hay tarjetas registradas en Firestore.*";
+                // Finance Cards (Agentic: consulta general o de una tarjeta específica)
+                if (respuestaTexto.includes('[ACTION_FINANCE_CARDS')) {
+                    const match = respuestaTexto.match(/\[ACTION_FINANCE_CARDS(?::\s*([^\]]+))?\]/);
+                    if (match) {
+                        if (chatId !== adminChatId) {
+                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Las funciones de finanzas están restringidas al Administrador.').trim();
+                        } else {
+                            if (!dbFirebase) inicializarFirebase();
+                            if (!dbFirebase || !firebaseUid) {
+                                respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Firebase no está configurado (falta serviceAccount.json o firebaseUid).').trim();
                             } else {
-                                let tDebt = 0, tLimit = 0;
-                                cardsReport = `\n\nx *ESTADO DE TARJETAS (PWA)* x\n`;
-                                snapshot.forEach(doc => {
-                                    const c = doc.data();
-                                    const debt = parseFloat(c.balance || 0);
-                                    const limit = parseFloat(c.limit || 0);
-                                    tDebt += debt; tLimit += limit;
-                                    cardsReport += ` *${c.name}*: Deuda $${debt.toFixed(2)} / Límite $${limit.toFixed(2)} (Disp: $${(limit - debt).toFixed(2)})\n`;
-                                });
-                                const ratio = tLimit > 0 ? (tDebt / tLimit) * 100 : 0;
-                                cardsReport += `x Endeudamiento global: *${ratio.toFixed(1)}%*\n`;
+                                try {
+                                    const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
+                                    const snapshot = await cardsRef.get();
+                                    if (snapshot.empty) {
+                                        respuestaTexto = respuestaTexto.replace(match[0], '\n\n💳 *No hay tarjetas registradas en Finanzas King.*').trim();
+                                    } else {
+                                        const cardQuery = match[1] ? match[1].trim() : null;
+                                        if (cardQuery) {
+                                            // Consulta de una tarjeta específica
+                                            const q = cardQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                            let matchingCard = null;
+                                            snapshot.forEach(doc => {
+                                                const c = doc.data();
+                                                const cName = (c.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                if (cName.includes(q) || q.includes(cName)) {
+                                                    matchingCard = { id: doc.id, ...c };
+                                                }
+                                            });
+
+                                            if (matchingCard) {
+                                                const debt = parseFloat(matchingCard.balance || 0);
+                                                const limit = parseFloat(matchingCard.limit || 0);
+                                                const payGoal = parseFloat(matchingCard.payGoal || 0);
+                                                const avail = limit > 0 ? (limit - debt) : 0;
+                                                const pct = limit > 0 ? ((debt / limit) * 100).toFixed(0) : 0;
+
+                                                let report = `\n\n💳 *DETALLE DE TARJETA: ${matchingCard.name}*\n\n`;
+                                                if (matchingCard.last4) report += `🔢 *Terminación:* •••• ${matchingCard.last4}\n`;
+                                                report += `💰 *Deuda Actual:* $${debt.toFixed(2)}\n`;
+                                                if (payGoal > 0) report += `🎯 *Pago p/no intereses:* $${payGoal.toFixed(2)}\n`;
+                                                if (limit > 0) {
+                                                    report += `📊 *Límite:* $${limit.toFixed(2)} | *Disponible:* $${avail.toFixed(2)} (${100 - pct}% libre)\n`;
+                                                }
+                                                if (matchingCard.cutDay) report += `✂️ *Día de corte:* ${matchingCard.cutDay}\n`;
+                                                if (matchingCard.payDay) report += `📅 *Día de pago:* ${matchingCard.payDay}\n`;
+
+                                                respuestaTexto = respuestaTexto.replace(match[0], report).trim();
+                                            } else {
+                                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No se encontró la tarjeta "${cardQuery}" en Finanzas King.`).trim();
+                                            }
+                                        } else {
+                                            // Resumen general de todas las tarjetas
+                                            let tDebt = 0, tLimit = 0;
+                                            let cardsReport = `\n\n💳 *ESTADO DE TARJETAS (Finanzas King)* 💳\n\n`;
+                                            snapshot.forEach(doc => {
+                                                const c = doc.data();
+                                                const debt = parseFloat(c.balance || 0);
+                                                const limit = parseFloat(c.limit || 0);
+                                                tDebt += debt; tLimit += limit;
+                                                const avail = limit > 0 ? (limit - debt) : 0;
+                                                const corteStr = c.cutDay ? `Corte: ${c.cutDay}` : '';
+                                                const pagoStr = c.payDay ? `Pago: ${c.payDay}` : '';
+                                                const fechas = [corteStr, pagoStr].filter(Boolean).join(' | ');
+
+                                                cardsReport += `🔹 *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
+                                                cardsReport += `   💰 Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
+                                                if (limit > 0) cardsReport += `   💵 Disp: $${avail.toFixed(2)}\n`;
+                                                if (fechas) cardsReport += `   📅 ${fechas}\n`;
+                                                cardsReport += `\n`;
+                                            });
+
+                                            const ratio = tLimit > 0 ? (tDebt / tLimit) * 100 : 0;
+                                            cardsReport += `📊 *Resumen Global:*\n`;
+                                            cardsReport += `🔴 *Deuda Total:* $${tDebt.toFixed(2)}\n`;
+                                            cardsReport += `🟢 *Disponible Total:* $${(tLimit - tDebt).toFixed(2)}\n`;
+                                            cardsReport += `📈 *Endeudamiento:* ${ratio.toFixed(1)}%`;
+                                            respuestaTexto = respuestaTexto.replace(match[0], cardsReport).trim();
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error("Error en agentic cards:", e);
+                                    respuestaTexto = respuestaTexto.replace(match[0], `\n\n❌ Error al obtener tarjetas: ${e.message}`).trim();
+                                }
                             }
-                            respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_CARDS]', cardsReport).trim();
-                        } catch (e) {
-                            console.error("Error en agentic cards:", e);
-                            respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_CARDS]', `\n\nR Error al obtener tarjetas: ${e.message}`).trim();
                         }
                     }
                 }
 
-                // Finance Add (Agentic)
+                // Finance Alerts (Agentic: alertas de vencimiento de tarjetas)
+                if (respuestaTexto.includes('[ACTION_FINANCE_ALERTS]')) {
+                    if (chatId !== adminChatId) {
+                        respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n⚠️ Funciones de finanzas restringidas al Administrador.').trim();
+                    } else {
+                        if (!dbFirebase) inicializarFirebase();
+                        if (!dbFirebase || !firebaseUid) {
+                            respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n⚠️ Firebase no configurado.').trim();
+                        } else {
+                            try {
+                                const alertaStr = await chequearVencimientosYNotificar(true);
+                                respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', alertaStr ? `\n\n${alertaStr}` : '\n\n✅ *No hay vencimientos próximos pendientes.*').trim();
+                            } catch (errAl) {
+                                respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', `\n\n❌ Error verificando vencimientos: ${errAl.message}`).trim();
+                            }
+                        }
+                    }
+                }
+
+                // Finance Add (Agentic: registrar gastos o abonos en Firestore)
                 if (respuestaTexto.includes('[ACTION_FINANCE_ADD:')) {
                     const match = respuestaTexto.match(/\[ACTION_FINANCE_ADD:\s*([^\]]+)\]/);
                     if (match) {
                         if (chatId !== adminChatId) {
-                            respuestaTexto = respuestaTexto.replace(match[0], '\n\nR Función de finanzas restringida al Administrador.').trim();
-                        } else if (!dbFirebase || !firebaseUid) {
-                            respuestaTexto = respuestaTexto.replace(match[0], '\n\nR Firebase no configurado.').trim();
+                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Función de finanzas restringida al Administrador.').trim();
                         } else {
-                            const parts = match[1].split('|').map(p => p.trim());
-                            const type = parts[0]?.toLowerCase() === 'payment' ? 'payment' : 'expense';
-                            const amt = parseFloat(parts[1]);
-                            const concept = parts[2] || 'Movimiento registrado';
-                            const cardQuery = parts[3] || '';
-                            const catQuery = parts[4] || '';
-
-                            if (isNaN(amt) || amt <= 0 || !cardQuery) {
-                                respuestaTexto = respuestaTexto.replace(match[0], '\n\nR Datos de transacción inválidos en la acción de finanzas.').trim();
+                            if (!dbFirebase) inicializarFirebase();
+                            if (!dbFirebase || !firebaseUid) {
+                                respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Firebase no configurado.').trim();
                             } else {
-                                try {
-                                    const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
-                                    const cardsSnap = await cardsRef.get();
-                                    let matchingCard = null;
-                                    cardsSnap.forEach(doc => {
-                                        const c = doc.data();
-                                        const cName = c.name.toLowerCase();
-                                        const qName = cardQuery.toLowerCase();
-                                        if (cName.includes(qName) || qName.includes(cName)) {
-                                            matchingCard = { id: doc.id, ...c };
-                                        }
-                                    });
+                                const parts = match[1].split('|').map(p => p.trim());
+                                const type = parts[0]?.toLowerCase() === 'payment' ? 'payment' : 'expense';
+                                const amt = parseFloat(parts[1]);
+                                const concept = parts[2] || (type === 'payment' ? 'Abono a tarjeta' : 'Gasto registrado');
+                                const cardQuery = parts[3] || '';
+                                const catQuery = parts[4] || '';
 
-                                    if (!matchingCard) {
-                                        respuestaTexto = respuestaTexto.replace(match[0], `\n\nR Tarjeta "${cardQuery}" no encontrada.`).trim();
-                                    } else {
-                                        const defaultCats = [' Supermercado', 'x Comida', ': Transporte', 'xS Hormiga', 'x Servicios', 'x Compras', 'x` Salud', ' Educación'];
-                                        const defaultPayCats = ['x Abono Capital', 'x Sueldo/Ingreso', 'x Transferencia'];
-                                        let category = (type === 'payment') ? 'x Abono Capital' : 'xS Hormiga';
+                                if (isNaN(amt) || amt <= 0 || !cardQuery) {
+                                    respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Datos de transacción inválidos en la acción de finanzas.').trim();
+                                } else {
+                                    try {
+                                        const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
+                                        const cardsSnap = await cardsRef.get();
+                                        let matchingCard = null;
+                                        const qName = cardQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                                        if (catQuery) {
-                                            const cleanCat = catQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                            const listToSearch = (type === 'payment') ? defaultPayCats : defaultCats;
-                                            for (const cat of listToSearch) {
-                                                const cleanListCat = cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                                                if (cleanListCat.includes(cleanCat)) {
-                                                    category = cat;
-                                                    break;
+                                        cardsSnap.forEach(doc => {
+                                            const c = doc.data();
+                                            const cName = (c.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                            if (cName.includes(qName) || qName.includes(cName)) {
+                                                matchingCard = { id: doc.id, ...c };
+                                            }
+                                        });
+
+                                        if (!matchingCard) {
+                                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ Tarjeta "${cardQuery}" no encontrada en Finanzas King.`).trim();
+                                        } else {
+                                            const defaultCats = ['🛒 Supermercado', '🍔 Comida', '⛽ Transporte', '🐜 Hormiga', '💡 Servicios', '📦 Compras', '💊 Salud', '🎓 Educación'];
+                                            const defaultPayCats = ['💵 Abono Capital', '💰 Sueldo/Ingreso', '🔄 Transferencia'];
+                                            let category = (type === 'payment') ? '💵 Abono Capital' : '🐜 Hormiga';
+
+                                            if (catQuery) {
+                                                const cleanCat = catQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                const listToSearch = (type === 'payment') ? defaultPayCats : defaultCats;
+                                                for (const cat of listToSearch) {
+                                                    const cleanListCat = cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                    if (cleanListCat.includes(cleanCat)) {
+                                                        category = cat;
+                                                        break;
+                                                    }
                                                 }
                                             }
+
+                                            let newBal = parseFloat(matchingCard.balance || 0);
+                                            if (type === 'expense') newBal += amt;
+                                            else newBal = Math.max(0, newBal - amt);
+
+                                            const batch = dbFirebase.batch();
+                                            const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
+                                            
+                                            const payload = {
+                                                amount: amt,
+                                                type,
+                                                cardId: matchingCard.id,
+                                                cardName: matchingCard.name,
+                                                concept,
+                                                category,
+                                                date: adminFirebase.firestore.Timestamp.fromDate(new Date())
+                                            };
+
+                                            batch.set(expRef, payload);
+                                            batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
+                                            await batch.commit();
+
+                                            const regReport = `\n\n✅ *Movimiento registrado (Finanzas King):*\n💳 *Tarjeta:* ${matchingCard.name}\n💰 *Monto:* $${amt.toFixed(2)} (${type === 'expense' ? 'Gasto' : 'Abono'})\n📌 *Concepto:* ${concept}\n🏷️ *Categoría:* ${category}\n📉 *Deuda Actualizada:* $${newBal.toFixed(2)}`;
+                                            respuestaTexto = respuestaTexto.replace(match[0], regReport).trim();
                                         }
-
-                                        let newBal = parseFloat(matchingCard.balance || 0);
-                                        if (type === 'expense') newBal += amt;
-                                        else newBal -= amt;
-                                        if (newBal < 0) newBal = 0;
-
-                                        const batch = dbFirebase.batch();
-                                        const expRef = dbFirebase.collection('users').doc(firebaseUid).collection('expenses').doc(Math.random().toString(36).slice(2));
-                                        
-                                        const payload = {
-                                            amount: amt,
-                                            type,
-                                            cardId: matchingCard.id,
-                                            cardName: matchingCard.name,
-                                            concept,
-                                            category,
-                                            date: adminFirebase.firestore.Timestamp.fromDate(new Date())
-                                        };
-
-                                        batch.set(expRef, payload);
-                                        batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
-                                        await batch.commit();
-
-                                        const regReport = `\n\nS& *Movimiento registrado (PWA):*\n *Tarjeta:* ${matchingCard.name}\n *Monto:* $${amt.toFixed(2)} (${type === 'expense' ? 'Gasto' : 'Abono'})\n *Concepto:* ${concept}\n *Categoría:* ${category}\n *Deuda:* $${newBal.toFixed(2)}`;
-                                        respuestaTexto = respuestaTexto.replace(match[0], regReport).trim();
+                                    } catch (e) {
+                                        console.error("Error en agentic finance add:", e);
+                                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n❌ Error al registrar movimiento: ${e.message}`).trim();
                                     }
-                                } catch (e) {
-                                    console.error("Error en agentic finance add:", e);
-                                    respuestaTexto = respuestaTexto.replace(match[0], `\n\nR Error al registrar movimiento: ${e.message}`).trim();
                                 }
                             }
                         }
