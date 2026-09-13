@@ -1253,19 +1253,47 @@ async function chequearVencimientosYNotificar(force = false) {
 }
 
 // ---------------------------------------------------------
-// INTEGRACIN DEL BOT DE TELEGRAM (RECEPTOR Y DESCARGADOR)
+// INTEGRACIÓN DEL BOT DE TELEGRAM (RECEPTOR Y ACTUALIZADOR DE FINANZAS)
 // ---------------------------------------------------------
 let telegramOffset = 0;
 let telegramPollingActive = false;
 
+async function enviarMensajeTelegram(chatId, texto) {
+    if (!telegramBotToken || !chatId) return;
+    try {
+        const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: texto
+            })
+        });
+    } catch (e) {
+        console.error("[❌ Telegram Send Error]:", e.message);
+    }
+}
+
 async function iniciarTelegramPolling() {
     if (!telegramBotToken) {
-        console.log("[x Telegram] Polling no iniciado: Falta telegramBotToken en admin.json.");
+        console.log("[ℹ️ Telegram] Polling no iniciado: Falta telegramBotToken en admin.json. Usa !bot settelegram <token> para activarlo.");
         return;
     }
     if (telegramPollingActive) return;
     telegramPollingActive = true;
-    console.log("[x Telegram] Iniciando servicio de escucha para bot de Telegram...");
+
+    try {
+        const meRes = await fetch(`https://api.telegram.org/bot${telegramBotToken}/getMe`);
+        if (meRes.ok) {
+            const meData = await meRes.json();
+            if (meData.ok) {
+                console.log(`[📲 Telegram] Conectado exitosamente como @${meData.result.username} (${meData.result.first_name}). Escuchando documentos...`);
+            }
+        }
+    } catch (errMe) {
+        console.error("[⚠️ Telegram] Error verificando token de bot:", errMe.message);
+    }
 
     const poll = async () => {
         if (!telegramBotToken) {
@@ -1286,11 +1314,11 @@ async function iniciarTelegramPolling() {
                     }
                 }
             } else {
-                console.error("[x Telegram] Error HTTP en getUpdates:", response.status);
+                console.error("[⚠️ Telegram] Error HTTP en getUpdates:", response.status);
                 await new Promise(resolve => setTimeout(resolve, 10000));
             }
         } catch (e) {
-            console.error("[x Telegram] Error en polling loop:", e.message);
+            console.error("[⚠️ Telegram] Error en polling loop:", e.message);
             await new Promise(resolve => setTimeout(resolve, 10000));
         }
         setTimeout(poll, 1000);
@@ -1298,7 +1326,83 @@ async function iniciarTelegramPolling() {
     poll();
 }
 
+// Iniciar polling de Telegram al arranque si el token existe
+if (telegramBotToken) {
+    iniciarTelegramPolling();
+}
+
 async function procesarMensajeTelegram(msgTeg) {
+    const tChatId = msgTeg.chat ? msgTeg.chat.id : null;
+
+    // 1. Manejo de texto / comandos en Telegram
+    if (msgTeg.text) {
+        const txt = msgTeg.text.trim().toLowerCase();
+
+        if (txt === '/start' || txt === '/ayuda' || txt === '/help') {
+            const bienvenida = `👑 *Bienvenido a Kingbot Finanzas*\n\n` +
+                `Envíame directamente por aquí:\n` +
+                `📄 *Estados de Cuenta* (PDF o foto)\n` +
+                `💵 *Comprobantes de Abono o Transferencia* (PDF o foto)\n` +
+                `🧾 *Tickets o Facturas de Compra* (PDF o foto)\n\n` +
+                `Y se actualizarán automáticamente en tu aplicación:\n` +
+                `🔗 https://finanzaskingapp.netlify.app/\n\n` +
+                `*Comandos disponibles:*\n` +
+                `• /tarjetas - Consulta deudas y límites de tus tarjetas\n` +
+                `• /vencimientos - Alertas de pagos próximos`;
+            await enviarMensajeTelegram(tChatId, bienvenida);
+            return;
+        }
+
+        if (txt === '/tarjetas' || txt === '/finanzas') {
+            if (!dbFirebase) inicializarFirebase();
+            if (!dbFirebase || !firebaseUid) {
+                await enviarMensajeTelegram(tChatId, "⚠️ Firebase no está configurado aún en el bot.");
+                return;
+            }
+            try {
+                const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
+                const snapshot = await cardsRef.get();
+                if (snapshot.empty) {
+                    await enviarMensajeTelegram(tChatId, "💳 No tienes tarjetas registradas en Finanzas King.");
+                    return;
+                }
+                let tDebt = 0, tLimit = 0;
+                let report = `💳 *ESTADO DE TARJETAS (Finanzas King)* 💳\n\n`;
+                snapshot.forEach(doc => {
+                    const c = doc.data();
+                    const debt = parseFloat(c.balance || 0);
+                    const limit = parseFloat(c.limit || 0);
+                    tDebt += debt; tLimit += limit;
+                    const avail = limit > 0 ? (limit - debt) : 0;
+                    report += `🔹 *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
+                    report += `   💰 Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
+                    if (limit > 0) report += `   💵 Disp: $${avail.toFixed(2)}\n`;
+                    if (c.cutDay || c.payDay) report += `   📅 Corte: ${c.cutDay || '?'} | Pago: ${c.payDay || '?'}\n`;
+                    report += `\n`;
+                });
+                const ratio = tLimit > 0 ? (tDebt / tLimit) * 100 : 0;
+                report += `📊 *Resumen Global:*\n🔴 Deuda Total: *$${tDebt.toFixed(2)}*\n🟢 Disponible Total: *$${(tLimit - tDebt).toFixed(2)}*\n📈 Endeudamiento: *${ratio.toFixed(1)}%*`;
+                await enviarMensajeTelegram(tChatId, report);
+                return;
+            } catch (e) {
+                await enviarMensajeTelegram(tChatId, `❌ Error consultando tarjetas: ${e.message}`);
+                return;
+            }
+        }
+
+        if (txt === '/vencimientos' || txt === '/alertas') {
+            try {
+                const alertaStr = await chequearVencimientosYNotificar(true);
+                await enviarMensajeTelegram(tChatId, alertaStr || "✅ Excelente noticia. No hay pagos pendientes próximos a vencer.");
+                return;
+            } catch (e) {
+                await enviarMensajeTelegram(tChatId, `❌ Error verificando vencimientos: ${e.message}`);
+                return;
+            }
+        }
+    }
+
+    // 2. Manejo de archivos (Documentos o Fotos)
     let fileId = null;
     let fileName = "archivo";
     let mimeType = "";
@@ -1316,10 +1420,16 @@ async function procesarMensajeTelegram(msgTeg) {
 
     if (!fileId) return;
 
-    console.log(`[x Telegram] Documento financiero detectado en Telegram. Descargando...`);
+    console.log(`[📲 Telegram] Documento recibido en Telegram: ${fileName}. Descargando y procesando...`);
     
+    if (tChatId) {
+        await enviarMensajeTelegram(tChatId, `📥 Recibí tu archivo: \`${fileName}\`.\n🔍 Analizándolo con IA para actualizar Finanzas King...`);
+    }
+
     if (adminChatId) {
-        await client.sendMessage(adminChatId, `x *Telegram Bot:* Se recibió un archivo en Telegram: \`${fileName}\`. Analizándolo...`);
+        try {
+            await client.sendMessage(adminChatId, `📲 *Telegram Bot:* Se recibió un archivo en Telegram: \`${fileName}\`. Analizándolo para Finanzas King...`);
+        } catch (errWp) {}
     }
 
     try {
@@ -1340,22 +1450,33 @@ async function procesarMensajeTelegram(msgTeg) {
 
         const replicaMsg = {
             reply: async (text) => {
+                // 1. Responder directamente en el chat de Telegram
+                if (tChatId) {
+                    await enviarMensajeTelegram(tChatId, text);
+                }
+                // 2. Notificar a WhatsApp
                 if (adminChatId) {
-                    await client.sendMessage(adminChatId, text);
-                } else {
-                    console.log("[x Telegram] Réplica WhatsApp omitida: adminChatId no definido. Mensaje:", text);
+                    try {
+                        await client.sendMessage(adminChatId, `📲 *[Telegram -> Finanzas King]*\n\n${text}`);
+                    } catch (errWp) {}
                 }
             }
         };
 
         const procesado = await procesarDocumentoFinanciero(media, replicaMsg);
-        if (!procesado && adminChatId) {
-            await client.sendMessage(adminChatId, ` *Telegram Bot:* El archivo \`${fileName}\` no contiene información financiera reconocible.`);
+        if (!procesado) {
+            const noFinMsg = `⚠️ El archivo \`${fileName}\` no contiene información financiera reconocible (estado de cuenta, comprobante de abono o ticket).`;
+            if (tChatId) await enviarMensajeTelegram(tChatId, noFinMsg);
+            if (adminChatId) {
+                try { await client.sendMessage(adminChatId, `📲 *Telegram Bot:* ${noFinMsg}`); } catch (errWp) {}
+            }
         }
     } catch (e) {
-        console.error("[x Telegram] Error al procesar documento recibido:", e);
+        console.error("[❌ Telegram] Error al procesar documento recibido:", e);
+        const errMsg = `❌ Error al procesar archivo en Telegram: ${e.message}`;
+        if (tChatId) await enviarMensajeTelegram(tChatId, errMsg);
         if (adminChatId) {
-            await client.sendMessage(adminChatId, `❌ *Telegram Bot:* Error al procesar archivo de Telegram: ${e.message}`);
+            try { await client.sendMessage(adminChatId, `❌ *Telegram Bot:* ${errMsg}`); } catch (errWp) {}
         }
     }
 }
@@ -3759,16 +3880,27 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             return msg.reply(`✅ *Kingbot:* UID de Firebase establecido con éxito: \`${firebaseUid}\``);
         }
 
-        if (comando === 'settelegramtoken') {
+        if (comando === 'settelegramtoken' || comando === 'settelegram' || comando === 'telegramtoken') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             const tokenInput = argumento.trim();
             if (!tokenInput) {
-                return msg.reply("❌ *Kingbot:* Proporcione su Token de Bot de Telegram.");
+                return msg.reply("❌ *Kingbot:* Proporcione su Token de Bot de Telegram obtenido de @BotFather.\n\nEjemplo: `!bot settelegram 123456789:ABCdefGhIJKlmNoPQ`");
             }
             telegramBotToken = tokenInput;
             guardarAdminJson();
+            telegramPollingActive = false;
             iniciarTelegramPolling();
-            return msg.reply(`✅ *Kingbot:* Token del Bot de Telegram registrado exitosamente. He iniciado el servicio de escucha.`);
+            return msg.reply(`✅ *Kingbot:* Token del Bot de Telegram registrado exitosamente. Servicio de escucha activado.`);
+        }
+
+        if (comando === 'telegram' || comando === 'estadotelegram') {
+            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (!telegramBotToken) {
+                return msg.reply("ℹ️ *Kingbot:* El Bot de Telegram no está configurado actualmente.\nPara activarlo escribe: `!bot settelegram <TOKEN_DE_BOTFATHER>`");
+            }
+            const estado = telegramPollingActive ? "✅ Activo y escuchando" : "⚠️ Detenido";
+            const mask = telegramBotToken.substring(0, 8) + '...' + telegramBotToken.substring(telegramBotToken.length - 5);
+            return msg.reply(`📲 *ESTADO DE TELEGRAM (Finanzas King):*\n\n• Token: \`${mask}\`\n• Estado: *${estado}*\n\nPuedes enviar estados de cuenta (PDF o foto), comprobantes o tickets directamente a tu bot de Telegram y se sincronizarán automáticamente con Finanzas King.`);
         }
 
         if (comando === 'tarjetas' || comando === 'finanzas') {
