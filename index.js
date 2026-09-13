@@ -312,7 +312,7 @@ let canalesYoutube = [
 ];
 
 let agentesCustom = {
-    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Tareas programadas: [ACTION_SCHEDULE: cron_expr | descripcion | prompt_natural] (IMPORTANTE: cron_expr DEBE ser exacto. Ej: si piden \\\"en 1 minuto\\\" y la hora actual es 15:30, debes generar \\\"31 15 * * *\\\")\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
+    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc. Ej: [ACTION_SCHEDULE: 05:00 | diaria | Dame una frase motivacional poderosa e inspiradora | Frase motivacional diaria] o [ACTION_SCHEDULE: 08:00 | diaria | Busca las noticias de futbol más importantes de hoy | Noticias futbol diarias])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
 };
 
 let botGlobalmenteActivo = true;
@@ -372,6 +372,42 @@ if (fs.existsSync('alarmas.json')) {
 let tareasProgramadas = [];
 if (fs.existsSync('tareas_programadas.json')) {
     try { tareasProgramadas = JSON.parse(fs.readFileSync('tareas_programadas.json', 'utf8')); } catch(e){}
+}
+
+function guardarTareasProgramadas() {
+    fs.writeFileSync('tareas_programadas.json', JSON.stringify(tareasProgramadas, null, 2));
+}
+
+function horaToCron(horaStr) {
+    if (!horaStr) return null;
+    let s = horaStr.trim().toLowerCase();
+    
+    // Si ya es formato cron (5 campos separados por espacio)
+    if (s.split(/\s+/).length === 5) {
+        return horaStr.trim();
+    }
+    
+    // Detectar AM/PM
+    const isPM = s.includes('pm') || s.includes('p.m.');
+    const isAM = s.includes('am') || s.includes('a.m.');
+    s = s.replace(/am|pm|a\.m\.|p\.m\./g, '').trim();
+    
+    let h = 0, m = 0;
+    if (s.includes(':')) {
+        const parts = s.split(':');
+        h = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10);
+    } else {
+        h = parseInt(s, 10);
+        m = 0;
+    }
+    
+    if (isNaN(h) || isNaN(m) || m < 0 || m > 59) return null;
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+    if (h < 0 || h > 23) return null;
+    
+    return `${m} ${h} * * *`;
 }
 
 function guardarAlarmas() {
@@ -1199,7 +1235,29 @@ client.on('ready', () => {
                 alarma.ultimoDisparo = fechaHoraActual;
                 try {
                     console.log(`[⏰ ALARMA DISPARADA] Enviando alarma programada para las ${horaAlarmaNorm}: "${alarma.mensaje}" a ${alarma.chatId}`);
-                    await client.sendMessage(alarma.chatId, `⏰ *¡ALARMA ACTIVADA!* ⏰\n\nSeñor Geovanny, es hora:\n👉 _"${alarma.mensaje}"_`);
+                    
+                    const msgLower = (alarma.mensaje || "").toLowerCase();
+                    const esAccion = msgLower.startsWith('!bot ') || 
+                                     msgLower.includes('frase') || 
+                                     msgLower.includes('noticia') || 
+                                     msgLower.includes('buscar') || 
+                                     msgLower.includes('clima') || 
+                                     msgLower.includes('resumen') || 
+                                     msgLower.includes('motivacion') || 
+                                     msgLower.includes('reflexion') || 
+                                     msgLower.includes('versiculo');
+
+                    if (esAccion) {
+                        await ejecutarAccionProgramada({
+                            accion: alarma.mensaje,
+                            hora: horaAlarmaNorm,
+                            chatId: alarma.chatId,
+                            descripcion: alarma.mensaje
+                        });
+                    } else {
+                        await client.sendMessage(alarma.chatId, `⏰ *¡ALARMA ACTIVADA!* ⏰\n\nSeñor Geovanny, es hora:\n👉 _"${alarma.mensaje}"_`);
+                    }
+
                     if (!alarma.recurrente) {
                         alarmasAEliminar.push(i);
                     }
@@ -1217,43 +1275,99 @@ client.on('ready', () => {
         }
     }, { timezone: "America/El_Salvador" });
 
+    // Función ejecutora de tareas programadas (soporta comandos e IA directa)
+    async function ejecutarAccionProgramada(tarea) {
+        const destChat = tarea.chatId || adminChatId;
+        if (!destChat) {
+            console.error("[⏰ CRON] Error: No hay chatId registrado para enviar la tarea programada:", tarea.descripcion || tarea.accion);
+            return;
+        }
+
+        const horaLabel = tarea.hora ? ` (${tarea.hora})` : '';
+        const accion = (tarea.accion || tarea.prompt || tarea.descripcion || "").trim();
+        console.log(`[⏰ CRON] Disparando tarea programada: "${accion}" para ${destChat}`);
+
+        // Si es un comando de Kingbot (!bot ...)
+        if (accion.toLowerCase().startsWith('!bot ') || accion.toLowerCase().startsWith('.')) {
+            try {
+                const fakeMsg = {
+                    body: accion,
+                    from: destChat,
+                    to: destChat,
+                    fromMe: false,
+                    hasMedia: false,
+                    timestamp: Math.floor(Date.now() / 1000),
+                    getChat: async () => ({ id: { _serialized: destChat }, isGroup: destChat.endsWith('@g.us'), sendStateTyping: async () => {}, fetchMessages: async () => [] }),
+                    getContact: async () => ({ number: "User", pushname: "Usuario" }),
+                    reply: async (txt, ch, opts) => await client.sendMessage(destChat, txt, opts || {}),
+                    downloadMedia: async () => null
+                };
+                client.emit('message_create', fakeMsg);
+                return;
+            } catch (err) {
+                console.error("[CRON Command Error]:", err.message);
+            }
+        }
+
+        // Si es una petición para la IA (frases motivacionales, noticias, resúmenes, etc.)
+        try {
+            const respuestaAI = await ejecutarGeminiConRetries(async (model) => {
+                const prompt = `Eres Kingbot, el asistente personal inteligente en WhatsApp.
+Esta es una tarea automática programada por el usuario para entregarse diariamente a esta hora${horaLabel}.
+Instrucción del usuario: "${accion}".
+Genera el contenido solicitado de forma completa, motivadora, atractiva y 100% en español.
+Usa buen formato de WhatsApp (negritas, listas y emojis cuando sea oportuno).
+Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario. No incluyas metadatos ni comentarios como 'Aquí tienes'.`;
+                const result = await model.generateContent(prompt);
+                return result.response.text();
+            });
+
+            if (respuestaAI && respuestaAI.trim()) {
+                await client.sendMessage(destChat, `⏰ *Kingbot - Tarea Programada${horaLabel}:*\n\n${limpiarRespuestaGemini(respuestaAI)}`);
+            }
+        } catch (e) {
+            console.error("[CRON AI Error]:", e.message);
+            try {
+                await client.sendMessage(destChat, `⏰ *Kingbot (Aviso Programado${horaLabel}):*\nEs hora de: _"${accion}"_\n_(No se pudo consultar a la IA en este instante)._`);
+            } catch (e2) {}
+        }
+    }
     
-    // Inicializar Tareas Programadas
+    // Inicializar Tareas Programadas con Timezone de El Salvador
     global.activeCronJobs = new Map();
     global.inicializarTareas = () => {
+        for (const [idx, job] of global.activeCronJobs.entries()) {
+            try { job.stop(); } catch(e) {}
+        }
+        global.activeCronJobs.clear();
+
         tareasProgramadas.forEach((tarea, index) => {
-            if (global.activeCronJobs.has(index)) {
-                global.activeCronJobs.get(index).stop();
-            }
             try {
-                const job = cron.schedule(tarea.cron, async () => {
+                const cronExpr = tarea.cron || horaToCron(tarea.hora);
+                if (!cronExpr) {
+                    console.error(`[CRON] Expresión cron no válida para tarea ${index}:`, tarea);
+                    return;
+                }
+
+                const job = cron.schedule(cronExpr, async () => {
                     if (!botGlobalmenteActivo) return;
-                    console.log("[🤖 CRON] Ejecutando tarea:", tarea.descripcion);
-                    try {
-                        const rawBody = tarea.prompt || tarea.descripcion;
-                        const promptText = rawBody.toLowerCase().startsWith('!bot') ? rawBody : `!bot ${rawBody}`;
-                        const fakeMsg = {
-                            body: promptText,
-                            from: adminChatId,
-                            to: adminChatId,
-                            fromMe: true,
-                            hasMedia: false,
-                            timestamp: Math.floor(Date.now() / 1000),
-                            getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false, sendStateTyping: async () => {}, fetchMessages: async () => [] }),
-                            getContact: async () => ({ number: "Admin", pushname: "Admin" }),
-                            reply: async (txt, chatId, options) => {
-                                await client.sendMessage(adminChatId, txt, options);
-                            },
-                            downloadMedia: async () => null
-                        };
-                        client.emit('message_create', fakeMsg);
-                    } catch (e) {
-                        console.error("Error en tarea programada:", e);
+                    await ejecutarAccionProgramada(tarea);
+
+                    // Si es una tarea no recurrente (una sola vez), eliminarla tras disparar
+                    if (tarea.recurrente === false) {
+                        const removeIdx = tareasProgramadas.indexOf(tarea);
+                        if (removeIdx !== -1) {
+                            tareasProgramadas.splice(removeIdx, 1);
+                            guardarTareasProgramadas();
+                            global.inicializarTareas();
+                        }
                     }
-                }, { scheduled: true });
+                }, { scheduled: true, timezone: "America/El_Salvador" });
+
                 global.activeCronJobs.set(index, job);
+                console.log(`[⏰ CRON] Tarea [${index + 1}] activa: "${tarea.descripcion || tarea.accion}" -> Cron [${cronExpr}] (Zona: El Salvador)`);
             } catch (e) {
-                console.error("Cron inválido para tarea " + index, e);
+                console.error("Error al programar cron para tarea " + index, e);
             }
         });
     };
@@ -2039,8 +2153,12 @@ client.on('message_create', async (msg) => {
         }
     }
 
-    // adminChatId auto-assignment removed to prevent security flaw.
-    // Use !bot claimadmin to set yourself as the admin.
+    // Auto-asignar admin si aún no existe y el mensaje es en chat privado
+    if (!isGroup && !adminChatId) {
+        adminChatId = chatId;
+        guardarAdminJson();
+        console.log(`[!] Administrador auto-asignado a chat privado: ${chatId}`);
+    }
 
     if (primerPalabra === '!iniciarbot' || primerPalabra === '!botgrupal') {
         if (primerPalabra === '!iniciarbot' && isGroup) return msg.reply("❌ Usa *!botgrupal* en grupos.");
@@ -3369,32 +3487,75 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
         }
 
         
+        if (comando === 'programar') {
+            if (!argumento) {
+                return msg.reply("❌ *Uso del comando:* `!bot programar <HH:MM> | <instrucción o comando> | [diaria/unavez]`\n\n*Ejemplos prácticos:*\n• `!bot programar 05:00 | Dame una frase motivacional poderosa para iniciar el día`\n• `!bot programar 08:00 | Busca las noticias de futbol más importantes de hoy`\n• `!bot programar 08:30 | !bot noticias | diaria`\n• `!bot programar 21:00 | Recordar planificar el día de mañana | diaria`");
+            }
+            const parts = argumento.split('|').map(p => p.trim());
+            const horaStr = parts[0];
+            const accionStr = parts[1];
+            const tipoStr = (parts[2] || 'diaria').toLowerCase();
+            const recurrente = (tipoStr !== 'unavez' && tipoStr !== 'una vez' && tipoStr !== 'false');
+
+            if (!horaStr || !accionStr) {
+                return msg.reply("❌ *Formato incompleto.*\nDebes indicar la hora y la instrucción separadas por `|`:\n`!bot programar 05:00 | Dame una frase motivacional`");
+            }
+
+            const cronExpr = horaToCron(horaStr);
+            if (!cronExpr) {
+                return msg.reply(`❌ *Hora no válida ("${horaStr}").*\nUsa formato de 24 horas (ej. 05:00, 08:00, 14:30) o 12 horas (ej. 5:00 AM, 8:00 PM).`);
+            }
+
+            const nuevaTarea = {
+                hora: horaStr,
+                cron: cronExpr,
+                recurrente,
+                accion: accionStr,
+                prompt: accionStr,
+                descripcion: accionStr.length > 60 ? accionStr.substring(0, 57) + '...' : accionStr,
+                chatId: chatId,
+                creada: new Date().toISOString()
+            };
+
+            tareasProgramadas.push(nuevaTarea);
+            guardarTareasProgramadas();
+            if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
+
+            const recLabel = recurrente ? 'Todos los días' : 'Una sola vez';
+            return msg.reply(`📅 *¡Tarea Programada con Éxito!*
+⏰ *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
+👉 *Instrucción:* "${accionStr}"
+📍 *Destino:* Este chat
+_Para ver todas tus tareas programadas escribe: *!bot programados*_`);
+        }
+
         if (comando === 'programados') {
             if (tareasProgramadas.length === 0) {
-                return msg.reply("❌ *Kingbot:* No hay tareas programadas.");
+                return msg.reply("❌ *Kingbot:* No tienes tareas programadas activas.\n\n_Puedes programar una escribiendo:_\n`!bot programar 05:00 | Frase motivacional`");
             }
-            let list = `📅 *TAREAS PROGRAMADAS:*\n\n`;
+            let list = `📅 *TAREAS PROGRAMADAS ACTIVAS:*\n\n`;
             tareasProgramadas.forEach((t, i) => {
-                list += `*${i}*. [ ${t.cron} ] - ${t.descripcion}\n`;
+                const rec = t.recurrente !== false ? '🔁 Diaria' : '1️⃣ Una sola vez';
+                list += `*${i + 1}*. [ ⏰ ${t.hora || t.cron} ] _(${rec})_\n   👉 ${t.descripcion || t.accion}\n\n`;
             });
-            list += `\n_Use !bot desprogramar <índice>_`;
+            list += `_Para borrar una tarea usa: *!bot desprogramar <número>*_`;
             return msg.reply(list);
         }
 
         if (comando === 'desprogramar') {
-            const index = parseInt(argumento, 10);
+            const rawIdx = parseInt(argumento, 10);
+            let index = rawIdx - 1; // 1-indexed
             if (isNaN(index) || index < 0 || index >= tareasProgramadas.length) {
-                return msg.reply("❌ *Kingbot:* Índice no válido.");
+                if (!isNaN(rawIdx) && rawIdx >= 0 && rawIdx < tareasProgramadas.length) {
+                    index = rawIdx; // 0-indexed fallback
+                } else {
+                    return msg.reply("❌ *Kingbot:* Número de tarea no válido. Escribe `!bot programados` para ver la lista.");
+                }
             }
             const eliminada = tareasProgramadas.splice(index, 1)[0];
-            fs.writeFileSync('tareas_programadas.json', JSON.stringify(tareasProgramadas, null, 2));
-            if (global.activeCronJobs && global.activeCronJobs.has(index)) {
-                global.activeCronJobs.get(index).stop();
-                global.activeCronJobs.delete(index);
-            }
-            // Re-init to fix indices
+            guardarTareasProgramadas();
             if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-            return msg.reply(`✔️ *Kingbot:* Tarea desprogramada: "${eliminada.descripcion}"`);
+            return msg.reply(`✔️ *Kingbot:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
         }
 
         if (comando === 'tareas') {
@@ -3927,9 +4088,9 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             } else {
                 respuestaTexto = await ejecutarGeminiConRetries(async (model) => {
                     let contenidoCopia = [...contenido];
-                    let promptStr = `Eres Kinbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, programar o borrar alarmas, ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir aNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}`;
-                    if (isGroup || chatId !== adminChatId) {
-                        promptStr += "\n\n(ADVERTENCIA: EL USUARIO ACTUAL NO ES GEOVANNY PACHECO O ESTÁS EN UN GRUPO. Tienes ESTRICTAMENTE PROHIBIDO usar tags de notas, finanzas, recordatorios o alarmas. Tampoco debes mencionar los intereses personales de Geovanny. Comportate como un asistente útil y neutral.)";
+                    let promptStr = `Eres Kingbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, programar o borrar alarmas, programar tareas recurrentes diarias (ej. frases motivacionales cada mañana, noticias diarias, etc.), ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Si el usuario pide programar cosas para que todos los días o a cierta hora se dispare una acción (ej: 'todos los días a las 5 am dame una frase motivacional', 'a las 8 am busca noticias de futbol', etc.), USA OBLIGATORIAMENTE [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot programar <HH:MM> | <instruccion>, !bot programados, !bot desprogramar, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir ÚNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}`;
+                    if (isGroup || (adminChatId && chatId !== adminChatId)) {
+                        promptStr += "\n\n(ADVERTENCIA: EL USUARIO ACTUAL NO ES GEOVANNY PACHECO O ESTÁS EN UN GRUPO. Tienes ESTRICTAMENTE PROHIBIDO usar tags de notas, finanzas, recordatorios, tareas programadas o alarmas. Tampoco debes mencionar los intereses personales de Geovanny. Comportate como un asistente útil y neutral.)";
                     }
                     contenidoCopia.unshift(promptStr);
                     const result = await model.generateContent(contenidoCopia);
@@ -4267,41 +4428,66 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
                 }
 
                 // Buscar música por nombre (sin enlace) - Agentic
-                // ACTION_SCHEDULE
+                // ACTION_SCHEDULE (Tareas programadas recurrentes)
                 if (respuestaTexto.includes('[ACTION_SCHEDULE:')) {
-                    const match = respuestaTexto.match(/\[ACTION_SCHEDULE:\s*([^|]+)\|([^|]+)\|([^\]]+)\]/);
+                    const match = respuestaTexto.match(/\[ACTION_SCHEDULE:\s*([^\]]+)\]/);
                     if (match) {
-                        const cronExpr = match[1].trim();
-                        const desc = match[2].trim();
-                        const tagAccion = match[3].trim();
-                        
-                        tareasProgramadas.push({ cron: cronExpr, descripcion: desc, prompt: tagAccion });
-                        fs.writeFileSync('tareas_programadas.json', JSON.stringify(tareasProgramadas, null, 2));
-                        
-                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n📅 *Tarea programada creada:* "${desc}" (${cronExpr})`).trim();
-                        
-                        try {
-                            const newIdx = tareasProgramadas.length - 1;
-                            const job = cron.schedule(cronExpr, async () => {
-                                if (!botGlobalmenteActivo) return;
-                                const promptText = tagAccion.toLowerCase().startsWith('!bot') ? tagAccion : `!bot ${tagAccion}`;
-                                const fakeMsg = {
-                                    body: promptText,
-                                    from: adminChatId,
-                                    to: adminChatId,
-                                    fromMe: true,
-                                    hasMedia: false,
-                                    timestamp: Math.floor(Date.now() / 1000),
-                                    getChat: async () => ({ id: { _serialized: adminChatId }, isGroup: false, sendStateTyping: async () => {}, fetchMessages: async () => [] }),
-                                    getContact: async () => ({ number: "Admin", pushname: "Admin" }),
-                                    reply: async (txt, ch, opts) => await client.sendMessage(adminChatId, txt, opts)
-                                };
-                                console.log("[🤖 CRON] Disparando tarea dinámica:", tagAccion);
-                                client.emit('message_create', fakeMsg);
-                            }, { scheduled: true });
-                            if (global.activeCronJobs) global.activeCronJobs.set(newIdx, job);
-                        } catch(e) {
-                            console.error("Cron Error", e);
+                        const partes = match[1].split('|').map(p => p.trim());
+                        let horaStr = partes[0] || '08:00';
+                        let recurrente = true;
+                        let instruccion = '';
+                        let descripcion = '';
+
+                        if (partes.length === 2) {
+                            // Formato: HH:MM | instruccion
+                            instruccion = partes[1];
+                            descripcion = partes[1];
+                        } else if (partes.length === 3) {
+                            // HH:MM | diaria/unavez | instruccion  O  cron | descripcion | instruccion
+                            if (['diaria', 'diario', 'recurrente', 'unavez', 'una vez', 'once'].includes(partes[1].toLowerCase())) {
+                                recurrente = !['unavez', 'una vez', 'once'].includes(partes[1].toLowerCase());
+                                instruccion = partes[2];
+                                descripcion = partes[2];
+                            } else {
+                                descripcion = partes[1];
+                                instruccion = partes[2];
+                            }
+                        } else if (partes.length >= 4) {
+                            // Formato: HH:MM | diaria/unavez | instruccion | descripcion
+                            recurrente = !['unavez', 'una vez', 'once'].includes(partes[1].toLowerCase());
+                            instruccion = partes[2];
+                            descripcion = partes[3];
+                        }
+
+                        if (!instruccion) instruccion = descripcion || "Tarea programada";
+                        if (!descripcion) descripcion = instruccion;
+
+                        const cronExpr = horaToCron(horaStr);
+                        if (cronExpr) {
+                            const nuevaTarea = {
+                                id: Date.now(),
+                                hora: horaStr,
+                                cron: cronExpr,
+                                recurrente: recurrente,
+                                accion: instruccion,
+                                prompt: instruccion,
+                                descripcion: descripcion.length > 60 ? descripcion.substring(0, 57) + '...' : descripcion,
+                                chatId: chatId,
+                                creada: new Date().toISOString()
+                            };
+
+                            tareasProgramadas.push(nuevaTarea);
+                            guardarTareasProgramadas();
+                            if (typeof global.inicializarTareas === 'function') {
+                                global.inicializarTareas();
+                            }
+
+                            const tipoTexto = recurrente ? "todos los días" : "una sola vez";
+                            console.log(`[🤖 Agentic] Tarea programada guardada: "${descripcion}" a las ${horaStr} (${cronExpr}) para ${chatId}`);
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n📅 *Tarea programada confirmada:*\n👉 "${descripcion}"\n⏰ Hora: ${horaStr} (${tipoTexto} - Zona El Salvador)\n_Escribe *!bot programados* para ver todas tus tareas activas._`).trim();
+                        } else {
+                            console.error(`[🤖 Agentic] Formato de hora/cron inválido: ${horaStr}`);
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No pude reconocer el formato de hora "${horaStr}". Por favor especifica la hora como HH:MM (ej. 05:00 o 5:00 AM).`).trim();
                         }
                     }
                 }
