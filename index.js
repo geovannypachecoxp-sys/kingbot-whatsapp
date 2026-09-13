@@ -1466,8 +1466,14 @@ async function procesarMensajeTelegram(msgTeg) {
                 `🔗 https://finanzaskingapp.netlify.app/\n\n` +
                 `*Comandos disponibles:*\n` +
                 `• /tarjetas - Consulta deudas y límites de tus tarjetas\n` +
-                `• /vencimientos - Alertas de pagos próximos`;
+                `• /vencimientos - Alertas de pagos próximos\n` +
+                `• /id - Ver tu Telegram Chat ID para automatizaciones`;
             await enviarMensajeTelegram(tChatId, bienvenida);
+            return;
+        }
+
+        if (txt === '/id' || txt === '/chatid' || txt === '/myid') {
+            await enviarMensajeTelegram(tChatId, `🆔 *Tu Telegram Chat ID es:*\n\`${tChatId}\`\n\n_(Copia este número para configurarlo en tu script de Gmail o automatizaciones)_`);
             return;
         }
 
