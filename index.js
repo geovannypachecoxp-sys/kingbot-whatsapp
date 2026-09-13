@@ -164,7 +164,15 @@ function guardarKeysYCuotas() {
     guardarEnArchivoTxt();
 }
 
-const MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-2.5-flash'];
+const MODELS = [
+    'gemini-3.7-flash',
+    'gemini-3.5-flash',
+    'gemini-flash-lite-latest',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-3.6-flash',
+    'gemini-3.8-flash'
+];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
@@ -177,7 +185,7 @@ function obtenerModel(modelName = null) {
     }
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAIInstance = new GoogleGenerativeAI(API_KEYS[currentKeyIndex]);
-    const modelo = modelName || MODELS[currentModelIndex] || 'gemini-3.6-flash';
+    const modelo = modelName || MODELS[currentModelIndex] || 'gemini-3.7-flash';
     return genAIInstance.getGenerativeModel({ model: modelo });
 }
 
@@ -196,7 +204,7 @@ function rotarApiKey() {
     }
     
     currentKeyIndex =  (currentKeyIndex + 1) % API_KEYS.length;
-    console.log('[!] Todas las keys agotadas. Rotando a la API Key numero ' + (currentKeyIndex + 1) + ' por descarte.');
+    console.log('[!] Todas las keys agotadas para este modelo. Rotando a la API Key numero ' + (currentKeyIndex + 1) + ' por descarte.');
     guardarKeysYCuotas();
     return true;
 }
@@ -239,6 +247,7 @@ async function ejecutarGeminiConRetries(callback) {
                 console.log(`[!] Modelo ${MODELS[currentModelIndex]} no disponible (404). Rotando inmediatamente al siguiente modelo.`);
                 currentModelIndex = (currentModelIndex + 1) % MODELS.length;
                 keysTriedForCurrentModel = 0;
+                keyStatus.forEach(k => { if (k) k.status = 'Activa'; });
             } else if (error.message.includes('429') || error.message.includes('403') || error.message.includes('quota') || error.message.includes('limit')) {
                 if (keyStatus[currentKeyIndex]) {
                     keyStatus[currentKeyIndex].status = 'Agotada';
@@ -249,10 +258,12 @@ async function ejecutarGeminiConRetries(callback) {
                     keysTriedForCurrentModel = 0;
                     currentModelIndex = (currentModelIndex + 1) % MODELS.length;
                     console.log(`[!] Todos los keys fallaron para este modelo. Rotando al modelo: ${MODELS[currentModelIndex]}`);
+                    keyStatus.forEach(k => { if (k) k.status = 'Activa'; });
                 }
             } else if (error.message.includes('503') || error.message.includes('500') || error.message.includes('overloaded')) {
                 currentModelIndex = (currentModelIndex + 1) % MODELS.length;
                 keysTriedForCurrentModel = 0;
+                keyStatus.forEach(k => { if (k) k.status = 'Activa'; });
                 console.log(`[!] Modelo saturado (503). Rotando directamente al modelo: ${MODELS[currentModelIndex]}`);
                 await new Promise(r => setTimeout(r, 1000));
             } else {
@@ -261,6 +272,7 @@ async function ejecutarGeminiConRetries(callback) {
                 if (keysTriedForCurrentModel >= API_KEYS.length) {
                     keysTriedForCurrentModel = 0;
                     currentModelIndex = (currentModelIndex + 1) % MODELS.length;
+                    keyStatus.forEach(k => { if (k) k.status = 'Activa'; });
                 }
             }
         }
@@ -905,8 +917,17 @@ Responde ÚNICAMENTE con el objeto JSON limpio. Sin markdown ni texto adicional.
             return result.response.text();
         });
 
-        const cleanJSON = respuesta.replace(/```json|```/g, '').trim();
-        const data = JSON.parse(cleanJSON);
+        let cleanJSON = respuesta.replace(/```json|```/g, '').trim();
+        const jsonMatch = respuesta.match(/\{[\s\S]*\}/);
+        if (jsonMatch) cleanJSON = jsonMatch[0];
+        
+        let data;
+        try {
+            data = JSON.parse(cleanJSON);
+        } catch (jsonErr) {
+            console.error("[!] Error parseando JSON de Gemini:", respuesta);
+            throw new Error("La IA no devolvió un formato estructurado legible.");
+        }
 
         if (!data.is_financial) {
             return false; // No es un documento financiero, seguir el flujo normal
