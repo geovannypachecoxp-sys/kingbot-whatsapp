@@ -312,7 +312,7 @@ let canalesYoutube = [
 ];
 
 let agentesCustom = {
-    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc. Ej: [ACTION_SCHEDULE: 05:00 | diaria | Dame una frase motivacional poderosa e inspiradora | Frase motivacional diaria] o [ACTION_SCHEDULE: 08:00 | diaria | Busca las noticias de futbol más importantes de hoy | Noticias futbol diarias])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
+    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *YouTube:* !bot videos (ultimos videos de tus canales), !bot agregarcanal <enlace/canal>, !bot canales, !bot borrarcanal <n>\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (PWA):* !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar nota: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Consultar últimos videos de YouTube de canales: [ACTION_YOUTUBE_CHECK] o [ACTION_YOUTUBE_CHECK: nombre_o_canal]\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc. Ej: [ACTION_SCHEDULE: 05:00 | diaria | Dame una frase motivacional poderosa e inspiradora | Frase motivacional diaria] o [ACTION_SCHEDULE: 08:00 | diaria | Busca las noticias de futbol más importantes de hoy | Noticias futbol diarias])\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Ver tarjetas/finanzas: [ACTION_FINANCE_CARDS]\n- Registrar gasto/abono: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment)\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
 };
 
 let botGlobalmenteActivo = true;
@@ -331,6 +331,18 @@ if (fs.existsSync('canales.json')) {
             fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
         }
     } catch (e) { console.error("No se pudo cargar canal.json"); }
+} else {
+    try {
+        fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
+    } catch (e) {}
+}
+
+function guardarCanales() {
+    try {
+        fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
+    } catch (e) {
+        console.error("Error al guardar canales.json:", e.message);
+    }
 }
 
 // Cargar agentes personalizados
@@ -550,15 +562,73 @@ const chatsActivos = new Set();
 const sesionesChat = new Map();
 const esperandoAyudaOpcion = new Map();
 
-async function obtenerIdCanal(url) {
-    if (url.startsWith('UC') && url.length === 24) return url;
+async function obtenerIdCanal(entrada) {
+    if (!entrada) return null;
+    let str = entrada.trim();
+    if (str.startsWith('UC') && str.length === 24) return str;
+
+    const directMatch = str.match(/channel\/(UC[a-zA-Z0-9_-]{22})/i);
+    if (directMatch) return directMatch[1];
+
     try {
-        const response = await fetch(url);
-        const html = await response.text();
-        const match = html.match(/"browseId":"(UC[a-zA-Z0-9_-]{22})"/);
+        let fetchUrl = str;
+        if (str.startsWith('@')) {
+            fetchUrl = 'https://www.youtube.com/' + str;
+        } else if (str.includes('youtube.com') || str.includes('youtu.be')) {
+            fetchUrl = str.startsWith('http') ? str : 'https://' + str;
+        } else {
+            // Buscar por nombre o término en YouTube
+            fetchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(str)}&sp=EgIQAg%253D%253D`;
+        }
+
+        const res = await fetch(fetchUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept-Language': 'es,en;q=0.9'
+            }
+        });
+        const html = await res.text();
+
+        const match = html.match(/"channelId":"(UC[a-zA-Z0-9_-]{22})"/i) ||
+                      html.match(/"browseId":"(UC[a-zA-Z0-9_-]{22})"/i) ||
+                      html.match(/<meta itemprop="identifier" content="(UC[a-zA-Z0-9_-]{22})">/i) ||
+                      html.match(/<meta itemprop="channelId" content="(UC[a-zA-Z0-9_-]{22})">/i) ||
+                      html.match(/youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{22})/i);
+
         if (match && match[1]) return match[1];
-    } catch (e) { console.error("Error obteniendo ID:", e); }
+    } catch (e) {
+        console.error("Error obteniendo ID de canal:", e.message);
+    }
     return null;
+}
+
+async function obtenerUltimosVideosCanal(canalId, limite = 3) {
+    if (!canalId) return null;
+    try {
+        const feed = await rssParser.parseURL('https://www.youtube.com/feeds/videos.xml?channel_id=' + canalId);
+        if (!feed || !feed.items) return null;
+        return {
+            canalNombre: feed.title || 'Canal de YouTube',
+            canalId: canalId,
+            videos: feed.items.slice(0, limite).map(item => {
+                let fechaFormato = '';
+                if (item.pubDate || item.isoDate) {
+                    try {
+                        const d = new Date(item.pubDate || item.isoDate);
+                        fechaFormato = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                    } catch(e){}
+                }
+                return {
+                    titulo: item.title,
+                    link: item.link,
+                    fecha: fechaFormato
+                };
+            })
+        };
+    } catch (e) {
+        console.error(`Error obteniendo videos del canal ${canalId}:`, e.message);
+        return null;
+    }
 }
 
 async function downloadTikTok(url) {
@@ -1155,28 +1225,36 @@ client.on('ready', () => {
 
 
     const verificarYouTube = async () => {
-        if (!botGlobalmenteActivo || !adminChatId || !canalesYoutube || canalesYoutube.length === 0) return;
+        if (!botGlobalmenteActivo || !canalesYoutube || canalesYoutube.length === 0) return;
+        const defaultDest = adminChatId || (canalesYoutube.find(c => c.chatId)?.chatId);
+        if (!defaultDest) return;
+
         for (let i = 0; i < canalesYoutube.length; i++) {
             const canal = canalesYoutube[i];
             try {
-                const feed = await rssParser.parseURL('https://www.youtube.com/feeds/videos.xml?channel_id=' + canal.id);
-                if (feed.items && feed.items.length > 0) {
-                    const videoNuevo = feed.items[0];
-                    if (canal.ultimoVideo !== '' && canal.ultimoVideo !== videoNuevo.link) {
-                        const alerta = `x *¡Nuevo Video en ${feed.title || canal.nombre}!*` + '\n\n*' + videoNuevo.title + '*\n' + videoNuevo.link + `\n\n_Escribe *!bot video ` + videoNuevo.link + `* si quiere descargarlo._`;
-                        client.sendMessage(adminChatId, alerta);
+                const info = await obtenerUltimosVideosCanal(canal.id, 1);
+                if (info && info.videos && info.videos.length > 0) {
+                    const videoNuevo = info.videos[0];
+                    const dest = canal.chatId || defaultDest;
+
+                    if (canal.ultimoVideo && canal.ultimoVideo !== videoNuevo.link && dest) {
+                        const alerta = `🔴 *¡Nuevo Video en ${info.canalNombre}!*\n\n*${videoNuevo.titulo}*\n${videoNuevo.link}\n\n_Escribe *!bot video ${videoNuevo.link}* si deseas descargarlo._`;
+                        await client.sendMessage(dest, alerta);
                     }
                     if (canal.ultimoVideo !== videoNuevo.link) {
                         canal.ultimoVideo = videoNuevo.link;
-                        canal.nombre = feed.title || canal.nombre;
-                        fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
+                        canal.nombre = info.canalNombre;
+                        guardarCanales();
                     }
                 }
-            } catch (e) { console.error(`Error en YouTube para canal ${canal.id}:`, e.message); }
+            } catch (e) {
+                console.error(`Error en YouTube para canal ${canal.id}:`, e.message);
+            }
         }
     };
 
-    cron.schedule('0 8,13,16,20,22 * * *', verificarYouTube);
+    // Verificar novedades de YouTube cada 30 minutos
+    cron.schedule('*/30 * * * *', verificarYouTube);
 
     // Resetear cuotas de API keys todos los días a la medianoche
     cron.schedule('0 0 * * *', () => {
@@ -1490,22 +1568,29 @@ client.on('message_create', async (msg) => {
     if (lowerBody.startsWith('!bot ytadd')) {
         const url = textoOriginal.substring('!bot ytadd'.length).trim();
         if (!url) {
-            await msg.reply("❌ Usa: !bot ytadd <enlace_del_canal_de_youtube>");
+            await msg.reply("❌ Usa: !bot ytadd <enlace, @handle o nombre del canal>");
             return;
         }
-        await msg.reply("🔍 Buscando el ID del canal...");
+        await msg.reply("🔍 Buscando canal en YouTube...");
         const id = await obtenerIdCanal(url);
         if (!id) {
-            await msg.reply("❌ No pude encontrar el ID del canal. Asegúrate de enviar un enlace válido.");
+            await msg.reply("❌ No pude encontrar el canal. Asegúrate de enviar un enlace válido, @usuario o nombre.");
             return;
         }
         if (canalesYoutube.find(c => c.id === id)) {
             await msg.reply("⚠️ Ese canal ya está en la lista de monitoreo.");
             return;
         }
-        canalesYoutube.push({ id: id, nombre: 'Canal Nuevo', ultimoVideo: '' });
-        fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
-        await msg.reply("✅ ¡Canal agregado exitosamente al monitoreo! Se revisará automáticamente.");
+        const info = await obtenerUltimosVideosCanal(id, 1);
+        const canalNombre = info?.canalNombre || 'Canal Nuevo';
+        const ultimoVid = info?.videos?.[0]?.link || '';
+        canalesYoutube.push({ id: id, nombre: canalNombre, ultimoVideo: ultimoVid, chatId: chatId });
+        guardarCanales();
+        let resp = `✅ ¡Canal agregado exitosamente al monitoreo!\n📺 *${canalNombre}* (\`${id}\`)`;
+        if (info?.videos?.[0]) {
+            resp += `\n\n🎬 *Último video:* ${info.videos[0].titulo}\n🔗 ${info.videos[0].link}`;
+        }
+        await msg.reply(resp);
         return;
     }
 
@@ -1516,9 +1601,10 @@ client.on('message_create', async (msg) => {
         }
         let reply = "📺 *Canales de YouTube en Monitoreo:*\n\n";
         canalesYoutube.forEach((c, idx) => {
-            reply += `*${idx + 1}.* ${c.nombre}\n(ID: ${c.id})\n\n`;
+            const ult = c.ultimoVideo ? `\n   🔗 ${c.ultimoVideo}` : '';
+            reply += `*${idx + 1}.* ${c.nombre}\n(ID: \`${c.id}\`)${ult}\n\n`;
         });
-        reply += "_Para eliminar uno usa !bot ytdel <numero>_";
+        reply += "_Para ver videos escribe: *!bot videos*_\n_Para eliminar uno usa: *!bot ytdel <numero>*_";
         await msg.reply(reply);
         return;
     }
@@ -1530,7 +1616,7 @@ client.on('message_create', async (msg) => {
             return;
         }
         const borrado = canalesYoutube.splice(num - 1, 1)[0];
-        fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
+        guardarCanales();
         await msg.reply(`🗑️ Canal eliminado: ${borrado.nombre}`);
         return;
     }
@@ -2118,10 +2204,11 @@ client.on('message_create', async (msg) => {
 \u2022 \`!bot recordar <minutos> <mensaje>\` - Agenda un aviso temporal.`);
             }
             if (opcion === '5') {
-                return msg.reply(`\uD83D\uDCE2 *5. GESTI\u00d3N RSS (YOUTUBE):*
-\u2022 \`!bot agregarcanal <enlace>\` - Registra un canal para notificar videos nuevos.
-\u2022 \`!bot canales\` - Muestra el listado de canales bajo seguimiento.
-\u2022 \`!bot borrarcanal <\u00edndice>\` - Elimina un canal de la lista de seguimiento.`);
+                return msg.reply(`📢 *5. GESTIÓN YOUTUBE Y CANALES:*
+• \`!bot videos\` (o \`!bot ultimosvideos\`) - Consulta los videos más recientes de tus canales y envía los enlaces.
+• \`!bot agregarcanal <enlace / @usuario / nombre>\` - Registra un canal para seguimiento.
+• \`!bot canales\` - Muestra el listado de canales bajo seguimiento.
+• \`!bot borrarcanal <índice>\` - Elimina un canal de la lista.`);
             }
             if (opcion === '6') {
                 return msg.reply(`🛠️ *6. INTEGRACIONES DIVERSAS:*
@@ -2378,34 +2465,121 @@ client.on('message_create', async (msg) => {
             return;
         }
 
+        if (comando === 'videos' || comando === 'ultimosvideos' || comando === 'novedades' || comando === 'verificarcanales' || comando === 'ytvideos' || comando === 'revisarcanales') {
+            if (canalesYoutube.length === 0) {
+                return msg.reply("📺 *Kingbot:* No hay canales registrados en el sistema de seguimiento.\n\n_Puedes registrar uno con:_\n`!bot agregarcanal <enlace, @canal o nombre>`");
+            }
+
+            await msg.reply("🔍 *Kingbot:* Consultando los últimos videos de tus canales de YouTube...");
+
+            // Si se especificó un canal por nombre o índice
+            if (argumento) {
+                let canalTarget = null;
+                const idx = parseInt(argumento, 10) - 1;
+                if (!isNaN(idx) && idx >= 0 && idx < canalesYoutube.length) {
+                    canalTarget = canalesYoutube[idx];
+                } else {
+                    const argLower = argumento.toLowerCase();
+                    canalTarget = canalesYoutube.find(c => c.nombre.toLowerCase().includes(argLower) || c.id === argumento);
+                }
+
+                if (!canalTarget) {
+                    // Si no está en la lista guardada, buscarlo directamente en YouTube
+                    const foundId = await obtenerIdCanal(argumento);
+                    if (foundId) {
+                        canalTarget = { id: foundId, nombre: argumento };
+                    }
+                }
+
+                if (!canalTarget) {
+                    return msg.reply(`❌ *Kingbot:* No encontré el canal "${argumento}". Escribe *!bot canales* para ver tu lista.`);
+                }
+
+                const info = await obtenerUltimosVideosCanal(canalTarget.id, 5);
+                if (!info || !info.videos || info.videos.length === 0) {
+                    return msg.reply(`📺 *Kingbot:* No se encontraron videos recientes en el canal *${canalTarget.nombre}*.`);
+                }
+
+                let respuesta = `📺 *ÚLTIMOS VIDEOS DE ${info.canalNombre.toUpperCase()}:*\n\n`;
+                info.videos.forEach((v, i) => {
+                    const f = v.fecha ? ` _(${v.fecha})_` : '';
+                    respuesta += `*${i + 1}.* *${v.titulo}*${f}\n🔗 ${v.link}\n\n`;
+                });
+                respuesta += `_Para descargar un video escribe: *!bot video <enlace>*_`;
+                return msg.reply(respuesta);
+            }
+
+            // Consultar todos los canales registrados
+            let respuesta = `📺 *ÚLTIMOS VIDEOS DE TUS CANALES DE YOUTUBE:*\n\n`;
+            let totalEncontrados = 0;
+
+            for (const canal of canalesYoutube) {
+                const info = await obtenerUltimosVideosCanal(canal.id, 2);
+                if (info && info.videos && info.videos.length > 0) {
+                    totalEncontrados++;
+                    canal.nombre = info.canalNombre;
+                    canal.ultimoVideo = info.videos[0].link;
+
+                    respuesta += `🔴 *${info.canalNombre}*\n`;
+                    info.videos.forEach(v => {
+                        const f = v.fecha ? ` _(${v.fecha})_` : '';
+                        respuesta += `• *${v.titulo}*${f}\n  🔗 ${v.link}\n`;
+                    });
+                    respuesta += '\n';
+                }
+            }
+
+            guardarCanales();
+
+            if (totalEncontrados === 0) {
+                return msg.reply("📺 *Kingbot:* No se pudieron obtener videos recientes de los canales registrados en este momento.");
+            }
+
+            respuesta += `_Para descargar cualquiera de ellos escribe: *!bot video <enlace>*_`;
+            return msg.reply(respuesta);
+        }
+
         if (comando === 'setcanal' || comando === 'canal' || comando === 'agregarcanal') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Proporcione el enlace o ID del canal de YouTube.");
+            if (!argumento) return msg.reply("❌ *Kingbot:* Proporcione el enlace, @handle, ID o nombre del canal de YouTube.\n_Ejemplo:_ `!bot agregarcanal @mkbhd` o `!bot agregarcanal MrBeast`");
+            await msg.reply("🔍 *Kingbot:* Localizando canal en YouTube...");
             const nuevoId = await obtenerIdCanal(argumento);
             if (nuevoId) {
                 if (canalesYoutube.some(c => c.id === nuevoId)) {
-                    return msg.reply("a *Kingbot:* Ese canal ya se encuentra en la lista de seguimiento.");
+                    return msg.reply("⚠️ *Kingbot:* Ese canal ya se encuentra en tu lista de seguimiento.");
                 }
-                let nombreCanal = 'Canal de YouTube';
-                try {
-                    const feed = await rssParser.parseURL('https://www.youtube.com/feeds/videos.xml?channel_id=' + nuevoId);
-                    if (feed.title) nombreCanal = feed.title;
-                } catch(e) {}
-                canalesYoutube.push({ id: nuevoId, nombre: nombreCanal, ultimoVideo: '' });
-                fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
-                return msg.reply(`S& *Kingbot:* Canal agregado con éxito:\n*${nombreCanal}* (${nuevoId})`);
+                const infoCanal = await obtenerUltimosVideosCanal(nuevoId, 1);
+                const nombreCanal = infoCanal?.canalNombre || 'Canal de YouTube';
+                const ultimoVid = infoCanal?.videos?.[0]?.link || '';
+                
+                canalesYoutube.push({
+                    id: nuevoId,
+                    nombre: nombreCanal,
+                    ultimoVideo: ultimoVid,
+                    chatId: chatId
+                });
+                guardarCanales();
+                
+                let respuesta = `✅ *Kingbot:* ¡Canal agregado con éxito!\n\n📺 *${nombreCanal}*\n🆔 \`${nuevoId}\``;
+                if (infoCanal && infoCanal.videos && infoCanal.videos.length > 0) {
+                    const v = infoCanal.videos[0];
+                    respuesta += `\n\n🎬 *Último video publicado:*\n• *${v.titulo}*\n🔗 ${v.link}`;
+                }
+                respuesta += `\n\n_Escribe *!bot videos* para consultar novedades de tus canales._`;
+                return msg.reply(respuesta);
             }
-            return msg.reply("❌ *Kingbot:* Enlace o ID de canal no válido.");
+            return msg.reply("❌ *Kingbot:* No pude encontrar el canal de YouTube. Asegúrate de ingresar un enlace válido, usuario (@handle) o nombre del canal.");
         }
 
         if (comando === 'listacanal' || comando === 'canales') {
             if (canalesYoutube.length === 0) {
-                return msg.reply("  *Kingbot:* No hay canales registrados en el sistema de seguimiento.");
+                return msg.reply("📺 *Kingbot:* No hay canales registrados en el sistema de seguimiento.\n_Agrega uno con:_ `!bot agregarcanal <enlace, @canal o nombre>`");
             }
-            let lista = `✔️  *CANALES DE YOUTUBE EN SEGUIMIENTO:*\n\n`;
+            let lista = `📺 *CANALES DE YOUTUBE EN SEGUIMIENTO:*\n\n`;
             canalesYoutube.forEach((c, index) => {
-                lista += `${index + 1}. *${c.nombre}*\n   ID: \`${c.id}\`\n`;
+                const ult = c.ultimoVideo ? `\n   🔗 Último: ${c.ultimoVideo}` : '';
+                lista += `*${index + 1}.* *${c.nombre}*\n   🆔: \`${c.id}\`${ult}\n\n`;
             });
-            lista += `\n_Para eliminar un canal use *!bot borrarcanal <número>*_`;
+            lista += `_Para consultar videos recientes: *!bot videos*_\n_Para eliminar un canal: *!bot borrarcanal <número>*_`;
             return msg.reply(lista);
         }
 
@@ -2431,8 +2605,8 @@ client.on('message_create', async (msg) => {
                 return msg.reply("❌ *Kingbot:* Número de índice fuera de rango o inválido.");
             }
             const eliminado = canalesYoutube.splice(indice, 1)[0];
-            fs.writeFileSync('canales.json', JSON.stringify(canalesYoutube, null, 2));
-            return msg.reply(`S& *Kingbot:* Se ha eliminado el canal *${eliminado.nombre}* de la lista.`);
+            guardarCanales();
+            return msg.reply(`🗑️ *Kingbot:* Se ha eliminado el canal *${eliminado.nombre}* de la lista.`);
         }
 
         if (comando === 'clima') {
@@ -2788,10 +2962,11 @@ client.on('message_create', async (msg) => {
             }
             
             if (opcion === '5' || opcion === 'rss' || opcion === 'canales') {
-                return msg.reply(`\uD83D\uDCE2 *5. GESTI\u00d3N RSS (YOUTUBE):*
-\u2022 \`!bot agregarcanal <enlace>\` - Registra un canal para notificar videos nuevos.
-\u2022 \`!bot canales\` - Muestra el listado de canales bajo seguimiento.
-\u2022 \`!bot borrarcanal <\u00edndice>\` - Elimina un canal de la lista de seguimiento.`);
+                return msg.reply(`📢 *5. GESTIÓN YOUTUBE Y CANALES:*
+• \`!bot videos\` (o \`!bot ultimosvideos\`) - Consulta los videos más recientes de tus canales y envía los enlaces.
+• \`!bot agregarcanal <enlace / @usuario / nombre>\` - Registra un canal para seguimiento.
+• \`!bot canales\` - Muestra el listado de canales bajo seguimiento.
+• \`!bot borrarcanal <índice>\` - Elimina un canal de la lista.`);
             }
             if (opcion === '6' || opcion === 'nuevas' || opcion === 'integraciones') {
                 return msg.reply(`🛠️ *6. INTEGRACIONES DIVERSAS:*
@@ -4088,7 +4263,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } else {
                 respuestaTexto = await ejecutarGeminiConRetries(async (model) => {
                     let contenidoCopia = [...contenido];
-                    let promptStr = `Eres Kingbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, programar o borrar alarmas, programar tareas recurrentes diarias (ej. frases motivacionales cada mañana, noticias diarias, etc.), ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Si el usuario pide programar cosas para que todos los días o a cierta hora se dispare una acción (ej: 'todos los días a las 5 am dame una frase motivacional', 'a las 8 am busca noticias de futbol', etc.), USA OBLIGATORIAMENTE [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot programar <HH:MM> | <instruccion>, !bot programados, !bot desprogramar, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir ÚNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}`;
+                    let promptStr = `Eres Kingbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar los últimos videos de YouTube de sus canales o de un canal en específico, programar o borrar alarmas, programar tareas recurrentes diarias (ej. frases motivacionales cada mañana, noticias diarias, etc.), ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Si el usuario te pide revisar o verificar los últimos videos de YouTube, USA [ACTION_YOUTUBE_CHECK] (o [ACTION_YOUTUBE_CHECK: nombre_canal]). Si el usuario pide programar cosas para que todos los días o a cierta hora se dispare una acción (ej: 'todos los días a las 5 am dame una frase motivacional', 'a las 8 am busca noticias de futbol', etc.), USA OBLIGATORIAMENTE [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot videos, !bot programar <HH:MM> | <instruccion>, !bot programados, !bot desprogramar, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir ÚNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}`;
                     if (isGroup || (adminChatId && chatId !== adminChatId)) {
                         promptStr += "\n\n(ADVERTENCIA: EL USUARIO ACTUAL NO ES GEOVANNY PACHECO O ESTÁS EN UN GRUPO. Tienes ESTRICTAMENTE PROHIBIDO usar tags de notas, finanzas, recordatorios, tareas programadas o alarmas. Tampoco debes mencionar los intereses personales de Geovanny. Comportate como un asistente útil y neutral.)";
                     }
@@ -4427,7 +4602,75 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                     }
                 }
 
-                // Buscar música por nombre (sin enlace) - Agentic
+                // ACTION_YOUTUBE_CHECK (Verificar últimos videos de YouTube de canales)
+                if (respuestaTexto.includes('[ACTION_YOUTUBE_CHECK')) {
+                    const match = respuestaTexto.match(/\[ACTION_YOUTUBE_CHECK(?::\s*([^\]]+))?\]/);
+                    if (match) {
+                        const targetCanal = match[1] ? match[1].trim() : null;
+                        let videosReporte = '';
+
+                        try {
+                            if (targetCanal) {
+                                // Buscar canal específico
+                                let canalId = await obtenerIdCanal(targetCanal);
+                                if (!canalId) {
+                                    const matchSaved = canalesYoutube.find(c => c.nombre.toLowerCase().includes(targetCanal.toLowerCase()));
+                                    if (matchSaved) canalId = matchSaved.id;
+                                }
+
+                                if (canalId) {
+                                    const info = await obtenerUltimosVideosCanal(canalId, 3);
+                                    if (info && info.videos && info.videos.length > 0) {
+                                        videosReporte = `📺 *Últimos videos de ${info.canalNombre}:*\n\n`;
+                                        info.videos.forEach((v, idx) => {
+                                            const f = v.fecha ? ` _(${v.fecha})_` : '';
+                                            videosReporte += `*${idx + 1}.* *${v.titulo}*${f}\n🔗 ${v.link}\n\n`;
+                                        });
+                                        videosReporte += `_Para descargar un video escribe: *!bot video <enlace>*_`;
+                                    } else {
+                                        videosReporte = `📺 *Canal:* ${info?.canalNombre || targetCanal}\nNo se encontraron videos recientes o el canal no tiene publicaciones públicas.`;
+                                    }
+                                } else {
+                                    videosReporte = `⚠️ No pude localizar el canal "${targetCanal}" en YouTube. Verifica el nombre o utiliza *!bot agregarcanal <enlace>*.`;
+                                }
+                            } else {
+                                // Consultar todos los canales registrados
+                                if (canalesYoutube.length === 0) {
+                                    videosReporte = "📺 No tienes canales de YouTube registrados en monitoreo.\nPuedes agregar uno escribiendo: `!bot agregarcanal <enlace o @canal>`";
+                                } else {
+                                    videosReporte = "📺 *ÚLTIMOS VIDEOS DE TUS CANALES DE YOUTUBE:*\n\n";
+                                    let totalEncontrados = 0;
+                                    for (const c of canalesYoutube) {
+                                        const info = await obtenerUltimosVideosCanal(c.id, 2);
+                                        if (info && info.videos && info.videos.length > 0) {
+                                            totalEncontrados++;
+                                            c.nombre = info.canalNombre;
+                                            c.ultimoVideo = info.videos[0].link;
+                                            videosReporte += `🔴 *${info.canalNombre}*\n`;
+                                            info.videos.forEach(v => {
+                                                const f = v.fecha ? ` _(${v.fecha})_` : '';
+                                                videosReporte += `• *${v.titulo}*${f}\n  🔗 ${v.link}\n`;
+                                            });
+                                            videosReporte += '\n';
+                                        }
+                                    }
+                                    guardarCanales();
+                                    if (totalEncontrados === 0) {
+                                        videosReporte = "📺 No se encontraron videos recientes en los canales monitoreados en este momento.";
+                                    } else {
+                                        videosReporte += "_Para descargar cualquiera de ellos escribe: *!bot video <enlace>*_";
+                                    }
+                                }
+                            }
+                        } catch (errYt) {
+                            console.error("[Agentic YouTube Check Error]:", errYt.message);
+                            videosReporte = "⚠️ Ocurrió un inconveniente al consultar los canales de YouTube.";
+                        }
+
+                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n${videosReporte}`).trim();
+                    }
+                }
+
                 // ACTION_SCHEDULE (Tareas programadas recurrentes)
                 if (respuestaTexto.includes('[ACTION_SCHEDULE:')) {
                     const match = respuestaTexto.match(/\[ACTION_SCHEDULE:\s*([^\]]+)\]/);
