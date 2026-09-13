@@ -10,6 +10,7 @@ console.warn = function(...args) {
     origWarn.apply(console, args);
 };
 
+const botStartTime = Math.floor(Date.now() / 1000);
 let isStartupSync = true;
 const { Client, LocalAuth, MessageMedia, Poll } = require('@juzi/whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
@@ -477,7 +478,12 @@ if (isTermux) {
         '--no-default-browser-check',
         '--mute-audio',
         '--no-sandbox',
-        '--disable-renderer-backgrounding'
+        '--disable-renderer-backgrounding',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-breakpad',
+        '--disable-ipc-flooding-protection',
+        '--js-flags=--max-old-space-size=512'
     );
     console.log('[Enrutador] Entorno detectado: Android/Termux. Cargando Chromium movil...');
     console.log('[ℹ️ WhatsApp Web]: Conectando sesión... (Los mensajes de "PUPPETEER PAGE LOG / storage denied" son advertencias internas normales de WhatsApp Web en móvil. Espera ~20 segundos a que diga LISTO)...');
@@ -1079,11 +1085,11 @@ client.on('qr', (qr) => {
 });
 
 client.on('ready', () => {
-    setTimeout(() => { isStartupSync = false; console.log('\n✅ Sistema estabilizado. Interceptor de spam apagado. Listo para comandos.'); }, 15000);
-    console.log('\n[OK] ¡BOT ACTIVO 24/7 Y LISTO PARA OPERAR!');
+    isStartupSync = false;
+    console.log('\n✅ [OK] ¡KINGBOT ACTIVO 24/7 Y LISTO PARA OPERAR!');
     iniciarTelegramPolling();
 
-    // --- VERIFICACIN DE DEPENDENCIAS PARA STICKERS ---
+    // --- VERIFICACI N DE DEPENDENCIAS PARA STICKERS ---
     const checkCmd = (cmd, label) => {
         return new Promise(resolve => {
             exec(cmd, { timeout: 10000 }, (err, stdout, stderr) => {
@@ -1257,15 +1263,26 @@ client.on('ready', () => {
 
 
 
-        console.log("[x&] Ejecutando verificación diaria de vencimientos de tarjetas...");
+        console.log("[x &] Ejecutando verificación diaria de vencimientos de tarjetas...");
         await chequearVencimientosYNotificar(false);
     }, { scheduled: true, timezone: "America/El_Salvador" });
 
     // Verificación en el arranque (con delay de 10s para permitir inicialización completa)
     setTimeout(async () => {
-        console.log("[x&] Ejecutando verificación de vencimientos al arranque...");
+        console.log("[x &] Ejecutando verificación de vencimientos al arranque...");
         await chequearVencimientosYNotificar(false);
     }, 10000);
+});
+
+client.on('disconnected', (reason) => {
+    console.log('\n[!] WhatsApp Web se desconectó. Razón:', reason);
+    console.log('[!] Saliendo para que el Watchdog de start.sh reinicie y reconecte...');
+    process.exit(1);
+});
+
+client.on('auth_failure', (msg) => {
+    console.error('\n[!] Error de autenticación en WhatsApp Web:', msg);
+    process.exit(1);
 });
 
 client.on('message_create', async (msg) => {
@@ -1294,7 +1311,7 @@ client.on('message_create', async (msg) => {
         }
     };
     if (isStartupSync) return;
-    if (msg.timestamp < Math.floor(Date.now() / 1000) - 3600) return;
+    if (msg.timestamp < botStartTime - 60) return;
     const chatId = msg.fromMe ? msg.to : msg.from;
     const isGroup = chatId.endsWith('@g.us');
     let textoOriginal = (msg.body || "").trim();
@@ -4670,35 +4687,30 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
 let _reconectando = false;
 
 process.on('uncaughtException', (error) => {
-    console.error('\n[x ERROR NO CAPTURADO]:', error.message);
+    console.error('\n[!] ERROR NO CAPTURADO:', error.message);
     
-    const esErrorWhatsApp = error.message && (
+    const esErrorFatal = error.message && (
+        error.message.includes('Execution context was destroyed') ||
+        error.message.includes('Session closed') ||
+        error.message.includes('Target closed') ||
+        error.message.includes('browser has disconnected') ||
+        error.message.includes('Protocol error')
+    );
+
+    if (esErrorFatal) {
+        console.log('[!] Error crítico de Chromium/WhatsApp Web. Reiniciando mediante Watchdog en 2s...');
+        setTimeout(() => process.exit(1), 2000);
+        return;
+    }
+
+    const esErrorNoCritico = error.message && (
         error.message.includes('canCheckStatusRanking') ||
         error.message.includes('window.require') ||
-        error.message.includes('is not a function') ||
-        error.message.includes('Execution context') ||
-        error.message.includes('Session closed') ||
-        error.message.includes('Target closed')
+        error.message.includes('is not a function')
     );
-    
-    if (esErrorWhatsApp && !_reconectando) {
-        _reconectando = true;
-        console.log('[a Kingbot]: Error de WhatsApp Web detectado. Reconectando en 15s...');
-        setTimeout(async () => {
-            try { await client.destroy(); } catch (e) {}
-            setTimeout(() => {
-                _reconectando = false;
-                try {
-                    client.initialize();
-                    console.log('[S& Kingbot]: Cliente reinicializado.');
-                } catch (e2) {
-                    console.error('[R Kingbot]: Fallo al reinicializar:', e2.message);
-                    process.exit(1); // El watchdog lo reiniciará
-                }
-            }, 5000);
-        }, 15000);
-    } else if (!esErrorWhatsApp) {
-        console.error('[a Kingbot]: Error no-crítico capturado, el proceso continúa.');
+
+    if (!esErrorNoCritico) {
+        console.error('[!] Error capturado, el proceso continúa.');
     }
 });
 
