@@ -7,3 +7,5 @@ admin.json
 *.exe
 *.session
 *.log
+llaves API gemini*
+llaves*.txt

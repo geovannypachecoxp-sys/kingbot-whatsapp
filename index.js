@@ -37,12 +37,88 @@ const getYtDlpBinary = () => {
 };
 
 // ---------------------------------------------------------
-// CONFIGURACIN DE MULTI-API KEYS Y MODELOS (GEMINI)
+// CONFIGURACI N DE MULTI-API KEYS Y MODELOS (GEMINI)
 // ---------------------------------------------------------
 const DEFAULT_KEYS = [];
 let API_KEYS = [...DEFAULT_KEYS];
 let keyStatus = [];
 let currentKeyIndex =  0;
+let ultimaModificacionLlavesTxt = 0;
+
+// Localizador flexible del archivo bloc de notas de llaves
+function getLlavesTxtPath() {
+    const candidates = [
+        'llaves API gemini.txt',
+        'llaves API gemini',
+        'llaves_api_gemini.txt',
+        'llaves_api_gemini',
+        'llaves.txt'
+    ];
+    for (const name of candidates) {
+        const fullPath = path.join(__dirname, name);
+        if (fs.existsSync(fullPath)) return fullPath;
+        const cwdPath = path.join(process.cwd(), name);
+        if (fs.existsSync(cwdPath)) return cwdPath;
+    }
+    return path.join(__dirname, 'llaves API gemini.txt');
+}
+
+// Extrae todas las claves válidas (AIzaSy... o AQ....) sin importar el formato
+function extraerKeysDeTexto(texto) {
+    if (!texto) return [];
+    const regex = /(?:AIzaSy[A-Za-z0-9_-]{30,}|AQ\.[A-Za-z0-9_-]{20,})/g;
+    const matches = texto.match(regex) || [];
+    return [...new Set(matches.map(k => k.trim()))];
+}
+
+// Sincroniza en memoria las claves presentes en el bloc de notas
+function sincronizarLlavesDesdeArchivo() {
+    try {
+        const filePath = getLlavesTxtPath();
+        if (!fs.existsSync(filePath)) return false;
+
+        const stat = fs.statSync(filePath);
+        if (stat.mtimeMs <= ultimaModificacionLlavesTxt) return false;
+        ultimaModificacionLlavesTxt = stat.mtimeMs;
+
+        const contenido = fs.readFileSync(filePath, 'utf8');
+        const llavesEncontradas = extraerKeysDeTexto(contenido);
+        let huboCambios = false;
+
+        llavesEncontradas.forEach(llave => {
+            if (!API_KEYS.includes(llave)) {
+                API_KEYS.push(llave);
+                keyStatus.push({ status: 'Activa', requestsToday: 0, lastRequest: null });
+                huboCambios = true;
+            }
+        });
+
+        if (huboCambios) {
+            console.log(`[!] Sincronizadas ${llavesEncontradas.length} llaves desde ${path.basename(filePath)}. Total llaves: ${API_KEYS.length}`);
+            fs.writeFileSync('keys.json', JSON.stringify(API_KEYS, null, 2));
+            fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
+            return true;
+        }
+    } catch (e) {
+        console.error("Error sincronizando llaves desde bloc de notas:", e.message);
+    }
+    return false;
+}
+
+// Guarda y sincroniza las claves en el bloc de notas
+function guardarEnArchivoTxt() {
+    try {
+        const filePath = getLlavesTxtPath();
+        if (API_KEYS.length === 0) return;
+        const lineas = API_KEYS.map((k, idx) => `llave ${idx + 1}: ${k}`).join('\n\n') + '\n';
+        fs.writeFileSync(filePath, lineas, 'utf8');
+        if (fs.existsSync(filePath)) {
+            ultimaModificacionLlavesTxt = fs.statSync(filePath).mtimeMs;
+        }
+    } catch (e) {
+        console.error("Error guardando en bloc de notas de llaves:", e.message);
+    }
+}
 
 // Cargar keys persistidas
 if (fs.existsSync('keys.json')) {
@@ -64,6 +140,9 @@ if (!Array.isArray(keyStatus)) {
     keyStatus = [];
 }
 
+// Sincronizar automáticamente desde bloc de notas ("llaves API gemini.txt")
+sincronizarLlavesDesdeArchivo();
+
 // Inicializar estado para keys
 API_KEYS.forEach((k, idx) => {
     if (!keyStatus[idx]) {
@@ -81,12 +160,14 @@ if (keyStatus.length > 0 && keyStatus.every(k => k && k.status === 'Agotada')) {
 function guardarKeysYCuotas() {
     fs.writeFileSync('keys.json', JSON.stringify(API_KEYS, null, 2));
     fs.writeFileSync('cuotas.json', JSON.stringify(keyStatus, null, 2));
+    guardarEnArchivoTxt();
 }
 
 const MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-2.5-flash'];
 let currentModelIndex =  0;
 
 function obtenerModel(modelName = null) {
+    sincronizarLlavesDesdeArchivo();
     if (!API_KEYS || API_KEYS.length === 0) {
         throw new Error("No hay API Keys configuradas");
     }
@@ -123,6 +204,7 @@ function rotarApiKey() {
 
 // Función resiliente con reintentos y fallback de modelos
 async function ejecutarGeminiConRetries(callback) {
+    sincronizarLlavesDesdeArchivo();
     if (!API_KEYS || API_KEYS.length === 0) {
         throw new Error("No hay ninguna API Key registrada. Usa !bot addkey <TU_API_KEY>");
     }
@@ -1220,6 +1302,7 @@ client.on('message_create', async (msg) => {
 
     // --- COMANDOS DE YT Y KEYS ---
     if (lowerBody.startsWith('!bot keys') || lowerBody.startsWith('!bot claves')) {
+        sincronizarLlavesDesdeArchivo();
         let reply = `🔑 *Estado de las API Keys (Gemini)*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
         API_KEYS.forEach((key, idx) => {
             const status = keyStatus[idx] || { status: 'Desconocido', requestsToday: 0 };
@@ -1246,6 +1329,7 @@ client.on('message_create', async (msg) => {
     }
 
     if (lowerBody.startsWith('!bot addkey')) {
+        sincronizarLlavesDesdeArchivo();
         let newKey = textoOriginal.substring('!bot addkey'.length).trim();
         if (newKey.startsWith(':')) {
             newKey = newKey.substring(1).trim();
@@ -1268,7 +1352,7 @@ client.on('message_create', async (msg) => {
         currentKeyIndex = API_KEYS.length - 1;
         currentModelIndex = 0;
         guardarKeysYCuotas();
-        await msg.reply(`✅ API Key agregada y activada correctamente. Ahora tienes ${API_KEYS.length} llaves.`);
+        await msg.reply(`✅ API Key agregada, activada y guardada automáticamente en tu bloc de notas ("llaves API gemini.txt"). Ahora tienes ${API_KEYS.length} llaves.`);
         return;
     }
 
@@ -3689,6 +3773,7 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
         if (comando === 'agregarclave' || comando === 'addkey') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             if (!argumento || (!argumento.startsWith('AIzaSy') && !argumento.startsWith('AQ.'))) return msg.reply("❌ *Kingbot:* Proporcione una clave API de Gemini válida.");
+            sincronizarLlavesDesdeArchivo();
             const existingIdx = API_KEYS.indexOf(argumento);
             if (existingIdx !== -1) {
                 keyStatus[existingIdx] = { status: 'Activa', requestsToday: 0, lastRequest: new Date().toISOString() };
@@ -3703,10 +3788,11 @@ _Escriba el número (1-7) para desplegar los comandos directamente._`;
             currentKeyIndex = newIdxK;
             currentModelIndex = 0;
             guardarKeysYCuotas();
-            return msg.reply("✅ *Kingbot:* Clave API agregada y activada. Total: " + API_KEYS.length);
+            return msg.reply("✅ *Kingbot:* Clave API agregada y guardada automáticamente en tu bloc de notas. Total: " + API_KEYS.length);
         }
         if (comando === 'claves' || comando === 'listkeys') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            sincronizarLlavesDesdeArchivo();
             let listK = `🔑 *ESTADO DE CLAVES API GEMINI:*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
             API_KEYS.forEach((key, idx) => {
                 const mask = key.substring(0, 10) + '...' + key.substring(key.length - 4);
