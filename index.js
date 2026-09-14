@@ -1310,6 +1310,9 @@ async function aplicarOperacionFinanciera(data, msg) {
     return false;
 }
 
+let verificandoVencimientosActualmente = false;
+let ultimoTimestampVencimientos = 0;
+
 async function chequearVencimientosYNotificar(force = false) {
     if (!dbFirebase) inicializarFirebase();
     if (!dbFirebase || !firebaseUid || !adminChatId) {
@@ -1317,16 +1320,34 @@ async function chequearVencimientosYNotificar(force = false) {
         return null;
     }
 
+    if (verificandoVencimientosActualmente) {
+        console.log("[ℹ️ Finanzas] Verificación de vencimientos ya en curso. Omitiendo llamada duplicada.");
+        return null;
+    }
+
+    const ahoraMs = Date.now();
+    if (!force && (ahoraMs - ultimoTimestampVencimientos < 120000)) {
+        console.log("[ℹ️ Finanzas] Alerta de vencimientos ya ejecutada hace menos de 2 minutos. Omitiendo duplicado.");
+        return null;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toDateString();
+
+    if (!force && ultimoChequeoVencimientos === todayStr) {
+        console.log("[ℹ️ Finanzas] Vencimientos ya verificados hoy. Saltando.");
+        return null;
+    }
+
+    verificandoVencimientosActualmente = true;
+    if (!force) {
+        ultimoChequeoVencimientos = todayStr;
+        ultimoTimestampVencimientos = ahoraMs;
+        guardarAdminJson();
+    }
+
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const todayStr = today.toDateString();
-        if (!force && ultimoChequeoVencimientos === todayStr) {
-            console.log("[ℹ️ Finanzas] Vencimientos ya verificados hoy. Saltando.");
-            return null;
-        }
-
         const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
         const cardsSnap = await cardsRef.get();
         if (cardsSnap.empty) {
@@ -1360,43 +1381,47 @@ async function chequearVencimientosYNotificar(force = false) {
         let alertMessages = [];
 
         cards.forEach(c => {
-            const balance = parseFloat(c.balance || 0);
-            if (balance <= 0) return;
-
-            const payGoal = parseFloat(c.payGoal || 0);
-            // Si payGoal está en 0 o no configurado, el monto a pagar es la deuda total
-            const payTarget = payGoal > 0 ? payGoal : balance;
-            if (payTarget <= 0) return;
-
             const payDay = parseInt(c.payDay);
-            const cutDay = parseInt(c.cutDay);
-            if (isNaN(payDay) || isNaN(cutDay)) return;
+            const balance = parseFloat(c.balance || 0);
+            const payGoal = parseFloat(c.payGoal || 0);
 
-            let nextPayDate = new Date(today.getFullYear(), today.getMonth(), payDay);
-            let diffDays = Math.ceil((nextPayDate - today) / 86400000);
+            if (isNaN(payDay) || (balance <= 0 && payGoal <= 0)) return;
+
+            const targetAmount = payGoal > 0 ? payGoal : balance;
+
+            // Calcular fecha exacta de pago del mes actual
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            let payDate = new Date(currentYear, currentMonth, payDay);
+
+            let diffDays = Math.round((payDate - today) / (1000 * 60 * 60 * 24));
+
+            // Si el día de pago ya pasó por mucho (> 7 días), chequear si pertenece al siguiente mes
             if (diffDays < -7) {
-                nextPayDate.setMonth(nextPayDate.getMonth() + 1);
-                diffDays = Math.ceil((nextPayDate - today) / 86400000);
+                payDate = new Date(currentYear, currentMonth + 1, payDay);
+                diffDays = Math.round((payDate - today) / (1000 * 60 * 60 * 24));
             }
 
-            let cycleStart = new Date(nextPayDate);
-            cycleStart.setMonth(cycleStart.getMonth() - 1);
-            cycleStart.setDate(cutDay);
-            cycleStart.setHours(0, 0, 0, 0);
+            // Calcular abonos desde el último corte
+            const cutDay = parseInt(c.cutDay) || 1;
+            let lastCutDate = new Date(currentYear, currentMonth, cutDay);
+            if (today.getDate() < cutDay) {
+                lastCutDate = new Date(currentYear, currentMonth - 1, cutDay);
+            }
 
-            let paid = 0;
-            trans.forEach(t => {
-                if (t.cardId === c.id) {
-                    if (t.date > cycleStart && t.date <= new Date()) {
-                        paid += t.amount;
-                    }
-                }
+            const cardNameNorm = (c.name || '').toLowerCase().trim();
+            const payments = trans.filter(t => {
+                const cName = (t.cardName || '').toLowerCase().trim();
+                return (cName.includes(cardNameNorm) || cardNameNorm.includes(cName)) && t.date >= lastCutDate;
             });
 
-            if (paid >= payTarget) return;
+            const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+            const remaining = Math.max(0, targetAmount - totalPaid);
 
-            const remaining = payTarget - paid;
-            let msg = '';
+            if (remaining <= 0) return; // Ya está pagada
+
+            // Notificar: Hoy (0), Mañana (1), En 2 o 3 días, o Vencida (-1 a -7)
+            let msg = null;
             let shouldNotify = false;
 
             if (diffDays === 0) {
@@ -1405,8 +1430,8 @@ async function chequearVencimientosYNotificar(force = false) {
             } else if (diffDays === 1) {
                 msg = `⚠️ *¡PAGO MAÑANA!* La tarjeta *${c.name}* vence *mañana* (día ${payDay}). Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
                 shouldNotify = true;
-            } else if (diffDays > 1 && diffDays <= 5) {
-                msg = `📅 *Recordatorio:* La tarjeta *${c.name}* vence en *${diffDays} días* (día ${payDay}). Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
+            } else if (diffDays > 1 && diffDays <= 3) {
+                msg = `🔔 *Recordatorio:* La tarjeta *${c.name}* vence en *${diffDays} días* (día ${payDay}). Pendiente: *$${remaining.toFixed(2)}*.`;
                 shouldNotify = true;
             } else if (diffDays < 0 && diffDays >= -7) {
                 msg = `🔴 *¡PAGO VENCIDO!* La tarjeta *${c.name}* venció hace *${Math.abs(diffDays)} días* (día ${payDay}). Falta pagar *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
@@ -1421,10 +1446,6 @@ async function chequearVencimientosYNotificar(force = false) {
         if (alertMessages.length > 0) {
             const finalMsg = `💳 *ALERTA DE VENCIMIENTOS (Finanzas King)* 💳\n\n` + alertMessages.join('\n\n');
             await client.sendMessage(adminChatId, finalMsg);
-            if (!force) {
-                ultimoChequeoVencimientos = todayStr;
-                guardarAdminJson();
-            }
             return finalMsg;
         } else if (force) {
             const okMsg = "✅ *Kingbot:* Excelente noticia, Señor. No hay pagos pendientes próximos a vencer para sus tarjetas activas.";
@@ -1432,15 +1453,13 @@ async function chequearVencimientosYNotificar(force = false) {
             return okMsg;
         }
 
-        if (!force) {
-            ultimoChequeoVencimientos = todayStr;
-            guardarAdminJson();
-        }
         return null;
     } catch (e) {
         console.error("Error al chequear vencimientos de tarjetas:", e);
         if (force) await client.sendMessage(adminChatId, `❌ *Kingbot:* Error en la verificación de vencimientos: ${e.message}`);
         return null;
+    } finally {
+        verificandoVencimientosActualmente = false;
     }
 }
 
@@ -1736,136 +1755,51 @@ client.on('ready', () => {
     })();
 
 
+    let cronsGlobalesIniciados = false;
+    global.activeCronJobs = new Map();
+    const ejecucionesRecientesTareas = new Map();
+    let verificandoYouTubeActualmente = false;
+    let ultimoTimestampYouTube = 0;
+
     const verificarYouTube = async () => {
         if (!botGlobalmenteActivo || !canalesYoutube || canalesYoutube.length === 0) return;
         const defaultDest = adminChatId || (canalesYoutube.find(c => c.chatId)?.chatId);
         if (!defaultDest) return;
 
-        for (let i = 0; i < canalesYoutube.length; i++) {
-            const canal = canalesYoutube[i];
-            try {
-                const info = await obtenerUltimosVideosCanal(canal.id, 1);
-                if (info && info.videos && info.videos.length > 0) {
-                    const videoNuevo = info.videos[0];
-                    const dest = canal.chatId || defaultDest;
+        const ahoraMs = Date.now();
+        if (verificandoYouTubeActualmente || (ahoraMs - ultimoTimestampYouTube < 60000)) return;
+        verificandoYouTubeActualmente = true;
+        ultimoTimestampYouTube = ahoraMs;
 
-                    if (canal.ultimoVideo && canal.ultimoVideo !== videoNuevo.link && dest) {
-                        const alerta = `🔴 *¡Nuevo Video en ${info.canalNombre}!*\n\n*${videoNuevo.titulo}*\n${videoNuevo.link}\n\n_Escribe *!bot video ${videoNuevo.link}* si deseas descargarlo._`;
-                        await client.sendMessage(dest, alerta);
+        try {
+            for (let i = 0; i < canalesYoutube.length; i++) {
+                const canal = canalesYoutube[i];
+                try {
+                    const info = await obtenerUltimosVideosCanal(canal.id, 1);
+                    if (info && info.videos && info.videos.length > 0) {
+                        const videoNuevo = info.videos[0];
+                        const dest = canal.chatId || defaultDest;
+
+                        if (canal.ultimoVideo && canal.ultimoVideo !== videoNuevo.link && dest) {
+                            const alerta = `🔴 *¡Nuevo Video en ${info.canalNombre}!*\n\n*${videoNuevo.titulo}*\n${videoNuevo.link}\n\n_Escribe *!bot video ${videoNuevo.link}* si deseas descargarlo._`;
+                            await client.sendMessage(dest, alerta);
+                        }
+                        if (canal.ultimoVideo !== videoNuevo.link) {
+                            canal.ultimoVideo = videoNuevo.link;
+                            canal.nombre = info.canalNombre;
+                            guardarCanales();
+                        }
                     }
-                    if (canal.ultimoVideo !== videoNuevo.link) {
-                        canal.ultimoVideo = videoNuevo.link;
-                        canal.nombre = info.canalNombre;
-                        guardarCanales();
-                    }
+                } catch (e) {
+                    console.error(`Error en YouTube para canal ${canal.id}:`, e.message);
                 }
-            } catch (e) {
-                console.error(`Error en YouTube para canal ${canal.id}:`, e.message);
             }
+        } finally {
+            verificandoYouTubeActualmente = false;
         }
     };
 
-    // Verificar novedades de YouTube cada 30 minutos
-    cron.schedule('*/30 * * * *', verificarYouTube);
-
-    // Resetear cuotas de API keys todos los días a la medianoche
-    cron.schedule('0 0 * * *', () => {
-        API_KEYS.forEach((key, idx) => {
-            if (keyStatus[idx]) {
-                keyStatus[idx].status = 'Activa';
-                keyStatus[idx].requestsToday = 0;
-            }
-        });
-        guardarKeysYCuotas();
-        console.log('[NODE-CRON] Cuotas diarias de Gemini reiniciadas a la medianoche.');
-    });
-
-    // Cron para alarmas persistentes (verificación cada 20 segundos con timezone exacta de El Salvador)
-    cron.schedule('*/20 * * * * *', async () => {
-        if (!botGlobalmenteActivo || alarmasGuardadas.length === 0) return;
-        
-        const hoy = new Date();
-        const horaStr = getHoraElSalvador(hoy);
-        const fechaStr = getFechaElSalvador(hoy);
-        const fechaHoraActual = fechaStr + ' ' + horaStr;
-        
-        const alarmasAEliminar = [];
-        for (let i = 0; i < alarmasGuardadas.length; i++) {
-            const alarma = alarmasGuardadas[i];
-            const horaAlarmaNorm = normalizarHora(alarma.hora);
-            
-            let debeDisparar = false;
-
-            if (!alarma.recurrente) {
-                if (alarma.fecha === fechaStr) {
-                    if (horaAlarmaNorm <= horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
-                        debeDisparar = true;
-                    }
-                } else {
-                    const parseDate = (dStr) => {
-                        if (!dStr) return new Date(0);
-                        const parts = dStr.split('/');
-                        if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]);
-                        return new Date(0);
-                    };
-                    const fAlarma = parseDate(alarma.fecha);
-                    const fHoy = parseDate(fechaStr);
-                    if (fAlarma < fHoy) {
-                        alarmasAEliminar.push(i);
-                        continue;
-                    }
-                }
-            } else {
-                if (horaAlarmaNorm === horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
-                    debeDisparar = true;
-                }
-            }
-
-            if (debeDisparar) {
-                alarma.ultimoDisparo = fechaHoraActual;
-                try {
-                    console.log(`[⏰ ALARMA DISPARADA] Enviando alarma programada para las ${horaAlarmaNorm}: "${alarma.mensaje}" a ${alarma.chatId}`);
-                    
-                    const msgLower = (alarma.mensaje || "").toLowerCase();
-                    const esAccion = msgLower.startsWith('!bot ') || 
-                                     msgLower.includes('frase') || 
-                                     msgLower.includes('noticia') || 
-                                     msgLower.includes('buscar') || 
-                                     msgLower.includes('clima') || 
-                                     msgLower.includes('resumen') || 
-                                     msgLower.includes('motivacion') || 
-                                     msgLower.includes('reflexion') || 
-                                     msgLower.includes('versiculo');
-
-                    if (esAccion) {
-                        await ejecutarAccionProgramada({
-                            accion: alarma.mensaje,
-                            hora: horaAlarmaNorm,
-                            chatId: alarma.chatId,
-                            descripcion: alarma.mensaje
-                        });
-                    } else {
-                        await client.sendMessage(alarma.chatId, `⏰ *¡ALARMA ACTIVADA!* ⏰\n\nSeñor Geovanny, es hora:\n👉 _"${alarma.mensaje}"_`);
-                    }
-
-                    if (!alarma.recurrente) {
-                        alarmasAEliminar.push(i);
-                    }
-                } catch (e) {
-                    console.error("Error al enviar alarma:", e);
-                }
-            }
-        }
-        
-        if (alarmasAEliminar.length > 0) {
-            for (let j = alarmasAEliminar.length - 1; j >= 0; j--) {
-                alarmasGuardadas.splice(alarmasAEliminar[j], 1);
-            }
-            guardarAlarmas();
-        }
-    }, { timezone: "America/El_Salvador" });
-
-    // Función ejecutora de tareas programadas (soporta comandos e IA directa)
+    // Función ejecutora de tareas programadas (con debounce y protección anti-duplicado)
     async function ejecutarAccionProgramada(tarea) {
         const destChat = tarea.chatId || adminChatId;
         if (!destChat) {
@@ -1873,8 +1807,19 @@ client.on('ready', () => {
             return;
         }
 
-        const horaLabel = tarea.hora ? ` (${tarea.hora})` : '';
         const accion = (tarea.accion || tarea.prompt || tarea.descripcion || "").trim();
+        const clave = `${tarea.hora || tarea.cron}_${accion.toLowerCase()}`;
+        const ahoraMs = Date.now();
+        const ultimaEjec = ejecucionesRecientesTareas.get(clave);
+
+        // Si ya se ejecutó esta misma tarea hace menos de 90 segundos, es un duplicado: omitir
+        if (ultimaEjec && (ahoraMs - ultimaEjec < 90000)) {
+            console.log(`[⏰ CRON] Descartando ejecución duplicada para tarea: "${clave}" (${Math.round((ahoraMs - ultimaEjec) / 1000)}s desde la anterior)`);
+            return;
+        }
+        ejecucionesRecientesTareas.set(clave, ahoraMs);
+
+        const horaLabel = tarea.hora ? ` (${tarea.hora})` : '';
         console.log(`[⏰ CRON] Disparando tarea programada: "${accion}" para ${destChat}`);
 
         // Si es un comando de Kingbot (!bot ...)
@@ -1923,13 +1868,33 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
         }
     }
     
-    // Inicializar Tareas Programadas con Timezone de El Salvador
-    global.activeCronJobs = new Map();
+    // Inicializar Tareas Programadas con Timezone de El Salvador y limpieza de duplicados
     global.inicializarTareas = () => {
-        for (const [idx, job] of global.activeCronJobs.entries()) {
-            try { job.stop(); } catch(e) {}
+        if (global.activeCronJobs && global.activeCronJobs.size > 0) {
+            for (const [idx, job] of global.activeCronJobs.entries()) {
+                try {
+                    if (job && typeof job.stop === 'function') job.stop();
+                } catch(e) {}
+            }
+            global.activeCronJobs.clear();
         }
-        global.activeCronJobs.clear();
+
+        // De-duplicar array de tareas programadas en memoria y persistencia
+        const tareasUnicas = [];
+        const vistas = new Set();
+        tareasProgramadas.forEach(t => {
+            const key = `${(t.hora || t.cron || '').trim().toLowerCase()}_${(t.accion || t.prompt || '').trim().toLowerCase()}`;
+            if (!vistas.has(key)) {
+                vistas.add(key);
+                tareasUnicas.push(t);
+            } else {
+                console.log(`[⏰ CRON] Eliminada tarea programada duplicada en configuración: "${key}"`);
+            }
+        });
+        if (tareasUnicas.length !== tareasProgramadas.length) {
+            tareasProgramadas = tareasUnicas;
+            guardarTareasProgramadas();
+        }
 
         tareasProgramadas.forEach((tarea, index) => {
             try {
@@ -1943,7 +1908,6 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
                     if (!botGlobalmenteActivo) return;
                     await ejecutarAccionProgramada(tarea);
 
-                    // Si es una tarea no recurrente (una sola vez), eliminarla tras disparar
                     if (tarea.recurrente === false) {
                         const removeIdx = tareasProgramadas.indexOf(tarea);
                         if (removeIdx !== -1) {
@@ -1961,21 +1925,115 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
             }
         });
     };
-    global.inicializarTareas();
 
-    cron.schedule('0 9 * * *', async () => {
+    function iniciarServiciosCron() {
+        if (cronsGlobalesIniciados) {
+            console.log('[CRON] Servicios programados ya inicializados previamente. Omitiendo duplicados.');
+            return;
+        }
+        cronsGlobalesIniciados = true;
+        console.log('[CRON] Inicializando servicios programados (instancia única)...');
 
+        // 1. Inicializar tareas programadas
+        global.inicializarTareas();
 
+        // 2. Verificar novedades de YouTube cada 30 minutos
+        cron.schedule('*/30 * * * *', verificarYouTube);
 
-        console.log("[x &] Ejecutando verificación diaria de vencimientos de tarjetas...");
-        await chequearVencimientosYNotificar(false);
-    }, { scheduled: true, timezone: "America/El_Salvador" });
+        // 3. Resetear cuotas de API keys todos los días a la medianoche
+        cron.schedule('0 0 * * *', () => {
+            API_KEYS.forEach((key, idx) => {
+                if (keyStatus[idx]) {
+                    keyStatus[idx].status = 'Activa';
+                    keyStatus[idx].requestsToday = 0;
+                }
+            });
+            guardarKeysYCuotas();
+            console.log('[NODE-CRON] Cuotas diarias de Gemini reiniciadas a la medianoche.');
+        });
 
-    // Verificación en el arranque (con delay de 10s para permitir inicialización completa)
-    setTimeout(async () => {
-        console.log("[x &] Ejecutando verificación de vencimientos al arranque...");
-        await chequearVencimientosYNotificar(false);
-    }, 10000);
+        // 4. Cron para alarmas persistentes (verificación cada 20 segundos)
+        cron.schedule('*/20 * * * * *', async () => {
+            if (!botGlobalmenteActivo || alarmasGuardadas.length === 0) return;
+            
+            const hoy = new Date();
+            const horaStr = getHoraElSalvador(hoy);
+            const fechaStr = getFechaElSalvador(hoy);
+            const fechaHoraActual = fechaStr + ' ' + horaStr;
+            
+            const alarmasAEliminar = [];
+            for (let i = 0; i < alarmasGuardadas.length; i++) {
+                const alarma = alarmasGuardadas[i];
+                const horaAlarmaNorm = normalizarHora(alarma.hora);
+                
+                let debeDisparar = false;
+
+                if (!alarma.recurrente) {
+                    if (alarma.fecha === fechaStr) {
+                        if (horaAlarmaNorm <= horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
+                            debeDisparar = true;
+                        }
+                    } else {
+                        const parseDate = (dStr) => {
+                            if (!dStr) return new Date(0);
+                            const parts = dStr.split('/');
+                            if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]);
+                            return new Date(0);
+                        };
+                        const fAlarma = parseDate(alarma.fecha);
+                        const fHoy = parseDate(fechaStr);
+                        if (fAlarma < fHoy) {
+                            alarmasAEliminar.push(i);
+                            continue;
+                        }
+                    }
+                } else {
+                    if (horaAlarmaNorm === horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
+                        debeDisparar = true;
+                    }
+                }
+
+                if (debeDisparar) {
+                    alarma.ultimoDisparo = fechaHoraActual;
+                    guardarAlarmas();
+                    
+                    const dest = alarma.chatId || adminChatId;
+                    if (dest) {
+                        try {
+                            await client.sendMessage(dest, `🔔 *ALARMA KINGBOT (Hora: ${alarma.hora}):*\n\n"${alarma.mensaje}"\n\n_Para ver o borrar alarmas: *!bot alarmas*_`);
+                        } catch (e) {
+                            console.error("Error enviando alarma:", e.message);
+                        }
+                    }
+
+                    if (!alarma.recurrente) {
+                        alarmasAEliminar.push(i);
+                    }
+                }
+            }
+
+            if (alarmasAEliminar.length > 0) {
+                for (let j = alarmasAEliminar.length - 1; j >= 0; j--) {
+                    alarmasGuardadas.splice(alarmasAEliminar[j], 1);
+                }
+                guardarAlarmas();
+            }
+        }, { timezone: "America/El_Salvador" });
+
+        // 5. Verificación diaria de vencimientos de tarjetas a las 9:00 AM
+        cron.schedule('0 9 * * *', async () => {
+            console.log("[💳] Ejecutando verificación diaria de vencimientos de tarjetas (09:00 AM)...");
+            await chequearVencimientosYNotificar(false);
+        }, { scheduled: true, timezone: "America/El_Salvador" });
+
+        // Verificación única al arranque tras delay de 12 segundos
+        setTimeout(async () => {
+            console.log("[💳] Verificación de vencimientos al arranque...");
+            await chequearVencimientosYNotificar(false);
+        }, 12000);
+    }
+
+    iniciarServiciosCron();
 });
 
 client.on('disconnected', (reason) => {
@@ -3807,28 +3865,29 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const sysUptime = formatTime(os.uptime());
             const jarvisUptime = formatTime(process.uptime());
             
-            let statusReport = `x *DIAGNSTICO DE SISTEMA KINBOT v4.0*\n\n`;
-            statusReport += `x *Asistente:* Activo y Altivo\n`;
-            statusReport += `xR *Plataforma:* ${platform === 'win32' ? 'Windows OS' : 'Termu/ Android'}\n`;
-            statusReport += `x *Arquitectura:* ${arch}\n`;
-            statusReport += `*Procesador:* ${cpuModel} (${cpuCores} núcleos)\n`;
-            statusReport += `x*Memoria RAM:* ${freeRAM} GB libres de ${totalRAM} GB totales\n`;
-            statusReport += ` *Uptime Servidor:* ${sysUptime}\n`;
-            statusReport += ` *Uptime Kinbot:* ${jarvisUptime}\n`;
+            let statusReport = `📊 *DIAGNÓSTICO DE SISTEMA KINGBOT*\n\n`;
+            statusReport += `🤖 *Asistente:* Activo y Operativo\n`;
+            statusReport += `🆔 *PID del Proceso:* ${process.pid}\n`;
+            statusReport += `💻 *Plataforma:* ${platform === 'win32' ? 'Windows OS' : 'Termux / Linux'}\n`;
+            statusReport += `⚙️ *Arquitectura:* ${arch}\n`;
+            statusReport += `🧠 *Procesador:* ${cpuModel} (${cpuCores} núcleos)\n`;
+            statusReport += `📈 *Memoria RAM:* ${freeRAM} GB libres de ${totalRAM} GB totales\n`;
+            statusReport += `⏱️ *Uptime Servidor:* ${sysUptime}\n`;
+            statusReport += `⏳ *Uptime Kingbot:* ${jarvisUptime}\n`;
             
             if (isTermux) {
                 exec('termux-battery-status', async (err, stdout) => {
                     if (!err) {
                         try {
                             const data = JSON.parse(stdout);
-                            const charging = data.status === 'CHARGING' ? 'xR Conectado' : 'x9 Desconectado';
-                            statusReport += `x *Energía:* ${charging} (Nivel: ${data.percentage}%, Temp: ${data.temperature}°C)\n`;
+                            const charging = data.status === 'CHARGING' ? '🔌 Conectado' : '🔋 Desconectado';
+                            statusReport += `🔋 *Energía:* ${charging} (Nivel: ${data.percentage}%, Temp: ${data.temperature}°C)\n`;
                         } catch(e) {}
                     }
                     await msg.reply(statusReport);
                 });
             } else {
-                statusReport += `a *Energía:* Red Eléctrica Directa (Ilimitada)\n`;
+                statusReport += `⚡ *Energía:* Red Eléctrica Directa (Ilimitada)\n`;
                 await msg.reply(statusReport);
             }
             return;
@@ -4492,6 +4551,15 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const cronExpr = horaToCron(horaStr);
             if (!cronExpr) {
                 return msg.reply(`❌ *Hora no válida ("${horaStr}").*\nUsa formato de 24 horas (ej. 05:00, 08:00, 14:30) o 12 horas (ej. 5:00 AM, 8:00 PM).`);
+            }
+
+            // Evitar duplicados idénticos en tareas programadas
+            const yaExiste = tareasProgramadas.some(t => 
+                (t.hora === horaStr || t.cron === cronExpr) && 
+                (t.accion || '').trim().toLowerCase() === accionStr.trim().toLowerCase()
+            );
+            if (yaExiste) {
+                return msg.reply(`⚠️ *Kingbot:* Ya existe una tarea programada para las *${horaStr}* con esa misma instrucción. No se duplicó.`);
             }
 
             const nuevaTarea = {
@@ -5622,22 +5690,30 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
 
                         const cronExpr = horaToCron(horaStr);
                         if (cronExpr) {
-                            const nuevaTarea = {
-                                id: Date.now(),
-                                hora: horaStr,
-                                cron: cronExpr,
-                                recurrente: recurrente,
-                                accion: instruccion,
-                                prompt: instruccion,
-                                descripcion: descripcion.length > 60 ? descripcion.substring(0, 57) + '...' : descripcion,
-                                chatId: chatId,
-                                creada: new Date().toISOString()
-                            };
+                            // Evitar duplicados idénticos en tareas programadas
+                            const yaExiste = tareasProgramadas.some(t => 
+                                (t.hora === horaStr || t.cron === cronExpr) && 
+                                (t.accion || '').trim().toLowerCase() === instruccion.trim().toLowerCase()
+                            );
 
-                            tareasProgramadas.push(nuevaTarea);
-                            guardarTareasProgramadas();
-                            if (typeof global.inicializarTareas === 'function') {
-                                global.inicializarTareas();
+                            if (!yaExiste) {
+                                const nuevaTarea = {
+                                    id: Date.now(),
+                                    hora: horaStr,
+                                    cron: cronExpr,
+                                    recurrente: recurrente,
+                                    accion: instruccion,
+                                    prompt: instruccion,
+                                    descripcion: descripcion.length > 60 ? descripcion.substring(0, 57) + '...' : descripcion,
+                                    chatId: chatId,
+                                    creada: new Date().toISOString()
+                                };
+
+                                tareasProgramadas.push(nuevaTarea);
+                                guardarTareasProgramadas();
+                                if (typeof global.inicializarTareas === 'function') {
+                                    global.inicializarTareas();
+                                }
                             }
 
                             const tipoTexto = recurrente ? "todos los días" : "una sola vez";
