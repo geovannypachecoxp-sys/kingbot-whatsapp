@@ -1464,6 +1464,49 @@ async function chequearVencimientosYNotificar(force = false) {
 }
 
 // ---------------------------------------------------------
+// ESCUCHADOR EN TIEMPO REAL DE NOTIFICACIONES DESDE FIRESTORE (GMAIL / APPS SCRIPT -> WHATSAPP)
+// ---------------------------------------------------------
+let escuchadorNotificacionesIniciado = false;
+
+function iniciarEscuchadorNotificacionesFirestore() {
+    if (escuchadorNotificacionesIniciado) return;
+    if (!dbFirebase) inicializarFirebase();
+    if (!dbFirebase || !firebaseUid) return;
+
+    escuchadorNotificacionesIniciado = true;
+    console.log('[🔔 Notificaciones] Iniciando escucha en tiempo real de alertas de Finanzas King en Firestore...');
+
+    const notifRef = dbFirebase.collection('users').doc(firebaseUid).collection('bot_notifications');
+
+    notifRef.where('processed', '==', false).onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(async change => {
+            if (change.type === 'added') {
+                const docSnap = change.doc;
+                const data = docSnap.data();
+                const docId = docSnap.id;
+
+                if (data.message && adminChatId && client) {
+                    try {
+                        console.log(`[📲 WhatsApp] Reenviando notificación de Firestore a WhatsApp: ${data.title || 'Alerta'}`);
+                        await client.sendMessage(adminChatId, data.message);
+                        await notifRef.doc(docId).update({
+                            processed: true,
+                            processedAt: new Date().toISOString()
+                        });
+                        console.log(`[✅ WhatsApp] Alerta enviada exitosamente a ${adminChatId} (${docId}).`);
+                    } catch (errSend) {
+                        console.error(`[❌ WhatsApp Error enviando notificación]:`, errSend.message);
+                    }
+                }
+            }
+        });
+    }, err => {
+        console.error('[⚠️ Error listener notificaciones Firestore]:', err.message);
+        escuchadorNotificacionesIniciado = false;
+    });
+}
+
+// ---------------------------------------------------------
 // INTEGRACIÓN DEL BOT DE TELEGRAM (RECEPTOR Y ACTUALIZADOR DE FINANZAS)
 // ---------------------------------------------------------
 let telegramOffset = 0;
@@ -1725,6 +1768,7 @@ client.on('ready', () => {
     isStartupSync = false;
     console.log('\n✅ [OK] ¡KINGBOT ACTIVO 24/7 Y LISTO PARA OPERAR!');
     iniciarTelegramPolling();
+    iniciarEscuchadorNotificacionesFirestore();
 
     // --- VERIFICACI N DE DEPENDENCIAS PARA STICKERS ---
     const checkCmd = (cmd, label) => {
