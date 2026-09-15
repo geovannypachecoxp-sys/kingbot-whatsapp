@@ -1023,7 +1023,12 @@ async function procesarTextoFinanciero(texto, msg) {
     if (!dbFirebase || !firebaseUid) return false;
 
     const tLower = texto.toLowerCase();
-    const palabrasClave = ['pago', 'abono', 'transferencia', 'comprobante', 'recibo', 'factura', 'compra', 'tarjeta', 'saldo', 'deuda', 'corte', 'banco', 'bac', 'davivienda', 'agricola', 'promerica', 'fedecredito', 'usd', '$'];
+    const palabrasClave = [
+        'pago', 'abono', 'transferencia', 'comprobante', 'recibo', 'factura', 'compra', 
+        'tarjeta', 'saldo', 'deuda', 'corte', 'banco', 'bac', 'davivienda', 'agricola', 
+        'promerica', 'fedecredito', 'siman', 'credisiman', 'chivo', 'recarga', 'consumo', 
+        'autorizacion', 'voucher', 'transaccion', 'retiro', 'usd', '$'
+    ];
     const tieneTerminos = palabrasClave.some(w => tLower.includes(w));
     if (!tieneTerminos) return false;
 
