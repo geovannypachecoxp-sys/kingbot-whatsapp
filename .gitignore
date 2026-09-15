@@ -9,3 +9,4 @@ admin.json
 *.log
 llaves API gemini*
 llaves*.txt
+gas_script.js*
