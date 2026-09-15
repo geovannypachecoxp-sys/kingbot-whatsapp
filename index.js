@@ -2944,8 +2944,37 @@ Responde de forma clara, natural y concisa en español.`;
         return msg.reply("💤 *Modo conversacional DESACTIVADO.*");
     }
 
+    // --- INTERCEPTOR DE COMPROBANTES / TRANSACCIONES REENVIADAS A WHATSAPP ---
+    if (!isGroup) {
+        // A) Si el mensaje trae adjunto (foto de ticket, voucher o PDF)
+        if (msg.hasMedia) {
+            try {
+                const media = await msg.downloadMedia();
+                if (media && (media.mimetype === 'application/pdf' || media.mimetype.startsWith('image/'))) {
+                    const esDocFinanciero = await procesarDocumentoFinanciero(media, msg);
+                    if (esDocFinanciero) return;
+                }
+            } catch (eMed) {}
+        }
+
+        // B) Si es texto reenviado (SMS bancario, alerta de compra, wompi, transferencia)
+        if (textoOriginal && textoOriginal.length > 15) {
+            const tLow = textoOriginal.toLowerCase();
+            const tieneTerminosFinancieros = [
+                'compra', 'abono', 'pago', 'transferencia', 'comprobante', 'recibo', 
+                'factura', 'tarjeta', 'saldo', 'monto', 'usd', '$', 'autorizacion', 
+                'wompi', 'chivo', 'recarga', 'retiro', 'banco'
+            ].some(k => tLow.includes(k));
+
+            if (tieneTerminosFinancieros) {
+                const esFinanciero = await procesarTextoFinanciero(textoOriginal, msg);
+                if (esFinanciero) return;
+            }
+        }
+    }
+
     const usaPrefijo = textoOriginal.toLowerCase().startsWith('!bot');
-    const esAdminPrivado = !isGroup && chatId === adminChatId;
+    const esAdminPrivado = !isGroup && (chatId === adminChatId || (adminChatId && chatId.includes(adminChatId.replace(/@.*$/, ''))));
     if (!chatsActivos.has(chatId) && !usaPrefijo && !esAdminPrivado) return;
 
     let textoLimpio = usaPrefijo ? textoOriginal.substring(4).trim() : textoOriginal;
