@@ -1264,15 +1264,17 @@ async function aplicarOperacionFinanciera(data, msg) {
         batch.set(expRef, payload);
         await batch.commit();
 
-        let confirmMsg = `💵 *COMPROBANTE DE ABONO PROCESADO (Finanzas King)* 💵\n\n`;
-        confirmMsg += `💳 *Tarjeta:* ${cardNameVal}\n`;
-        confirmMsg += `💰 *Monto Abonado:* $${amt.toFixed(2)}\n`;
-        if (matchingCard) {
-            confirmMsg += `📉 *Nueva Deuda:* $${newBal.toFixed(2)}\n`;
-        }
-        confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n`;
-        if (data.reference) confirmMsg += `🔢 *Referencia:* ${data.reference}\n`;
-        confirmMsg += `\n✅ *¡Abono registrado en Finanzas King con éxito!*`;
+        const fDia = String(tDate.getDate()).padStart(2, '0');
+        const fMes = String(tDate.getMonth() + 1).padStart(2, '0');
+        const fAnio = tDate.getFullYear();
+        const fechaFormateada = `${fDia}/${fMes}/${fAnio}`;
+
+        let confirmMsg = `💵 *Abono Procesado*\n\n`;
+        confirmMsg += `• *Monto:* $${amt.toFixed(2)}\n`;
+        confirmMsg += `• *Tarjeta:* ${cardNameVal}\n`;
+        confirmMsg += `• *Fecha:* ${fechaFormateada}\n`;
+        if (data.reference) confirmMsg += `• *Referencia:* ${data.reference}\n`;
+        confirmMsg += `\n✅ _Guardado exitosamente_`;
 
         await msg.reply(confirmMsg);
         return true;
@@ -1325,16 +1327,18 @@ async function aplicarOperacionFinanciera(data, msg) {
         batch.set(expRef, payload);
         await batch.commit();
 
-        let confirmMsg = `🧾 *TICKET / COMPRA PROCESADA (Finanzas King)* 🧾\n\n`;
-        confirmMsg += `💰 *Monto:* $${amt.toFixed(2)}\n`;
-        confirmMsg += `📌 *Concepto:* ${concept}\n`;
-        confirmMsg += `🏷️ *Categoría:* ${category}\n`;
-        confirmMsg += `💳 *Método de Pago:* ${cardNameVal}\n`;
-        if (matchingCard) {
-            confirmMsg += `📈 *Deuda Actualizada:* $${newBal.toFixed(2)}\n`;
-        }
-        confirmMsg += `📅 *Fecha:* ${tDate.toLocaleDateString()}\n\n`;
-        confirmMsg += `✅ *¡Movimiento guardado con éxito!*`;
+        const fDia = String(tDate.getDate()).padStart(2, '0');
+        const fMes = String(tDate.getMonth() + 1).padStart(2, '0');
+        const fAnio = tDate.getFullYear();
+        const fechaFormateada = `${fDia}/${fMes}/${fAnio}`;
+
+        let confirmMsg = `💳 *Compra Procesada*\n\n`;
+        confirmMsg += `• *Monto:* $${amt.toFixed(2)}\n`;
+        confirmMsg += `• *Concepto:* ${concept}\n`;
+        confirmMsg += `• *Categoría:* ${category}\n`;
+        confirmMsg += `• *Método:* ${cardNameVal}\n`;
+        confirmMsg += `• *Fecha:* ${fechaFormateada}\n\n`;
+        confirmMsg += `✅ _Guardado exitosamente_`;
 
         await msg.reply(confirmMsg);
         return true;
@@ -4651,7 +4655,14 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
                 await batch.commit();
 
-                return msg.reply(`✅ *Kingbot:* ¡Movimiento registrado exitosamente en Finanzas King!\n\n💳 *Tarjeta:* ${matchingCard.name}\n💰 *Monto:* $${amt.toFixed(2)} (${type === 'expense' ? 'Gasto' : 'Abono'})\n📌 *Concepto:* ${concept}\n🏷️ *Categoría:* ${category}\n📉 *Deuda Actualizada:* $${newBal.toFixed(2)}`);
+                const titulo = type === 'expense' ? 'Gasto Registrado' : 'Abono Registrado';
+                let respMsg = `💳 *${titulo}*\n\n`;
+                respMsg += `• *Monto:* $${amt.toFixed(2)}\n`;
+                respMsg += `• *Tarjeta:* ${matchingCard.name}\n`;
+                respMsg += `• *Concepto:* ${concept}\n`;
+                respMsg += `• *Categoría:* ${category}\n\n`;
+                respMsg += `✅ _Guardado exitosamente_`;
+                return msg.reply(respMsg);
 
             } catch (e) {
                 console.error("Error al registrar movimiento:", e);
@@ -6331,7 +6342,13 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                                             batch.update(cardsRef.doc(matchingCard.id), { balance: newBal });
                                             await batch.commit();
 
-                                            const regReport = `\n\n✅ *Movimiento registrado (Finanzas King):*\n💳 *Tarjeta:* ${matchingCard.name}\n💰 *Monto:* $${amt.toFixed(2)} (${type === 'expense' ? 'Gasto' : 'Abono'})\n📌 *Concepto:* ${concept}\n🏷️ *Categoría:* ${category}\n📉 *Deuda Actualizada:* $${newBal.toFixed(2)}`;
+                                            const titulo = type === 'expense' ? 'Gasto Registrado' : 'Abono Registrado';
+                                            let regReport = `\n\n💳 *${titulo}*\n`;
+                                            regReport += `• *Monto:* $${amt.toFixed(2)}\n`;
+                                            regReport += `• *Tarjeta:* ${matchingCard.name}\n`;
+                                            regReport += `• *Concepto:* ${concept}\n`;
+                                            regReport += `• *Categoría:* ${category}\n`;
+                                            regReport += `_Guardado exitosamente._`;
                                             respuestaTexto = respuestaTexto.replace(match[0], regReport).trim();
                                         }
                                     } catch (e) {
