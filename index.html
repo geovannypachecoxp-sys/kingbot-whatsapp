@@ -2414,7 +2414,7 @@ Sé específico con los números. Usa un tono amigable y motivador. Máximo 400 
 
                 let nextPayDate = new Date(today.getFullYear(), today.getMonth(), payDay);
                 let diffDays = Math.ceil((nextPayDate - today) / 86400000);
-                if (diffDays < -7) {
+                if (diffDays < 0) {
                     nextPayDate.setMonth(nextPayDate.getMonth() + 1);
                     diffDays = Math.ceil((nextPayDate - today) / 86400000);
                 }
@@ -2436,11 +2436,9 @@ Sé específico con los números. Usa un tono amigable y motivador. Máximo 400 
                 let isUrgent = false;
                 const remaining = formatMoney(goal - paid);
 
-                if (diffDays === 0)       { msg = `¡<b>${c.name}</b> vence <b>HOY</b>! Faltan <b class="text-danger">${remaining}</b>.`; isUrgent = true; }
-                else if (diffDays === 1)  { msg = `¡<b>${c.name}</b> vence <b>mañana</b>! Faltan ${remaining}.`; isUrgent = true; }
-                else if (diffDays > 0 && diffDays <= 3) { msg = `<b>${c.name}</b> vence en ${diffDays} días. Faltan ${remaining}.`; isUrgent = true; }
-                else if (diffDays > 3 && diffDays <= 7) { msg = `<b>${c.name}</b> vence en ${diffDays} días.`; }
-                else if (diffDays < 0 && diffDays >= -5) { msg = `¡<b>${c.name}</b> venció hace ${Math.abs(diffDays)} días! Pago pendiente: ${remaining}.`; isUrgent = true; }
+                if (diffDays === 0)       { msg = `<b>${c.name}</b> vence <b>HOY</b> (Día ${payDay}). Faltan <b class="text-danger">${remaining}</b>.`; isUrgent = true; }
+                else if (diffDays === 1)  { msg = `<b>${c.name}</b> vence <b>mañana</b> (Día ${payDay}). Faltan ${remaining}.`; isUrgent = true; }
+                else if (diffDays > 1 && diffDays <= 3) { msg = `<b>${c.name}</b> vence en <b>${diffDays} días</b> (Día ${payDay}). Faltan ${remaining}.`; isUrgent = true; }
 
                 if (msg) {
                     if (isUrgent) {

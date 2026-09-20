@@ -1345,13 +1345,12 @@ async function aplicarOperacionFinanciera(data, msg) {
 
         await cardsRef.doc(matchingCard.id).update(updatePayload);
 
-        let confirmMsg = `💳 *ESTADO DE CUENTA PROCESADO (Finanzas King)* 💳\n\n`;
-        confirmMsg += `📌 *Tarjeta:* ${matchingCard.name}\n`;
-        confirmMsg += `💰 *Deuda al Corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}\n`;
-        confirmMsg += `🎯 *Pago p/no intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}\n`;
-        confirmMsg += `📅 *Fecha Límite:* ${data.pay_date || 'No especificada'} (Día ${payDay})\n`;
-        confirmMsg += `✂️ *Fecha de Corte:* ${data.cutoff_date || 'No especificada'} (Día ${cutDay})\n\n`;
-        confirmMsg += `✅ *¡Finanzas King actualizado con éxito!* Se programaron los recordatorios automáticos.`;
+        let confirmMsg = `💳 *Estado de Cuenta Procesado*\n\n`;
+        confirmMsg += `• *Tarjeta:* ${matchingCard.name}\n`;
+        confirmMsg += `• *Pago de contado:* $${parseFloat(data.pay_goal || 0).toFixed(2)}\n`;
+        confirmMsg += `• *Fecha límite:* ${data.pay_date || 'No especificada'} (Día ${payDay})\n`;
+        confirmMsg += `• *Saldo al corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}\n\n`;
+        confirmMsg += `✅ _Guardado exitosamente_`;
 
         await msg.reply(confirmMsg);
         return true;
@@ -1564,18 +1563,24 @@ async function chequearVencimientosYNotificar(force = false) {
 
             const targetAmount = payGoal > 0 ? payGoal : balance;
 
-            // Calcular fecha exacta de pago del mes actual
+            // Calcular próxima fecha de pago (mes actual o siguiente mes si ya pasó en el corriente)
             const currentYear = today.getFullYear();
             const currentMonth = today.getMonth();
-            let payDate = new Date(currentYear, currentMonth, payDay);
+            const maxDaysCurrent = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let payDate = new Date(currentYear, currentMonth, Math.min(payDay, maxDaysCurrent));
+            payDate.setHours(0, 0, 0, 0);
 
-            let diffDays = Math.round((payDate - today) / (1000 * 60 * 60 * 24));
-
-            // Si el día de pago ya pasó por mucho (> 7 días), chequear si pertenece al siguiente mes
-            if (diffDays < -7) {
-                payDate = new Date(currentYear, currentMonth + 1, payDay);
-                diffDays = Math.round((payDate - today) / (1000 * 60 * 60 * 24));
+            if (payDate < today) {
+                const nextMonth = currentMonth + 1;
+                const maxDaysNext = new Date(currentYear, nextMonth + 1, 0).getDate();
+                payDate = new Date(currentYear, nextMonth, Math.min(payDay, maxDaysNext));
+                payDate.setHours(0, 0, 0, 0);
             }
+
+            const diffDays = Math.round((payDate - today) / (1000 * 60 * 60 * 24));
+
+            // Recordar únicamente justo antes de la fecha de pago (de 0 a 3 días de antelación)
+            if (diffDays < 0 || diffDays > 3) return;
 
             // Calcular abonos desde el último corte
             const cutDay = parseInt(c.cutDay) || 1;
@@ -1586,8 +1591,10 @@ async function chequearVencimientosYNotificar(force = false) {
 
             const cardNameNorm = (c.name || '').toLowerCase().trim();
             const payments = trans.filter(t => {
+                const matchesId = t.cardId && t.cardId === c.id;
                 const cName = (t.cardName || '').toLowerCase().trim();
-                return (cName.includes(cardNameNorm) || cardNameNorm.includes(cName)) && t.date >= lastCutDate;
+                const matchesName = cName && (cName.includes(cardNameNorm) || cardNameNorm.includes(cName));
+                return (matchesId || matchesName) && t.date >= lastCutDate;
             });
 
             const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
@@ -1595,35 +1602,21 @@ async function chequearVencimientosYNotificar(force = false) {
 
             if (remaining <= 0) return; // Ya está pagada
 
-            // Notificar: Hoy (0), Mañana (1), En 2 o 3 días, o Vencida (-1 a -7)
-            let msg = null;
-            let shouldNotify = false;
+            let cuandoTexto = '';
+            if (diffDays === 0) cuandoTexto = 'Hoy';
+            else if (diffDays === 1) cuandoTexto = 'Mañana';
+            else cuandoTexto = `En ${diffDays} días`;
 
-            if (diffDays === 0) {
-                msg = `🚨 *¡PAGO HOY!* La tarjeta *${c.name}* vence *HOY* (día ${payDay}). Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
-                shouldNotify = true;
-            } else if (diffDays === 1) {
-                msg = `⚠️ *¡PAGO MAÑANA!* La tarjeta *${c.name}* vence *mañana* (día ${payDay}). Faltan *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
-                shouldNotify = true;
-            } else if (diffDays > 1 && diffDays <= 3) {
-                msg = `🔔 *Recordatorio:* La tarjeta *${c.name}* vence en *${diffDays} días* (día ${payDay}). Pendiente: *$${remaining.toFixed(2)}*.`;
-                shouldNotify = true;
-            } else if (diffDays < 0 && diffDays >= -7) {
-                msg = `🔴 *¡PAGO VENCIDO!* La tarjeta *${c.name}* venció hace *${Math.abs(diffDays)} días* (día ${payDay}). Falta pagar *$${remaining.toFixed(2)}* (Deuda total: *$${balance.toFixed(2)}*).`;
-                shouldNotify = true;
-            }
-
-            if (shouldNotify && msg) {
-                alertMessages.push(msg);
-            }
+            const itemMsg = `• *${c.name}*\n  – Vence: ${cuandoTexto} (Día ${payDay})\n  – Pendiente: $${remaining.toFixed(2)}`;
+            alertMessages.push(itemMsg);
         });
 
         if (alertMessages.length > 0) {
-            const finalMsg = `💳 *ALERTA DE VENCIMIENTOS (Finanzas King)* 💳\n\n` + alertMessages.join('\n\n');
+            const finalMsg = `💳 *Recordatorio de Pagos*\n\n` + alertMessages.join('\n\n');
             await client.sendMessage(adminChatId, finalMsg);
             return finalMsg;
         } else if (force) {
-            const okMsg = "✅ *Kingbot:* Excelente noticia, Señor. No hay pagos pendientes próximos a vencer para sus tarjetas activas.";
+            const okMsg = "✅ *Sin pagos pendientes próximos a vencer.*";
             await client.sendMessage(adminChatId, okMsg);
             return okMsg;
         }
