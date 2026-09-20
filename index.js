@@ -496,6 +496,33 @@ function guardarTareasProgramadas() {
     fs.writeFileSync('tareas_programadas.json', JSON.stringify(tareasProgramadas, null, 2));
 }
 
+// Variables de control de Cron a nivel de módulo (instancias singleton persistentes)
+let cronsGlobalesIniciados = false;
+global.activeCronJobs = new Map();
+const ejecucionesRecientesTareas = new Map();
+let verificandoYouTubeActualmente = false;
+let ultimoTimestampYouTube = 0;
+
+// Funciones para normalizar chats y detectar equivalencias (LID vs c.us vs admin vs grupos)
+function normalizarDestinoChat(chatId) {
+    if (!chatId) return adminChatId || 'admin_privado';
+    const cStr = String(chatId).trim();
+    if (cStr.endsWith('@g.us')) return cStr;
+    if (adminChatId) {
+        if (cStr === adminChatId) return adminChatId;
+        const cleanAdmin = adminChatId.replace(/@.*$/, '');
+        const cleanCurrent = cStr.replace(/@.*$/, '');
+        if (cleanAdmin && cleanCurrent && (cleanAdmin === cleanCurrent || cStr.includes(cleanAdmin) || adminChatId.includes(cleanCurrent))) {
+            return adminChatId;
+        }
+    }
+    return cStr;
+}
+
+function sonMismoChatDestino(chatA, chatB) {
+    return normalizarDestinoChat(chatA) === normalizarDestinoChat(chatB);
+}
+
 function horaToCron(horaStr) {
     if (!horaStr) return null;
     let s = horaStr.trim().toLowerCase();
@@ -1804,12 +1831,6 @@ client.on('ready', () => {
     })();
 
 
-    let cronsGlobalesIniciados = false;
-    global.activeCronJobs = new Map();
-    const ejecucionesRecientesTareas = new Map();
-    let verificandoYouTubeActualmente = false;
-    let ultimoTimestampYouTube = 0;
-
     const verificarYouTube = async () => {
         if (!botGlobalmenteActivo || !canalesYoutube || canalesYoutube.length === 0) return;
         const defaultDest = adminChatId || (canalesYoutube.find(c => c.chatId)?.chatId);
@@ -1848,28 +1869,40 @@ client.on('ready', () => {
         }
     };
 
-    // Función ejecutora de tareas programadas (con debounce y protección anti-duplicado)
+    // Función ejecutora de tareas programadas (con doble debounce anti-duplicado por Destino y Horario)
     async function ejecutarAccionProgramada(tarea) {
-        const destChat = tarea.chatId || adminChatId;
+        const destChat = normalizarDestinoChat(tarea.chatId) || adminChatId;
         if (!destChat) {
             console.error("[⏰ CRON] Error: No hay chatId registrado para enviar la tarea programada:", tarea.descripcion || tarea.accion);
             return;
         }
 
         const accion = (tarea.accion || tarea.prompt || tarea.descripcion || "").trim();
-        const clave = `${tarea.hora || tarea.cron}_${accion.toLowerCase()}`;
+        const cronExpr = tarea.cron || horaToCron(tarea.hora) || tarea.hora || "0 8 * * *";
         const ahoraMs = Date.now();
-        const ultimaEjec = ejecucionesRecientesTareas.get(clave);
 
-        // Si ya se ejecutó esta misma tarea hace menos de 90 segundos, es un duplicado: omitir
-        if (ultimaEjec && (ahoraMs - ultimaEjec < 90000)) {
-            console.log(`[⏰ CRON] Descartando ejecución duplicada para tarea: "${clave}" (${Math.round((ahoraMs - ultimaEjec) / 1000)}s desde la anterior)`);
+        // 1. Candado estricto por destino y horario: un mismo chat nunca debe recibir más de 1 envío en el mismo minuto
+        const claveDestHora = `dest_${destChat}_hora_${cronExpr}`;
+        const ultEjecDestHora = ejecucionesRecientesTareas.get(claveDestHora);
+        if (ultEjecDestHora && (ahoraMs - ultEjecDestHora < 90000)) {
+            console.log(`[⏰ CRON] Descartando ejecución repetida para destino ${destChat} en horario ${cronExpr} (${Math.round((ahoraMs - ultEjecDestHora) / 1000)}s desde la anterior)`);
             return;
         }
-        ejecucionesRecientesTareas.set(clave, ahoraMs);
+
+        // 2. Candado por acción específica
+        const accionClave = accion.toLowerCase().replace(/\s+/g, '_').substring(0, 40);
+        const claveAccion = `dest_${destChat}_act_${accionClave}`;
+        const ultEjecAccion = ejecucionesRecientesTareas.get(claveAccion);
+        if (ultEjecAccion && (ahoraMs - ultEjecAccion < 90000)) {
+            console.log(`[⏰ CRON] Descartando ejecución repetida para destino ${destChat} con acción "${accion}" (${Math.round((ahoraMs - ultEjecAccion) / 1000)}s)`);
+            return;
+        }
+
+        ejecucionesRecientesTareas.set(claveDestHora, ahoraMs);
+        ejecucionesRecientesTareas.set(claveAccion, ahoraMs);
 
         const horaLabel = tarea.hora ? ` (${tarea.hora})` : '';
-        console.log(`[⏰ CRON] Disparando tarea programada: "${accion}" para ${destChat}`);
+        console.log(`[⏰ CRON] Disparando tarea programada única: "${accion}" para ${destChat}`);
 
         // Si es un comando de Kingbot (!bot ...)
         if (accion.toLowerCase().startsWith('!bot ') || accion.toLowerCase().startsWith('.')) {
@@ -1917,7 +1950,7 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
         }
     }
     
-    // Inicializar Tareas Programadas con Timezone de El Salvador y limpieza de duplicados
+    // Inicializar Tareas Programadas con Timezone de El Salvador y depuración inteligente de duplicados
     global.inicializarTareas = () => {
         if (global.activeCronJobs && global.activeCronJobs.size > 0) {
             for (const [idx, job] of global.activeCronJobs.entries()) {
@@ -1928,19 +1961,30 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
             global.activeCronJobs.clear();
         }
 
-        // De-duplicar array de tareas programadas en memoria y persistencia
+        // Deduplicar array de tareas programadas en memoria y persistencia
+        // Regla: Para un mismo destino (grupo o número propio), no debe existir más de una tarea para el mismo horario exacto
         const tareasUnicas = [];
-        const vistas = new Set();
+        const vistasHorariosChat = new Map();
+
         tareasProgramadas.forEach(t => {
-            const key = `${(t.hora || t.cron || '').trim().toLowerCase()}_${(t.accion || t.prompt || '').trim().toLowerCase()}`;
-            if (!vistas.has(key)) {
-                vistas.add(key);
+            const destNorm = normalizarDestinoChat(t.chatId);
+            const cronExpr = t.cron || horaToCron(t.hora);
+            const horaNorm = (t.hora || cronExpr || '').trim().toLowerCase();
+
+            // Clave única por destino + horario
+            const keyHorario = `${destNorm}__${cronExpr || horaNorm}`;
+
+            if (!vistasHorariosChat.has(keyHorario)) {
+                vistasHorariosChat.set(keyHorario, t);
                 tareasUnicas.push(t);
             } else {
-                console.log(`[⏰ CRON] Eliminada tarea programada duplicada en configuración: "${key}"`);
+                const tareaExistente = vistasHorariosChat.get(keyHorario);
+                console.log(`[⏰ CRON] Depurada tarea duplicada para ${destNorm} en horario ${horaNorm}: "${t.descripcion || t.accion}" vs "${tareaExistente.descripcion || tareaExistente.accion}"`);
             }
         });
+
         if (tareasUnicas.length !== tareasProgramadas.length) {
+            console.log(`[⏰ CRON] Se eliminaron ${tareasProgramadas.length - tareasUnicas.length} tareas programadas duplicadas/redundantes.`);
             tareasProgramadas = tareasUnicas;
             guardarTareasProgramadas();
         }
@@ -2098,9 +2142,27 @@ client.on('auth_failure', (msg) => {
 
 client.on('message_create', async (msg) => {
     if (msg.fromMe) {
-        const lowerBody = (msg.body || "").toLowerCase();
+        const bodyStr = msg.body || "";
+        const lowerBody = bodyStr.toLowerCase();
         const isCommand = lowerBody.startsWith('!bot') || lowerBody.startsWith('.s') || lowerBody.startsWith('.sticker') || lowerBody.startsWith('!iniciarbot') || lowerBody.startsWith('!finalizarbot');
         const isSelfChat = msg.to === msg.from;
+
+        // Si es un mensaje automático generado por el propio Kingbot (tareas programadas, avisos, alarmas),
+        // ignorar totalmente para evitar ciclos de re-procesamiento en chat propio (self-chat / número propio)
+        if (bodyStr && (
+            bodyStr.startsWith('⏰') || 
+            bodyStr.includes('Kingbot - Tarea Programada') || 
+            bodyStr.includes('Kingbot (Aviso Programado') ||
+            bodyStr.startsWith('🔔 *ALARMA') ||
+            bodyStr.includes('RECORDATORIO!') ||
+            bodyStr.includes('NOTIFICACIÓN DE KINGBOT:') ||
+            bodyStr.startsWith('👑 *Kingbot') ||
+            bodyStr.startsWith('🤖 *Modo conversacional') ||
+            bodyStr.startsWith('📅 *¡Tarea Programada')
+        )) {
+            return;
+        }
+
         if (!isCommand && !isSelfChat) return; // Ignorar mensajes propios que no sean comandos
     }
     const originalReply = msg.reply.bind(msg);
@@ -4631,13 +4693,34 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 return msg.reply(`❌ *Hora no válida ("${horaStr}").*\nUsa formato de 24 horas (ej. 05:00, 08:00, 14:30) o 12 horas (ej. 5:00 AM, 8:00 PM).`);
             }
 
-            // Evitar duplicados idénticos en tareas programadas
-            const yaExiste = tareasProgramadas.some(t => 
-                (t.hora === horaStr || t.cron === cronExpr) && 
-                (t.accion || '').trim().toLowerCase() === accionStr.trim().toLowerCase()
-            );
-            if (yaExiste) {
-                return msg.reply(`⚠️ *Kingbot:* Ya existe una tarea programada para las *${horaStr}* con esa misma instrucción. No se duplicó.`);
+            // Evitar duplicados idénticos o conflicto de horario en el mismo chat
+            const destNormalizado = normalizarDestinoChat(chatId);
+            const indexExistente = tareasProgramadas.findIndex(t => {
+                const mismoChat = sonMismoChatDestino(t.chatId, destNormalizado);
+                const mismaHora = (t.hora === horaStr || t.cron === cronExpr);
+                return mismoChat && mismaHora;
+            });
+
+            if (indexExistente !== -1) {
+                // Si ya existía una tarea para este chat a esta misma hora, actualizarla en lugar de duplicarla
+                const antigua = tareasProgramadas[indexExistente];
+                antigua.accion = accionStr;
+                antigua.prompt = accionStr;
+                antigua.descripcion = accionStr.length > 60 ? accionStr.substring(0, 57) + '...' : accionStr;
+                antigua.recurrente = recurrente;
+                antigua.hora = horaStr;
+                antigua.cron = cronExpr;
+                antigua.chatId = destNormalizado;
+                antigua.actualizada = new Date().toISOString();
+                guardarTareasProgramadas();
+                if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
+
+                const recLabel = recurrente ? 'Todos los días' : 'Una sola vez';
+                return msg.reply(`🔄 *¡Tarea Programada Actualizada con Éxito!*
+⏰ *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
+👉 *Nueva Instrucción:* "${accionStr}"
+📍 *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
+_Se actualizó la tarea existente a las ${horaStr} para evitar duplicados._`);
             }
 
             const nuevaTarea = {
@@ -4647,7 +4730,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 accion: accionStr,
                 prompt: accionStr,
                 descripcion: accionStr.length > 60 ? accionStr.substring(0, 57) + '...' : accionStr,
-                chatId: chatId,
+                chatId: destNormalizado,
                 creada: new Date().toISOString()
             };
 
@@ -4659,7 +4742,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             return msg.reply(`📅 *¡Tarea Programada con Éxito!*
 ⏰ *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
 👉 *Instrucción:* "${accionStr}"
-📍 *Destino:* Este chat
+📍 *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
 _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         }
 
@@ -4670,13 +4753,25 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             let list = `📅 *TAREAS PROGRAMADAS ACTIVAS:*\n\n`;
             tareasProgramadas.forEach((t, i) => {
                 const rec = t.recurrente !== false ? '🔁 Diaria' : '1️⃣ Una sola vez';
-                list += `*${i + 1}*. [ ⏰ ${t.hora || t.cron} ] _(${rec})_\n   👉 ${t.descripcion || t.accion}\n\n`;
+                const destEsAdmin = !t.chatId || sonMismoChatDestino(t.chatId, adminChatId);
+                const destLabel = destEsAdmin ? '👤 Privado (Tú)' : (t.chatId?.endsWith('@g.us') ? '👥 Grupo' : '💬 Chat');
+                list += `*${i + 1}*. [ ⏰ ${t.hora || t.cron} ] _(${rec} | ${destLabel})_\n   👉 ${t.descripcion || t.accion}\n\n`;
             });
-            list += `_Para borrar una tarea usa: *!bot desprogramar <número>*_`;
+            list += `_Para borrar una tarea usa: *!bot desprogramar <número>* o *!bot desprogramar todas*_`;
             return msg.reply(list);
         }
 
         if (comando === 'desprogramar') {
+            if (!argumento) {
+                return msg.reply("❌ *Uso:* `!bot desprogramar <número>` o `!bot desprogramar todas`.\n\n_Para ver la lista escribe: *!bot programados*_");
+            }
+            if (argumento.toLowerCase() === 'todas' || argumento.toLowerCase() === 'todo') {
+                const cant = tareasProgramadas.length;
+                tareasProgramadas = [];
+                guardarTareasProgramadas();
+                if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
+                return msg.reply(`🗑️ *Kingbot:* Se han cancelado y eliminado todas las tareas programadas (${cant} tareas eliminadas).`);
+            }
             const rawIdx = parseInt(argumento, 10);
             let index = rawIdx - 1; // 1-indexed
             if (isNaN(index) || index < 0 || index >= tareasProgramadas.length) {
@@ -4689,7 +4784,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             const eliminada = tareasProgramadas.splice(index, 1)[0];
             guardarTareasProgramadas();
             if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-            return msg.reply(`✔️ *Kingbot:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
+            return msg.reply(`🗑️ *Kingbot:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
         }
 
         if (comando === 'tareas') {
@@ -5768,13 +5863,30 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
 
                         const cronExpr = horaToCron(horaStr);
                         if (cronExpr) {
-                            // Evitar duplicados idénticos en tareas programadas
-                            const yaExiste = tareasProgramadas.some(t => 
-                                (t.hora === horaStr || t.cron === cronExpr) && 
-                                (t.accion || '').trim().toLowerCase() === instruccion.trim().toLowerCase()
-                            );
+                            const destNormalizado = normalizarDestinoChat(chatId);
+                            const indexExistente = tareasProgramadas.findIndex(t => {
+                                const mismoChat = sonMismoChatDestino(t.chatId, destNormalizado);
+                                const mismaHora = (t.hora === horaStr || t.cron === cronExpr);
+                                return mismoChat && mismaHora;
+                            });
 
-                            if (!yaExiste) {
+                            if (indexExistente !== -1) {
+                                // Actualizar tarea existente para este chat en este horario en vez de duplicarla
+                                const tareaExistente = tareasProgramadas[indexExistente];
+                                tareaExistente.accion = instruccion;
+                                tareaExistente.prompt = instruccion;
+                                tareaExistente.descripcion = descripcion.length > 60 ? descripcion.substring(0, 57) + '...' : descripcion;
+                                tareaExistente.recurrente = recurrente;
+                                tareaExistente.hora = horaStr;
+                                tareaExistente.cron = cronExpr;
+                                tareaExistente.chatId = destNormalizado;
+                                tareaExistente.actualizada = new Date().toISOString();
+                                guardarTareasProgramadas();
+                                if (typeof global.inicializarTareas === 'function') {
+                                    global.inicializarTareas();
+                                }
+                                console.log(`[🤖 Agentic] Tarea programada actualizada: "${descripcion}" a las ${horaStr} para ${destNormalizado}`);
+                            } else {
                                 const nuevaTarea = {
                                     id: Date.now(),
                                     hora: horaStr,
@@ -5783,7 +5895,7 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                                     accion: instruccion,
                                     prompt: instruccion,
                                     descripcion: descripcion.length > 60 ? descripcion.substring(0, 57) + '...' : descripcion,
-                                    chatId: chatId,
+                                    chatId: destNormalizado,
                                     creada: new Date().toISOString()
                                 };
 
@@ -5792,10 +5904,10 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                                 if (typeof global.inicializarTareas === 'function') {
                                     global.inicializarTareas();
                                 }
+                                console.log(`[🤖 Agentic] Tarea programada guardada: "${descripcion}" a las ${horaStr} (${cronExpr}) para ${destNormalizado}`);
                             }
 
                             const tipoTexto = recurrente ? "todos los días" : "una sola vez";
-                            console.log(`[🤖 Agentic] Tarea programada guardada: "${descripcion}" a las ${horaStr} (${cronExpr}) para ${chatId}`);
                             respuestaTexto = respuestaTexto.replace(match[0], `\n\n📅 *Tarea programada confirmada:*\n👉 "${descripcion}"\n⏰ Hora: ${horaStr} (${tipoTexto} - Zona El Salvador)\n_Escribe *!bot programados* para ver todas tus tareas activas._`).trim();
                         } else {
                             console.error(`[🤖 Agentic] Formato de hora/cron inválido: ${horaStr}`);
