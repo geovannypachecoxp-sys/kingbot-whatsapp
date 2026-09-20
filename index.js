@@ -806,6 +806,145 @@ async function downloadTikTokMedia(url) {
     return null;
 }
 
+// ---------------------------------------------------------
+// MOTOR UNIFICADO DE DESCARGA DE VIDEOS (INSTAGRAM, FB, TIKTOK, YT)
+// ---------------------------------------------------------
+async function descargarYEnviarVideo(rawUrl, msg) {
+    if (!rawUrl || !rawUrl.includes('http')) {
+        return msg.reply("❌ *Por favor proporciona un enlace de video válido.*");
+    }
+
+    let videoUrl = rawUrl.trim();
+    try {
+        new URL(videoUrl);
+    } catch (e) {
+        return msg.reply("❌ *El enlace proporcionado no es válido.*");
+    }
+
+    const _isTikTok = videoUrl.includes('tiktok.com') || videoUrl.includes('vm.tiktok') || videoUrl.includes('vt.tiktok');
+    const _isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+    const _isInstagram = videoUrl.includes('instagram.com') || videoUrl.includes('instagr.am');
+    const _isFacebook = videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch') || videoUrl.includes('fb.com');
+    const _isTwitter = videoUrl.includes('twitter.com') || videoUrl.includes('x.com') || videoUrl.includes('t.co');
+
+    // Limpieza de parámetros de rastreo
+    if (_isInstagram) {
+        videoUrl = videoUrl.replace(/\?.*$/, '');
+        if (!videoUrl.endsWith('/')) videoUrl += '/';
+    } else if (_isFacebook && !videoUrl.includes('/watch')) {
+        videoUrl = videoUrl.replace(/\?.*$/, '');
+    }
+
+    let plataforma = 'Video';
+    if (_isInstagram) plataforma = 'Instagram';
+    else if (_isFacebook) plataforma = 'Facebook';
+    else if (_isTikTok) plataforma = 'TikTok';
+    else if (_isYouTube) plataforma = 'YouTube';
+    else if (_isTwitter) plataforma = 'X (Twitter)';
+
+    await msg.reply(`🎬 *Descargando video de ${plataforma}...*\n_Por favor espere un momento._`);
+
+    // 1. Si es TikTok, intentar primero con API directa sin marca de agua
+    if (_isTikTok) {
+        try {
+            const media = await downloadTikTokMedia(videoUrl);
+            if (media) {
+                try {
+                    await msg.reply(media, undefined, { sendMediaAsDocument: false, caption: `🎬 *Video de ${plataforma}*` });
+                    return true;
+                } catch (eDoc) {
+                    await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
+                    return true;
+                }
+            }
+        } catch (eTk) {
+            console.error('[!] API TikTok falló, pasando a yt-dlp:', eTk.message);
+        }
+    }
+
+    // 2. Descarga con yt-dlp optimizado para evitar necesidad de ffmpeg y omitir SSL estricto en Termux
+    const outputFile = 'video_' + Date.now() + '.mp4';
+    const uaDesktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+    let _ytArgs = [
+        '--no-check-certificates',
+        '--no-warnings',
+        '--no-playlist',
+        '--user-agent', uaDesktop
+    ];
+
+    if (_isYouTube) {
+        _ytArgs.push('-f', '18/best[height<=480][ext=mp4]/best[ext=mp4]/b/best', '--max-filesize', '80m', '-o', outputFile, videoUrl);
+    } else if (_isInstagram) {
+        _ytArgs.push('--add-header', 'Referer:https://www.instagram.com/', '-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+    } else if (_isFacebook) {
+        _ytArgs.push('--add-header', 'Referer:https://www.facebook.com/', '-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+    } else if (_isTikTok) {
+        _ytArgs.push('--add-header', 'Referer:https://www.tiktok.com/', '-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+    } else {
+        _ytArgs.push('-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+    }
+
+    return new Promise((resolve) => {
+        let stderrData = '';
+        const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
+
+        if (child.stderr) {
+            child.stderr.on('data', (d) => { stderrData += d.toString(); });
+        }
+
+        child.on('error', (err) => {
+            console.error('[!] Error ejecutando yt-dlp:', err);
+            msg.reply("❌ *El módulo de descarga no está disponible en el servidor.*").catch(()=>{});
+            resolve(false);
+        });
+
+        child.on('close', async (code) => {
+            if (code !== 0 || !fs.existsSync(outputFile)) {
+                console.error(`[!] yt-dlp falló (código ${code}) para ${videoUrl}. Stderr:`, stderrData.trim());
+                if (fs.existsSync(outputFile)) {
+                    try { fs.unlinkSync(outputFile); } catch(e){}
+                }
+                await msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública y no requiera inicio de sesión._").catch(()=>{});
+                resolve(false);
+                return;
+            }
+
+            try {
+                const stats = fs.statSync(outputFile);
+                const sizeMB = stats.size / (1024 * 1024);
+                if (sizeMB > 300) {
+                    try { fs.unlinkSync(outputFile); } catch(e){}
+                    await msg.reply(`⚠️ *El video excede el límite permitido (${sizeMB.toFixed(1)} MB).*`).catch(()=>{});
+                    resolve(false);
+                    return;
+                }
+
+                const media = MessageMedia.fromFilePath(outputFile);
+                const asDoc = sizeMB > 15;
+                try {
+                    await msg.reply(media, undefined, { sendMediaAsDocument: asDoc, caption: `🎬 *Video de ${plataforma}*` });
+                } catch (e1) {
+                    if (!asDoc) {
+                        await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
+                    } else {
+                        throw e1;
+                    }
+                }
+                resolve(true);
+            } catch (err) {
+                console.error('[!] Error enviando video descargado:', err);
+                await msg.reply("❌ *Ocurrió un error al enviar el archivo de video.*").catch(()=>{});
+                resolve(false);
+            } finally {
+                if (fs.existsSync(outputFile)) {
+                    try { fs.unlinkSync(outputFile); } catch(e){}
+                }
+            }
+        });
+    });
+}
+
 function obtenerFechaContexto() {
     const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -3615,102 +3754,18 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
         const esTikTokLink = textoOriginal.includes('tiktok.com') || textoOriginal.includes('vm.tiktok') || textoOriginal.includes('vt.tiktok');
-        const esComandoDescarga = ['video', 'tiktok', 'descarga', 'descargar', 'bajar', 'mp4'].includes(comando);
+        const esInstagramLink = textoOriginal.includes('instagram.com') || textoOriginal.includes('instagr.am');
+        const esFacebookLink = textoOriginal.includes('facebook.com') || textoOriginal.includes('fb.watch') || textoOriginal.includes('fb.com');
+        const esYouTubeLink = textoOriginal.includes('youtube.com') || textoOriginal.includes('youtu.be');
+        const esTwitterLink = textoOriginal.includes('twitter.com') || textoOriginal.includes('x.com');
+        const esComandoDescarga = ['video', 'tiktok', 'descarga', 'descargar', 'bajar', 'mp4', 'reel', 'reels', 'ig', 'fb'].includes(comando);
 
-        if (esComandoDescarga || (esTikTokLink && (usaPrefijo || /descarg|baj|vide/i.test(textoOriginal)))) {
-            // Smart URL extraction - get the URL from anywhere in the text
+        const contieneEnlaceVideo = esTikTokLink || esInstagramLink || esFacebookLink || esYouTubeLink || esTwitterLink;
+
+        if (esComandoDescarga || (contieneEnlaceVideo && (usaPrefijo || /descarg|baj|vide|reel/i.test(textoOriginal)))) {
             const urlMatch = (argumento || textoOriginal).match(/(https?:\/\/[^\s]+)/);
             const videoUrl = urlMatch ? urlMatch[1] : argumento;
-            
-            if (!videoUrl || !videoUrl.includes('http')) return msg.reply("❌ *Kingbot:* Requiero un enlace de video real para iniciar mis protocolos.");
-            
-            try { new URL(videoUrl); } catch (e) { return msg.reply("❌ *Kingbot:* Enlace mal formado."); }
-
-            const _isTikTok = videoUrl.includes('tiktok.com') || videoUrl.includes('vm.tiktok') || videoUrl.includes('vt.tiktok');
-            const _isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
-            
-            await msg.reply(_isTikTok
-                ? ' *Kingbot:* Entendido. Descargando desde TikTok sin marca de agua...'
-                : _isYouTube ? ' *Kingbot:* Descargando video de YouTube (esto puede tomar un momento para videos largos)...'
-                : ' *Kingbot:* Iniciando protocolos de descarga para el video...');
-            
-            if (_isTikTok) {
-                const media = await downloadTikTokMedia(videoUrl);
-                if (media) {
-                    try {
-                        await msg.reply(media, undefined, { sendMediaAsDocument: false });
-                        return;
-                    } catch (err) {
-                        console.error('[!] Error enviando tiktok como video normal, reintentando como documento MP4...');
-                        try {
-                            await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: '🎬 *Kingbot:* Video TikTok' });
-                            return;
-                        } catch (err2) {
-                            console.error('[!] Error enviando documento tiktok:', err2);
-                        }
-                    }
-                }
-                await msg.reply("⚠️ *Kingbot:* API TikTok falló. Intentando yt-dlp...");
-            }
-
-            const outputFile = 'video_' + Date.now() + '.mp4';
-            const ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15";
-            
-            // For YouTube: use 360p to keep file size manageable, for others use best
-            let _ytArgs;
-            if (_isYouTube) {
-                _ytArgs = [
-                    '--user-agent', ua,
-                    '-f', 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best',
-                    '--merge-output-format', 'mp4',
-                    '--max-filesize', '60m',
-                    '-o', outputFile,
-                    videoUrl
-                ];
-            } else if (_isTikTok) {
-                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', 'User-Agent:' + ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '--merge-output-format', 'mp4', '-o', outputFile, videoUrl];
-            } else {
-                _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '--merge-output-format', 'mp4', '-o', outputFile, videoUrl];
-            }
-            
-            const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
-            
-            child.on('error', (err) => {
-                console.error('[!] Error en yt-dlp:', err);
-                return msg.reply("❌ *Kingbot:* yt-dlp no está disponible en este entorno.");
-            });
-
-            child.on('close', async (code) => {
-                if (code !== 0) {
-                    if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-                    return msg.reply("❌ *Kingbot:* Error al descargar el video.\n\n*NOTA PARA TERMUX:* YouTube eliminó el soporte para videos directos. Ahora es OBLIGATORIO tener ffmpeg. Ve a Termux y escribe:\n*pkg install ffmpeg*");
-                }
-                try {
-                    const stats = fs.statSync(outputFile);
-                    const sizeMB = stats.size / (1024 * 1024);
-                    if (sizeMB > 300) {
-                        if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-                        return msg.reply('a *Kingbot:* El video es absurdamente grande para enviarlo por WhatsApp (' + sizeMB.toFixed(1) + 'MB). El límite absoluto son 300 MB.');
-                    }
-                    const media = MessageMedia.fromFilePath(outputFile);
-                    const asDoc = sizeMB > 15;
-                    try {
-                        await msg.reply(media, undefined, { sendMediaAsDocument: asDoc });
-                    } catch (e1) {
-                        console.error('[!] Falló envío como video (posible codec/dimensión). Fallback a documento:', e1.message);
-                        if (!asDoc) {
-                            await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: '🎬 *Kingbot:* Video' });
-                        } else {
-                            throw e1;
-                        }
-                    }
-                    if (asDoc) await msg.reply('  *Kingbot:* El video se envió como documento porque es largo/pesado (' + sizeMB.toFixed(1) + ' MB).');
-                    if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-                } catch (err) {
-                    console.error('[!] Error enviando video:', err);
-                    msg.reply("❌ *Kingbot:* Error interno al enviar el archivo.").catch(()=>{});
-                }
-            });
+            await descargarYEnviarVideo(videoUrl, msg);
             return;
         }
 
@@ -5568,93 +5623,17 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                     }
                 }
 
-                // Video Download - Universal (Agentic) - handles ACTION_DOWNLOAD and legacy ACTION_TIKTOK
+                // Video Download - Universal (Agentic)
                 const _agVideoTag = respuestaTexto.includes('[ACTION_DOWNLOAD:') ? '[ACTION_DOWNLOAD:' : (respuestaTexto.includes('[ACTION_TIKTOK:') ? '[ACTION_TIKTOK:' : null);
                 if (_agVideoTag) {
                     const _agVidRegex = _agVideoTag === '[ACTION_DOWNLOAD:' ? /\[ACTION_DOWNLOAD:\s*([^\]]+)\]/ : /\[ACTION_TIKTOK:\s*([^\]]+)\]/;
                     const match = respuestaTexto.match(_agVidRegex);
                     if (match) {
-                        // Smart URL extraction   remove any text before/after the URL
                         const rawUrl = match[1].trim();
                         const urlExtract = rawUrl.match(/(https?:\/\/[^\s\]]+)/);
                         const urlStr = urlExtract ? urlExtract[1] : rawUrl;
-                        console.log(`[x  Agentic Video]: Descargando: ${urlStr}`);
-                        
-                        try {
-                            new URL(urlStr); // Validate
-                            const _isTikTok = urlStr.includes('tiktok.com') || urlStr.includes('vm.tiktok') || urlStr.includes('vt.tiktok');
-                            const _isYouTube = urlStr.includes('youtube.com') || urlStr.includes('youtu.be');
-                            const _isInstagram = urlStr.includes('instagram.com') || urlStr.includes('instagr.am');
-                            const _isTwitter = urlStr.includes('twitter.com') || urlStr.includes('x.com') || urlStr.includes('t.co');
-                            
-                            // Remove tag from text response (we'll handle the download separately)
-                            respuestaTexto = respuestaTexto.replace(match[0], '').trim();
-                            
-                            // TikTok API first
-                            if (_isTikTok) {
-                                const media = await downloadTikTokMedia(urlStr);
-                                if (media) {
-                                    try {
-                                        await msg.reply(media, undefined, { sendMediaAsDocument: false });
-                                        continue;
-                                    } catch (err) {
-                                        console.error('[!] Error enviando tiktok agentic como video, reintentando como documento...');
-                                        try {
-                                            await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: '🎬 *Kingbot:* Video TikTok' });
-                                            continue;
-                                        } catch (err2) {
-                                            console.error('[!] Error enviando documento tiktok agentic:', err2);
-                                        }
-                                    }
-                                }
-                            }
-
-                            const outputFile = 'video_' + Date.now() + '.mp4';
-                            const ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15";
-                            let _ytArgs;
-                            
-                            if (_isYouTube) {
-                                _ytArgs = ['--user-agent', ua, '-f', '18/b[height<=480][ext=mp4]/b[ext=mp4]/worst', '--max-filesize', '60m', '-o', outputFile, urlStr];
-                            } else if (_isTikTok) {
-                                _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', `User-Agent:${ua}`, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
-                            } else if (_isInstagram) {
-                                _ytArgs = ['--add-header', `User-Agent:${ua}`, '--add-header', 'Referer:https://www.instagram.com/', '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
-                            } else {
-                                _ytArgs = ['--user-agent', ua, '-S', 'vcodec:h264,res,acodec:aac', '-f', 'best[ext=mp4]/best', '-o', outputFile, urlStr];
-                            }
-                                
-                            const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
-                            
-                            child.on('error', (err) => {
-                                console.error('[!] Error en yt-dlp agentic:', err);
-                                msg.reply("❌ *Kingbot:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
-                            });
-
-                            child.on('close', async (code) => {
-                                if (code !== 0) {
-                                    if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-                                    msg.reply("❌ *Kingbot:* No se pudo descargar el video. Puede estar restringido o ser demasiado largo.").catch(()=>{});
-                                    return;
-                                }
-                                try {
-                                    const stats = fs.statSync(outputFile);
-                                    const sizeMB = stats.size / (1024 * 1024);
-                                    if (sizeMB > 60) {
-                                        if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-                                        msg.reply(`a *Kingbot:* El video es demasiado grande (${sizeMB.toFixed(1)}MB). Prueba con uno más corto.`).catch(()=>{});
-                                        return;
-                                    }
-                                    const media = MessageMedia.fromFilePath(outputFile);
-                                    await msg.reply(media, undefined, { sendMediaAsDocument: sizeMB > 20 });
-                                    if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-                                } catch (err) {
-                                    console.error('[!] Error enviando video agentic:', err);
-                                }
-                            });
-                            
-                        } catch (e) {
-                            respuestaTexto = (respuestaTexto + `\n\nR *Error:* Enlace inválido para descarga.`).trim();
-                        }
+                        respuestaTexto = respuestaTexto.replace(match[0], '').trim();
+                        descargarYEnviarVideo(urlStr, msg).catch(e => console.error('[!] Error en descarga agentic:', e.message));
                     }
                 }
 
