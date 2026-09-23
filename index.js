@@ -29,10 +29,39 @@ const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
 const isTermux = process.platform === 'android' || !!process.env.PREFIX;
 
+function getFfmpegLocation() {
+    if (process.platform === 'win32') {
+        const wingetDir = path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Packages');
+        if (fs.existsSync(wingetDir)) {
+            try {
+                const pkgs = fs.readdirSync(wingetDir);
+                const ffPkg = pkgs.find(p => p.toLowerCase().includes('ffmpeg'));
+                if (ffPkg) {
+                    const fullPkg = path.join(wingetDir, ffPkg);
+                    const subdirs = fs.readdirSync(fullPkg);
+                    const binDir = subdirs.find(s => s.toLowerCase().includes('ffmpeg'));
+                    if (binDir) {
+                        const candidate = path.join(fullPkg, binDir, 'bin');
+                        if (fs.existsSync(path.join(candidate, 'ffmpeg.exe'))) return candidate;
+                    }
+                }
+            } catch(e){}
+        }
+    }
+    return null;
+}
+
 const getYtDlpBinary = () => {
     const winBinary = path.join(__dirname, 'yt-dlp.exe');
-    if (process.platform === 'win32' && fs.existsSync(winBinary)) {
-        return winBinary;
+    if (process.platform === 'win32') {
+        if (fs.existsSync(winBinary)) return winBinary;
+        try {
+            const { execSync } = require('child_process');
+            execSync('yt-dlp --version', { stdio: 'ignore' });
+            return 'yt-dlp';
+        } catch (e) {
+            return 'python';
+        }
     }
     return 'yt-dlp';
 };
@@ -767,18 +796,35 @@ async function obtenerUltimosVideosCanal(canalId, limite = 3) {
 async function downloadTikTok(url) {
     try {
         const fetch = require('node-fetch');
+        const uaDesktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
         let fullUrl = url;
         try {
-            const head = await fetch(url, { method: 'HEAD', redirect: 'follow' });
-            if (head.url) fullUrl = head.url;
+            const head = await fetch(url, { method: 'GET', redirect: 'follow', headers: { 'User-Agent': uaDesktop } });
+            if (head && head.url) fullUrl = head.url;
         } catch(e){}
-        const res = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(fullUrl));
-        const json = await res.json();
-        if (json.code === 0 && json.data && json.data.play) {
-            return json.data.play;
+
+        // Si es un enlace de compras/mall de TikTok y no un video, abortar
+        if (fullUrl.includes('mall') || fullUrl.includes('oec-api') || fullUrl.includes('order_delivering')) {
+            return null;
+        }
+
+        // 1. Intentar con API de alta velocidad TikTokio
+        try {
+            const res1 = await fetch('https://backend1.tioo.eu.org/ttdl?url=' + encodeURIComponent(fullUrl), { timeout: 12000 });
+            const json1 = await res1.json();
+            if (json1 && json1.status && json1.video && json1.video[0]) {
+                return json1.video[0];
+            }
+        } catch(e1){}
+
+        // 2. Intentar con API tikwm
+        const res2 = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(fullUrl), { timeout: 12000 });
+        const json2 = await res2.json();
+        if (json2 && json2.code === 0 && json2.data && json2.data.play) {
+            return json2.data.play;
         }
     } catch (e) {
-        console.error("Error en tikwm:", e);
+        console.error("Error en downloadTikTok:", e.message);
     }
     return null;
 }
@@ -790,18 +836,79 @@ async function downloadTikTokMedia(url) {
         if (playUrl) {
             const videoRes = await fetch(playUrl, {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                     'Referer': 'https://www.tiktok.com/',
                     'Accept': '*/*'
-                }
+                },
+                timeout: 45000
             });
             if (videoRes.ok) {
                 const buffer = await videoRes.buffer();
-                return new MessageMedia('video/mp4', buffer.toString('base64'), 'tiktok.mp4', buffer.length);
+                if (buffer && buffer.length >= 10000) {
+                    return new MessageMedia('video/mp4', buffer.toString('base64'), 'tiktok.mp4', buffer.length);
+                }
             }
         }
     } catch (e) {
-        console.error("Error en downloadTikTokMedia:", e);
+        console.error("Error en downloadTikTokMedia:", e.message);
+    }
+    return null;
+}
+
+// ---------------------------------------------------------
+// MOTOR DE RESCATE VÍA API EXTERNA (FALLBACK PARA YT, IG, FB, TIKTOK)
+// ---------------------------------------------------------
+async function descargarViaApiRescue(videoUrl, plataforma) {
+    const fetch = require('node-fetch');
+    const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    try {
+        let directUrl = null;
+        let referer = 'https://www.google.com/';
+
+        if (plataforma === 'YouTube') {
+            const apiRes = await fetch('https://backend1.tioo.eu.org/youtube?url=' + encodeURIComponent(videoUrl), { timeout: 15000 });
+            const data = await apiRes.json();
+            if (data && data.status && data.mp4) {
+                directUrl = data.mp4;
+                referer = 'https://ymcdn.org/';
+            }
+        } else if (plataforma === 'Instagram') {
+            const apiRes = await fetch('https://backend1.tioo.eu.org/igdl?url=' + encodeURIComponent(videoUrl), { timeout: 15000 });
+            const data = await apiRes.json();
+            if (Array.isArray(data) && data[0] && data[0].url) {
+                directUrl = data[0].url;
+                referer = 'https://www.instagram.com/';
+            }
+        } else if (plataforma === 'Facebook') {
+            const apiRes = await fetch('https://backend1.tioo.eu.org/fbdown?url=' + encodeURIComponent(videoUrl), { timeout: 15000 });
+            const data = await apiRes.json();
+            if (data && data.status && (data.HD || data.Normal_video)) {
+                directUrl = data.HD || data.Normal_video;
+                referer = 'https://www.facebook.com/';
+            }
+        } else if (plataforma === 'TikTok') {
+            return await downloadTikTokMedia(videoUrl);
+        }
+
+        if (directUrl) {
+            const mediaRes = await fetch(directUrl, {
+                headers: {
+                    'User-Agent': ua,
+                    'Referer': referer,
+                    'Accept': '*/*'
+                },
+                timeout: 60000
+            });
+            if (mediaRes.ok || mediaRes.status === 206) {
+                const buffer = await mediaRes.buffer();
+                if (buffer && buffer.length >= 10000) {
+                    const filename = `${plataforma.toLowerCase()}_${Date.now()}.mp4`;
+                    return new MessageMedia('video/mp4', buffer.toString('base64'), filename, buffer.length);
+                }
+            }
+        }
+    } catch (e) {
+        console.error(`[!] Error en descargarViaApiRescue para ${plataforma}:`, e.message);
     }
     return null;
 }
@@ -844,27 +951,38 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
     await msg.reply(`🎬 *Descargando video de ${plataforma}...*\n_Por favor espere un momento._`);
 
+    // Función auxiliar para envío seguro de MessageMedia
+    const safeSendMedia = async (media, isDoc) => {
+        try {
+            await msg.reply(media, undefined, { sendMediaAsDocument: isDoc, caption: `🎬 *Video de ${plataforma}*` });
+            return true;
+        } catch (e1) {
+            if (!isDoc) {
+                await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
+                return true;
+            }
+            throw e1;
+        }
+    };
+
     // 1. Si es TikTok, intentar primero con API directa sin marca de agua
     if (_isTikTok) {
         try {
             const media = await downloadTikTokMedia(videoUrl);
             if (media) {
-                try {
-                    await msg.reply(media, undefined, { sendMediaAsDocument: false, caption: `🎬 *Video de ${plataforma}*` });
-                    return true;
-                } catch (eDoc) {
-                    await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
-                    return true;
-                }
+                const asDoc = (media.filesize || 0) > 15 * 1024 * 1024;
+                await safeSendMedia(media, asDoc);
+                return true;
             }
         } catch (eTk) {
             console.error('[!] API TikTok falló, pasando a yt-dlp:', eTk.message);
         }
     }
 
-    // 2. Descarga con yt-dlp optimizado para evitar necesidad de ffmpeg y omitir SSL estricto en Termux
-    const outputFile = 'video_' + Date.now() + '.mp4';
+    // 2. Descarga con yt-dlp usando FFmpeg para mezcla automática de audio/video y sin límites restrictivos
+    const outputFile = path.join(__dirname, 'video_' + Date.now() + '.mp4');
     const uaDesktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    const ffmpegDir = getFfmpegLocation();
 
     let _ytArgs = [
         '--no-check-certificates',
@@ -873,8 +991,17 @@ async function descargarYEnviarVideo(rawUrl, msg) {
         '--user-agent', uaDesktop
     ];
 
+    if (ffmpegDir) {
+        _ytArgs.push('--ffmpeg-location', ffmpegDir);
+    }
+
     if (_isYouTube) {
-        _ytArgs.push('-f', '18/best[height<=480][ext=mp4]/best[ext=mp4]/b/best', '--max-filesize', '80m', '-o', outputFile, videoUrl);
+        _ytArgs.push(
+            '-f', 'bv*[height<=480][ext=mp4]+ba[ext=m4a]/bv*[height<=480]+ba/b[height<=480]/best',
+            '--merge-output-format', 'mp4',
+            '-o', outputFile,
+            videoUrl
+        );
     } else if (_isInstagram) {
         _ytArgs.push('--add-header', 'Referer:https://www.instagram.com/', '-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
     } else if (_isFacebook) {
@@ -893,54 +1020,72 @@ async function descargarYEnviarVideo(rawUrl, msg) {
             child.stderr.on('data', (d) => { stderrData += d.toString(); });
         }
 
-        child.on('error', (err) => {
-            console.error('[!] Error ejecutando yt-dlp:', err);
-            msg.reply("❌ *El módulo de descarga no está disponible en el servidor.*").catch(()=>{});
+        child.on('error', async (err) => {
+            console.error('[!] Error ejecutando yt-dlp:', err.message);
+            // Intentar rescate vía API antes de fallar
+            const rescueMedia = await descargarViaApiRescue(videoUrl, plataforma);
+            if (rescueMedia) {
+                try {
+                    const asDoc = (rescueMedia.filesize || 0) > 15 * 1024 * 1024;
+                    await safeSendMedia(rescueMedia, asDoc);
+                    return resolve(true);
+                } catch(eSend) {}
+            }
+            msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública y no requiera inicio de sesión._").catch(()=>{});
             resolve(false);
         });
 
         child.on('close', async (code) => {
-            if (code !== 0 || !fs.existsSync(outputFile)) {
-                console.error(`[!] yt-dlp falló (código ${code}) para ${videoUrl}. Stderr:`, stderrData.trim());
-                if (fs.existsSync(outputFile)) {
-                    try { fs.unlinkSync(outputFile); } catch(e){}
-                }
-                await msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública y no requiera inicio de sesión._").catch(()=>{});
-                resolve(false);
-                return;
+            let stats = null;
+            if (fs.existsSync(outputFile)) {
+                try { stats = fs.statSync(outputFile); } catch(e){}
             }
 
-            try {
-                const stats = fs.statSync(outputFile);
+            // Si yt-dlp generó un archivo válido (mayor a 10 KB)
+            if (code === 0 && stats && stats.size >= 10000) {
                 const sizeMB = stats.size / (1024 * 1024);
-                if (sizeMB > 300) {
+                if (sizeMB > 100) {
                     try { fs.unlinkSync(outputFile); } catch(e){}
                     await msg.reply(`⚠️ *El video excede el límite permitido (${sizeMB.toFixed(1)} MB).*`).catch(()=>{});
                     resolve(false);
                     return;
                 }
 
-                const media = MessageMedia.fromFilePath(outputFile);
-                const asDoc = sizeMB > 15;
                 try {
-                    await msg.reply(media, undefined, { sendMediaAsDocument: asDoc, caption: `🎬 *Video de ${plataforma}*` });
-                } catch (e1) {
-                    if (!asDoc) {
-                        await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
-                    } else {
-                        throw e1;
+                    const media = MessageMedia.fromFilePath(outputFile);
+                    const asDoc = sizeMB > 15;
+                    await safeSendMedia(media, asDoc);
+                    resolve(true);
+                    return;
+                } catch (err) {
+                    console.error('[!] Error enviando video descargado por yt-dlp:', err);
+                } finally {
+                    if (fs.existsSync(outputFile)) {
+                        try { fs.unlinkSync(outputFile); } catch(e){}
                     }
                 }
-                resolve(true);
-            } catch (err) {
-                console.error('[!] Error enviando video descargado:', err);
-                await msg.reply("❌ *Ocurrió un error al enviar el archivo de video.*").catch(()=>{});
-                resolve(false);
-            } finally {
-                if (fs.existsSync(outputFile)) {
-                    try { fs.unlinkSync(outputFile); } catch(e){}
+            }
+
+            // Si yt-dlp falló o el archivo generado es nulo/corrupto (<10 KB), ejecutar Rescate vía API
+            console.warn(`[!] yt-dlp falló para ${plataforma} (código ${code}, tamaño ${stats ? stats.size : 0} bytes). Iniciando Rescate API...`);
+            if (fs.existsSync(outputFile)) {
+                try { fs.unlinkSync(outputFile); } catch(e){}
+            }
+
+            const rescueMedia = await descargarViaApiRescue(videoUrl, plataforma);
+            if (rescueMedia) {
+                try {
+                    const asDoc = (rescueMedia.filesize || 0) > 15 * 1024 * 1024;
+                    await safeSendMedia(rescueMedia, asDoc);
+                    resolve(true);
+                    return;
+                } catch (errRescue) {
+                    console.error('[!] Error enviando video de rescate:', errRescue);
                 }
             }
+
+            await msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública y no requiera inicio de sesión._").catch(()=>{});
+            resolve(false);
         });
     });
 }
@@ -2570,20 +2715,29 @@ client.on('message_create', async (msg) => {
                     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
                     const tmpVideo = path.join(tmpDir, 'dl_' + Date.now() + '.mp4');
                     const ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15";
-                    let _ytArgs = ['--user-agent', ua, '-f', '18/b[height<=480][ext=mp4]/b[ext=mp4]/worst', '--max-filesize', '60m', '-o', tmpVideo, urlDescargar];
-                    if (_isTikTok) _ytArgs = ['--no-check-certificates', '--add-header', 'Referer:https://www.tiktok.com/', '--add-header', `User-Agent:${ua}`, '-f', 'best[ext=mp4]/best', '-o', tmpVideo, urlDescargar];
+                    const ffmpegDirSticker = getFfmpegLocation();
+                    let _ytArgs = ['--user-agent', ua, '--no-check-certificates', '--no-warnings'];
+                    if (ffmpegDirSticker) _ytArgs.push('--ffmpeg-location', ffmpegDirSticker);
+
+                    if (_isTikTok) {
+                        _ytArgs.push('--add-header', 'Referer:https://www.tiktok.com/', '-f', 'best[ext=mp4]/best', '-o', tmpVideo, urlDescargar);
+                    } else {
+                        _ytArgs.push('-f', 'bv*[height<=480][ext=mp4]+ba[ext=m4a]/bv*[height<=480]+ba/b[height<=480]/best', '--merge-output-format', 'mp4', '-o', tmpVideo, urlDescargar);
+                    }
                     
                     await new Promise((resolve, reject) => {
                         const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
                         child.on('close', code => {
-                            if (code === 0 && fs.existsSync(tmpVideo)) resolve();
+                            if (code === 0 && fs.existsSync(tmpVideo) && fs.statSync(tmpVideo).size >= 10000) resolve();
                             else reject(new Error('Fallo al descargar video de la URL proporcionada.'));
                         });
                         child.on('error', reject);
                     });
                     
-                    media = MessageMedia.fromFilePath(tmpVideo);
-                    fs.unlinkSync(tmpVideo);
+                    if (fs.existsSync(tmpVideo)) {
+                        media = MessageMedia.fromFilePath(tmpVideo);
+                        try { fs.unlinkSync(tmpVideo); } catch(e){}
+                    }
                 }
             } else {
                 media = await mediaMsg.downloadMedia();
@@ -3683,17 +3837,21 @@ Create a visually stunning commercial product photograph: clean composition, stu
             const queryFull = artistaQuery ? `${cancionQuery} ${artistaQuery}` : cancionQuery;
             await msg.reply(` *Kingbot:* Buscando *"${cancionQuery}"${artistaQuery ? ' de *' + artistaQuery + '*' : ''}* en la red... Un momento.`);
             const outputAudio = 'musica_' + Date.now() + '.mp3';
+            const ffmpegDirAudio = getFfmpegLocation();
             const searchArgs = [
                 '-x', '--audio-format', 'mp3', '--audio-quality', '0',
                 '--embed-thumbnail', '--add-metadata',
                 '-o', outputAudio,
                 `ytsearch1:${queryFull}`
             ];
+            if (ffmpegDirAudio) searchArgs.unshift('--ffmpeg-location', ffmpegDirAudio);
+
             const child = spawn(getYtDlpBinary(), searchArgs, { shell: false });
             child.on('error', () => msg.reply('❌ *Kingbot:* yt-dlp no disponible. Instala con: pip install yt-dlp').catch(()=>{}));
             child.on('close', async (code) => {
                 const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3','') + '.mp3';
-                if (code !== 0 || !fs.existsSync(possibleFile)) {
+                if (code !== 0 || !fs.existsSync(possibleFile) || fs.statSync(possibleFile).size < 10000) {
+                    if (fs.existsSync(possibleFile)) try { fs.unlinkSync(possibleFile); } catch(e){}
                     return msg.reply(`❌ *Kingbot:* No encontré esa canción. Verifica el nombre: *"${queryFull}"*`);
                 }
                 try {
@@ -3719,8 +3877,11 @@ Create a visually stunning commercial product photograph: clean composition, stu
 
             await msg.reply(' *Kingbot:* Procesando y extrayendo audio de alta fidelidad, un momento...');
             const outputFile = 'audio_' + Date.now() + '.mp3';
+            const ffmpegDirAudio = getFfmpegLocation();
+            const audioArgs = ['-x', '--audio-format', 'mp3', '-o', outputFile, argumento];
+            if (ffmpegDirAudio) audioArgs.unshift('--ffmpeg-location', ffmpegDirAudio);
             
-            const child = spawn(getYtDlpBinary(), ['-x', '--audio-format', 'mp3', '-o', outputFile, argumento], { shell: false });
+            const child = spawn(getYtDlpBinary(), audioArgs, { shell: false });
             
             child.on('error', (err) => {
                 console.error('[!] Error en yt-dlp:', err);
@@ -3728,7 +3889,8 @@ Create a visually stunning commercial product photograph: clean composition, stu
             });
 
             child.on('close', async (code) => {
-                if (code !== 0) {
+                if (code !== 0 || !fs.existsSync(outputFile) || fs.statSync(outputFile).size < 10000) {
+                    if (fs.existsSync(outputFile)) try { fs.unlinkSync(outputFile); } catch(e){}
                     return msg.reply("❌ *Kingbot:* El servidor de descargas falló o el enlace es incorrecto.");
                 }
                 try {
