@@ -1940,7 +1940,7 @@ async function procesarMensajeTelegram(msgTeg) {
                     return;
                 }
                 let tDebt = 0, tLimit = 0;
-                let report = `💳 *ESTADO DE TARJETAS (Finanzas King)* 💳\n\n`;
+                let report = `💳 *ESTADO DE TARJETAS*\n\n`;
                 snapshot.forEach(doc => {
                     const c = doc.data();
                     const debt = parseFloat(c.balance || 0);
@@ -1983,7 +1983,7 @@ async function procesarMensajeTelegram(msgTeg) {
                     }
                     if (adminChatId) {
                         try {
-                            await client.sendMessage(adminChatId, `📲 *[Telegram -> Finanzas King]*\n\n${text}`);
+                            await client.sendMessage(adminChatId, `📲 *Telegram:*\n\n${text}`);
                         } catch (errWp) {}
                     }
                 }
@@ -2048,7 +2048,7 @@ async function procesarMensajeTelegram(msgTeg) {
                 // 2. Notificar a WhatsApp
                 if (adminChatId) {
                     try {
-                        await client.sendMessage(adminChatId, `📲 *[Telegram -> Finanzas King]*\n\n${text}`);
+                        await client.sendMessage(adminChatId, `📲 *Telegram:*\n\n${text}`);
                     } catch (errWp) {}
                 }
             }
