@@ -72,8 +72,8 @@ function getFfmpegLocation() {
 }
 
 const getYtDlpBinary = () => {
-    const winBinary = path.join(__dirname, 'yt-dlp.exe');
     if (process.platform === 'win32') {
+        const winBinary = path.join(__dirname, 'yt-dlp.exe');
         if (fs.existsSync(winBinary)) return winBinary;
         try {
             const { execSync } = require('child_process');
@@ -83,12 +83,21 @@ const getYtDlpBinary = () => {
             return 'python';
         }
     }
-    if (process.env.PREFIX && fs.existsSync(path.join(process.env.PREFIX, 'bin', 'yt-dlp'))) {
-        return path.join(process.env.PREFIX, 'bin', 'yt-dlp');
+    const candidates = [
+        process.env.PREFIX ? path.join(process.env.PREFIX, 'bin', 'yt-dlp') : null,
+        '/data/data/com.termux/files/usr/bin/yt-dlp',
+        '/data/data/com.termux/files/home/.local/bin/yt-dlp',
+        '/usr/local/bin/yt-dlp',
+        '/usr/bin/yt-dlp'
+    ].filter(Boolean);
+    for (const c of candidates) {
+        if (fs.existsSync(c)) return c;
     }
-    if (fs.existsSync('/data/data/com.termux/files/usr/bin/yt-dlp')) {
-        return '/data/data/com.termux/files/usr/bin/yt-dlp';
-    }
+    try {
+        const { execSync } = require('child_process');
+        const which = execSync('which yt-dlp', { stdio: 'pipe' }).toString().trim().split(/\r?\n/)[0];
+        if (which && fs.existsSync(which)) return which;
+    } catch(e){}
     return 'yt-dlp';
 };
 
@@ -979,7 +988,7 @@ async function descargarViaApiRescue(videoUrl, plataforma) {
                     'Referer': referer,
                     'Accept': '*/*'
                 },
-                timeout: 45000
+                timeout: 90000
             });
             if (mediaRes.ok || mediaRes.status === 206) {
                 const cl = parseInt(mediaRes.headers.get('content-length') || '0', 10);
@@ -1043,7 +1052,9 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
     // Función auxiliar para envío seguro de MessageMedia
     const safeSendMedia = async (media, isDoc) => {
-        const preferDoc = isDoc || (media.filesize && media.filesize > 15 * 1024 * 1024);
+        // En Termux / Android, Chromium carece de códecs H264 de canvas y cuelga el bot si se envía como video normal.
+        // Forzar sendMediaAsDocument: true garantiza entrega instantánea y confiable.
+        const preferDoc = isTermux ? true : (isDoc || (media.filesize && media.filesize > 15 * 1024 * 1024));
 
         // 1. Enviar prioritariamente usando client.sendMessage al chat real (evita status@broadcast en self-chat)
         if (destChat && !destChat.includes('broadcast')) {
@@ -1052,41 +1063,41 @@ async function descargarYEnviarVideo(rawUrl, msg) {
                     sendMediaAsDocument: preferDoc,
                     caption: caption
                 });
-                if (resA && resA.id) return true;
+                if (resA) return true;
             } catch (eA) {
-                console.warn('[!] safeSendMedia intento directo falló:', eA.message);
+                console.warn('[!] safeSendMedia client.sendMessage falló:', eA.message);
             }
 
-            // Si falló como video normal, forzar como documento (vital en Termux/Linux sin codecs H264 de canvas)
+            // Si falló como video normal, forzar como documento
             if (!preferDoc) {
                 try {
                     const resB = await client.sendMessage(destChat, media, {
                         sendMediaAsDocument: true,
                         caption: caption
                     });
-                    if (resB && resB.id) return true;
+                    if (resB) return true;
                 } catch (eB) {
-                    console.warn('[!] safeSendMedia intento directo como documento falló:', eB.message);
+                    console.warn('[!] safeSendMedia client.sendMessage doc falló:', eB.message);
                 }
             }
         }
 
-        // 2. Fallback: msg.reply
+        // 2. Fallback: msg.reply pasando destChat explícito (evita el desvío a status@broadcast)
         try {
-            const resC = await msg.reply(media, undefined, {
-                sendMediaAsDocument: preferDoc,
+            const resC = await msg.reply(media, destChat || undefined, {
+                sendMediaAsDocument: isTermux ? true : preferDoc,
                 caption: caption
             });
-            if (resC && resC.id) return true;
+            if (resC) return true;
         } catch (eC) {
-            console.warn('[!] safeSendMedia fallback msg.reply falló:', eC.message);
+            console.warn('[!] safeSendMedia msg.reply con destChat falló:', eC.message);
             if (!preferDoc) {
                 try {
-                    const resD = await msg.reply(media, undefined, {
+                    const resD = await msg.reply(media, destChat || undefined, {
                         sendMediaAsDocument: true,
                         caption: caption
                     });
-                    if (resD && resD.id) return true;
+                    if (resD) return true;
                 } catch (eD) {}
             }
         }
@@ -1099,7 +1110,7 @@ async function descargarYEnviarVideo(rawUrl, msg) {
         try {
             const media = await downloadTikTokMedia(videoUrl);
             if (media) {
-                const asDoc = (media.filesize || 0) > 15 * 1024 * 1024;
+                const asDoc = isTermux || (media.filesize || 0) > 15 * 1024 * 1024;
                 const sent = await safeSendMedia(media, asDoc);
                 if (sent) return true;
             }
@@ -1128,22 +1139,20 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
     if (_isYouTube) {
         _ytArgs.push(
-            '--js-runtimes', 'node',
-            '--extractor-args', 'youtube:player_client=android,web',
-            '-S', 'ext:mp4:m4a,res:480',
-            '-f', 'b[height<=480][ext=mp4]/best[height<=480][ext=mp4]/18/bv*[height<=360]+ba/b[height<=360]/bv*[height<=480]+ba/best',
+            '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best',
+            '-S', 'res:480,ext:mp4:m4a',
             '--merge-output-format', 'mp4',
             '-o', outputFile,
             videoUrl
         );
     } else if (_isInstagram) {
-        _ytArgs.push('--add-header', 'Referer:https://www.instagram.com/', '-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+        _ytArgs.push('--add-header', 'Referer:https://www.instagram.com/', '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl);
     } else if (_isFacebook) {
-        _ytArgs.push('--add-header', 'Referer:https://www.facebook.com/', '-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+        _ytArgs.push('--add-header', 'Referer:https://www.facebook.com/', '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl);
     } else if (_isTikTok) {
-        _ytArgs.push('--add-header', 'Referer:https://www.tiktok.com/', '-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+        _ytArgs.push('--add-header', 'Referer:https://www.tiktok.com/', '-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl);
     } else {
-        _ytArgs.push('-f', 'b/best[ext=mp4]/best', '-o', outputFile, videoUrl);
+        _ytArgs.push('-f', 'best[ext=mp4]/best', '-o', outputFile, videoUrl);
     }
 
     return new Promise((resolve) => {
@@ -1185,14 +1194,14 @@ async function descargarYEnviarVideo(rawUrl, msg) {
             console.log(`[!] Iniciando Rescate API para ${plataforma}...`);
             const rescueMedia = await descargarViaApiRescue(videoUrl, plataforma);
             if (rescueMedia) {
-                const asDoc = (rescueMedia.filesize || 0) > 15 * 1024 * 1024;
+                const asDoc = isTermux || (rescueMedia.filesize || 0) > 15 * 1024 * 1024;
                 const sent = await safeSendMedia(rescueMedia, asDoc);
                 if (sent) {
                     cleanupAndFinish(true);
                     return;
                 }
             }
-            await msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública, no requiera inicio de sesión y no supere los límites de tamaño._").catch(()=>{});
+            await msg.reply(`❌ *No se pudo descargar el video de ${plataforma}.*\n_Asegúrate de que la publicación sea pública, no requiera inicio de sesión y no supere los límites de tamaño (100 MB)._`).catch(()=>{});
             cleanupAndFinish(false);
         };
 
