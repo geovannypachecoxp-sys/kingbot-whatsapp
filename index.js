@@ -29,6 +29,18 @@ const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
 const isTermux = process.platform === 'android' || !!process.env.PREFIX;
 
+function getRealChatId(msg) {
+    if (!msg) return null;
+    if (msg.id && msg.id.remote && !msg.id.remote.includes('broadcast')) {
+        return msg.id.remote;
+    }
+    if (msg.fromMe) {
+        if (msg.to && !msg.to.includes('broadcast')) return msg.to;
+        if (msg.from && !msg.from.includes('broadcast')) return msg.from;
+    }
+    return msg.from || msg.to;
+}
+
 function getFfmpegLocation() {
     if (process.platform === 'win32') {
         const wingetDir = path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Packages');
@@ -812,7 +824,34 @@ async function downloadTikTok(url) {
         const fetch = require('node-fetch');
         let fullUrl = url ? url.trim() : '';
 
-        // 1. Resolver redirección ultra rápido usando GET manual (evita descargar páginas HTML completas)
+        // Función auxiliar para consultar TikWM
+        const queryTikwm = async (targetUrl) => {
+            const tikwmEndpoints = [
+                'https://www.tikwm.com/api/?url=',
+                'https://tikwm.com/api/?url='
+            ];
+            for (const ep of tikwmEndpoints) {
+                try {
+                    const res = await fetch(ep + encodeURIComponent(targetUrl), {
+                        headers: { 'User-Agent': 'Mozilla/5.0' },
+                        timeout: 8000
+                    });
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json && json.code === 0 && json.data) {
+                            return json.data.play || json.data.wmplay || json.data.hdplay;
+                        }
+                    }
+                } catch(e) {}
+            }
+            return null;
+        };
+
+        // 1. Probar TikWM directamente con la URL (resuelve vt.tiktok.com en ~1 seg sin desvíos)
+        let playUrl = await queryTikwm(fullUrl);
+        if (playUrl) return playUrl;
+
+        // 2. Si no resolvió directo, resolver redirección manual
         try {
             const head = await fetch(fullUrl, {
                 method: 'GET',
@@ -825,33 +864,16 @@ async function downloadTikTok(url) {
             const loc = head.headers.get('location');
             if (loc) {
                 fullUrl = loc.startsWith('http') ? loc : new URL(loc, fullUrl).href;
+                if (!fullUrl.includes('mall') && !fullUrl.includes('oec-api') && !fullUrl.includes('order_delivering')) {
+                    playUrl = await queryTikwm(fullUrl);
+                    if (playUrl) return playUrl;
+                }
             }
         } catch(e) {}
 
         // Si es un enlace de compras/mall de TikTok y no un video, abortar
         if (fullUrl.includes('mall') || fullUrl.includes('oec-api') || fullUrl.includes('order_delivering')) {
             return null;
-        }
-
-        // 2. Motor principal: tikwm.com (Ultra rápido ~1 seg, sin marca de agua, CDN directa compacta)
-        const tikwmEndpoints = [
-            'https://www.tikwm.com/api/?url=',
-            'https://tikwm.com/api/?url='
-        ];
-        for (const ep of tikwmEndpoints) {
-            try {
-                const res = await fetch(ep + encodeURIComponent(fullUrl), {
-                    headers: { 'User-Agent': 'Mozilla/5.0' },
-                    timeout: 8000
-                });
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json && json.code === 0 && json.data) {
-                        const playUrl = json.data.play || json.data.wmplay || json.data.hdplay;
-                        if (playUrl) return playUrl;
-                    }
-                }
-            } catch(e) {}
         }
 
         // 3. Fallback: TikTokio API con timeout estricto de 8s (para evitar bloqueos de minutos)
@@ -882,9 +904,9 @@ async function downloadTikTokMedia(url) {
                     'Referer': 'https://www.tiktok.com/',
                     'Accept': '*/*'
                 },
-                timeout: 25000
+                timeout: 30000
             });
-            if (videoRes.ok) {
+            if (videoRes.ok || videoRes.status === 206) {
                 const buffer = await videoRes.buffer();
                 if (buffer && buffer.length >= 10000) {
                     return new MessageMedia('video/mp4', buffer.toString('base64'), 'tiktok.mp4', buffer.length);
@@ -961,8 +983,8 @@ async function descargarViaApiRescue(videoUrl, plataforma) {
             });
             if (mediaRes.ok || mediaRes.status === 206) {
                 const cl = parseInt(mediaRes.headers.get('content-length') || '0', 10);
-                if (cl > 50 * 1024 * 1024) {
-                    console.warn(`[!] Video de rescate para ${plataforma} excede 50 MB (${cl} bytes).`);
+                if (cl > 95 * 1024 * 1024) {
+                    console.warn(`[!] Video de rescate para ${plataforma} excede 95 MB (${cl} bytes).`);
                     return null;
                 }
                 const buffer = await mediaRes.buffer();
@@ -1016,23 +1038,60 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
     await msg.reply(`🎬 *Descargando video de ${plataforma}...*\n_Por favor espere un momento._`);
 
+    const destChat = getRealChatId(msg) || (msg.fromMe ? msg.to : msg.from);
+    const caption = `🎬 *Video de ${plataforma}*`;
+
     // Función auxiliar para envío seguro de MessageMedia
     const safeSendMedia = async (media, isDoc) => {
-        try {
-            await msg.reply(media, undefined, { sendMediaAsDocument: isDoc, caption: `🎬 *Video de ${plataforma}*` });
-            return true;
-        } catch (e1) {
-            console.error('[!] Error en safeSendMedia (intento normal):', e1.message);
-            if (!isDoc) {
+        const preferDoc = isDoc || (media.filesize && media.filesize > 15 * 1024 * 1024);
+
+        // 1. Enviar prioritariamente usando client.sendMessage al chat real (evita status@broadcast en self-chat)
+        if (destChat && !destChat.includes('broadcast')) {
+            try {
+                const resA = await client.sendMessage(destChat, media, {
+                    sendMediaAsDocument: preferDoc,
+                    caption: caption
+                });
+                if (resA && resA.id) return true;
+            } catch (eA) {
+                console.warn('[!] safeSendMedia intento directo falló:', eA.message);
+            }
+
+            // Si falló como video normal, forzar como documento (vital en Termux/Linux sin codecs H264 de canvas)
+            if (!preferDoc) {
                 try {
-                    await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
-                    return true;
-                } catch (e2) {
-                    console.error('[!] Error en safeSendMedia (intento documento):', e2.message);
+                    const resB = await client.sendMessage(destChat, media, {
+                        sendMediaAsDocument: true,
+                        caption: caption
+                    });
+                    if (resB && resB.id) return true;
+                } catch (eB) {
+                    console.warn('[!] safeSendMedia intento directo como documento falló:', eB.message);
                 }
             }
-            return false;
         }
+
+        // 2. Fallback: msg.reply
+        try {
+            const resC = await msg.reply(media, undefined, {
+                sendMediaAsDocument: preferDoc,
+                caption: caption
+            });
+            if (resC && resC.id) return true;
+        } catch (eC) {
+            console.warn('[!] safeSendMedia fallback msg.reply falló:', eC.message);
+            if (!preferDoc) {
+                try {
+                    const resD = await msg.reply(media, undefined, {
+                        sendMediaAsDocument: true,
+                        caption: caption
+                    });
+                    if (resD && resD.id) return true;
+                } catch (eD) {}
+            }
+        }
+
+        return false;
     };
 
     // 1. Si es TikTok, intentar primero con API directa sin marca de agua (ultra rápida: ~1.5 seg)
@@ -1101,11 +1160,11 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
         const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
 
-        // Temporizador de seguridad: si yt-dlp tarda más de 50 segundos, matar proceso y usar Rescate API
+        // Temporizador de seguridad: si yt-dlp tarda más de 75 segundos, matar proceso y usar Rescate API
         timer = setTimeout(() => {
-            console.warn(`[!] yt-dlp excedió tiempo límite (50s) para ${plataforma}. Abortando...`);
+            console.warn(`[!] yt-dlp excedió tiempo límite (75s) para ${plataforma}. Abortando...`);
             try { child.kill('SIGKILL'); } catch(e){}
-        }, 50000);
+        }, 75000);
 
         if (child.stderr) {
             child.stderr.on('data', (d) => { stderrData += d.toString(); });
@@ -1163,7 +1222,7 @@ async function descargarYEnviarVideo(rawUrl, msg) {
             // Si yt-dlp generó un archivo válido (mayor a 10 KB)
             if (code === 0 && stats && stats.size >= 10000) {
                 const sizeMB = stats.size / (1024 * 1024);
-                if (sizeMB > 80) {
+                if (sizeMB > 95) {
                     try { fs.unlinkSync(actualFile); } catch(e){}
                     await msg.reply(`⚠️ *El video excede el límite permitido para WhatsApp (${sizeMB.toFixed(1)} MB).*`).catch(()=>{});
                     cleanupAndFinish(false);
@@ -2556,24 +2615,24 @@ client.on('message_create', async (msg) => {
     const originalReply = msg.reply.bind(msg);
     msg.reply = async (...args) => {
         try {
-            return await originalReply(...args);
+            const res = await originalReply(...args);
+            if (res) return res;
         } catch (e) {
             console.error("[msg.reply fallback] Error:", e.message);
-            try {
-                const dest = msg.fromMe ? msg.to : msg.from;
-                return await client.sendMessage(dest, args[0], args[2] || {});
-            } catch(e2) {
-                console.error("[msg.reply fallback] Falló:", e2.message);
-            }
-            if (e && e.message && (e.message.includes('endsWith') || e.message.includes('not a function'))) {
-                return { fake: true, message: 'Swallowed endsWith error' };
-            }
-            throw e;
         }
+        try {
+            const dest = getRealChatId(msg) || (msg.fromMe ? msg.to : msg.from);
+            if (dest && !dest.includes('broadcast')) {
+                return await client.sendMessage(dest, args[0], args[2] || {});
+            }
+        } catch(e2) {
+            console.error("[msg.reply fallback] Falló:", e2.message);
+        }
+        return { fake: true };
     };
     if (isStartupSync) return;
     if (msg.timestamp < botStartTime - 60) return;
-    const chatId = msg.fromMe ? msg.to : msg.from;
+    const chatId = getRealChatId(msg) || (msg.fromMe ? msg.to : msg.from) || '';
     const isGroup = chatId.endsWith('@g.us');
     let textoOriginal = (msg.body || "").trim();
     const lowerBody = textoOriginal.toLowerCase();
