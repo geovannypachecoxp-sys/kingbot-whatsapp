@@ -47,6 +47,14 @@ function getFfmpegLocation() {
                 }
             } catch(e){}
         }
+    } else {
+        const termuxBin = process.env.PREFIX ? path.join(process.env.PREFIX, 'bin') : '/data/data/com.termux/files/usr/bin';
+        if (fs.existsSync(path.join(termuxBin, 'ffmpeg'))) {
+            return termuxBin;
+        }
+        if (fs.existsSync('/usr/bin/ffmpeg')) {
+            return '/usr/bin';
+        }
     }
     return null;
 }
@@ -62,6 +70,12 @@ const getYtDlpBinary = () => {
         } catch (e) {
             return 'python';
         }
+    }
+    if (process.env.PREFIX && fs.existsSync(path.join(process.env.PREFIX, 'bin', 'yt-dlp'))) {
+        return path.join(process.env.PREFIX, 'bin', 'yt-dlp');
+    }
+    if (fs.existsSync('/data/data/com.termux/files/usr/bin/yt-dlp')) {
+        return '/data/data/com.termux/files/usr/bin/yt-dlp';
     }
     return 'yt-dlp';
 };
@@ -796,35 +810,63 @@ async function obtenerUltimosVideosCanal(canalId, limite = 3) {
 async function downloadTikTok(url) {
     try {
         const fetch = require('node-fetch');
-        const uaDesktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-        let fullUrl = url;
+        let fullUrl = url ? url.trim() : '';
+
+        // 1. Resolver redirección ultra rápido usando GET manual (evita descargar páginas HTML completas)
         try {
-            const head = await fetch(url, { method: 'GET', redirect: 'follow', headers: { 'User-Agent': uaDesktop } });
-            if (head && head.url) fullUrl = head.url;
-        } catch(e){}
+            const head = await fetch(fullUrl, {
+                method: 'GET',
+                redirect: 'manual',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                },
+                timeout: 5000
+            });
+            const loc = head.headers.get('location');
+            if (loc) {
+                fullUrl = loc.startsWith('http') ? loc : new URL(loc, fullUrl).href;
+            }
+        } catch(e) {}
 
         // Si es un enlace de compras/mall de TikTok y no un video, abortar
         if (fullUrl.includes('mall') || fullUrl.includes('oec-api') || fullUrl.includes('order_delivering')) {
             return null;
         }
 
-        // 1. Intentar con API de alta velocidad TikTokio
-        try {
-            const res1 = await fetch('https://backend1.tioo.eu.org/ttdl?url=' + encodeURIComponent(fullUrl), { timeout: 12000 });
-            const json1 = await res1.json();
-            if (json1 && json1.status && json1.video && json1.video[0]) {
-                return json1.video[0];
-            }
-        } catch(e1){}
-
-        // 2. Intentar con API tikwm
-        const res2 = await fetch('https://www.tikwm.com/api/?url=' + encodeURIComponent(fullUrl), { timeout: 12000 });
-        const json2 = await res2.json();
-        if (json2 && json2.code === 0 && json2.data && json2.data.play) {
-            return json2.data.play;
+        // 2. Motor principal: tikwm.com (Ultra rápido ~1 seg, sin marca de agua, CDN directa compacta)
+        const tikwmEndpoints = [
+            'https://www.tikwm.com/api/?url=',
+            'https://tikwm.com/api/?url='
+        ];
+        for (const ep of tikwmEndpoints) {
+            try {
+                const res = await fetch(ep + encodeURIComponent(fullUrl), {
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    timeout: 8000
+                });
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json && json.code === 0 && json.data) {
+                        const playUrl = json.data.play || json.data.wmplay || json.data.hdplay;
+                        if (playUrl) return playUrl;
+                    }
+                }
+            } catch(e) {}
         }
+
+        // 3. Fallback: TikTokio API con timeout estricto de 8s (para evitar bloqueos de minutos)
+        try {
+            const res1 = await fetch('https://backend1.tioo.eu.org/ttdl?url=' + encodeURIComponent(fullUrl), { timeout: 8000 });
+            if (res1.ok) {
+                const json1 = await res1.json();
+                if (json1 && json1.status && json1.video && json1.video[0]) {
+                    return json1.video[0];
+                }
+            }
+        } catch(e1) {}
+
     } catch (e) {
-        console.error("Error en downloadTikTok:", e.message);
+        console.error("[!] Error en downloadTikTok:", e.message);
     }
     return null;
 }
@@ -840,7 +882,7 @@ async function downloadTikTokMedia(url) {
                     'Referer': 'https://www.tiktok.com/',
                     'Accept': '*/*'
                 },
-                timeout: 45000
+                timeout: 25000
             });
             if (videoRes.ok) {
                 const buffer = await videoRes.buffer();
@@ -850,7 +892,7 @@ async function downloadTikTokMedia(url) {
             }
         }
     } catch (e) {
-        console.error("Error en downloadTikTokMedia:", e.message);
+        console.error("[!] Error en downloadTikTokMedia:", e.message);
     }
     return null;
 }
@@ -865,29 +907,47 @@ async function descargarViaApiRescue(videoUrl, plataforma) {
         let directUrl = null;
         let referer = 'https://www.google.com/';
 
-        if (plataforma === 'YouTube') {
-            const apiRes = await fetch('https://backend1.tioo.eu.org/youtube?url=' + encodeURIComponent(videoUrl), { timeout: 15000 });
-            const data = await apiRes.json();
-            if (data && data.status && data.mp4) {
-                directUrl = data.mp4;
-                referer = 'https://ymcdn.org/';
+        if (plataforma === 'TikTok') {
+            return await downloadTikTokMedia(videoUrl);
+        } else if (plataforma === 'YouTube') {
+            try {
+                const apiRes = await fetch('https://backend1.tioo.eu.org/youtube?url=' + encodeURIComponent(videoUrl), { timeout: 12000 });
+                if (apiRes.ok) {
+                    const data = await apiRes.json();
+                    if (data && data.status && data.mp4) {
+                        directUrl = data.mp4;
+                        referer = 'https://ymcdn.org/';
+                    }
+                }
+            } catch(eYt) {
+                console.warn('[!] Error conectando a API YouTube rescue:', eYt.message);
             }
         } else if (plataforma === 'Instagram') {
-            const apiRes = await fetch('https://backend1.tioo.eu.org/igdl?url=' + encodeURIComponent(videoUrl), { timeout: 15000 });
-            const data = await apiRes.json();
-            if (Array.isArray(data) && data[0] && data[0].url) {
-                directUrl = data[0].url;
-                referer = 'https://www.instagram.com/';
+            try {
+                const apiRes = await fetch('https://backend1.tioo.eu.org/igdl?url=' + encodeURIComponent(videoUrl), { timeout: 12000 });
+                if (apiRes.ok) {
+                    const data = await apiRes.json();
+                    if (Array.isArray(data) && data[0] && data[0].url) {
+                        directUrl = data[0].url;
+                        referer = 'https://www.instagram.com/';
+                    }
+                }
+            } catch(eIg) {
+                console.warn('[!] Error conectando a API Instagram rescue:', eIg.message);
             }
         } else if (plataforma === 'Facebook') {
-            const apiRes = await fetch('https://backend1.tioo.eu.org/fbdown?url=' + encodeURIComponent(videoUrl), { timeout: 15000 });
-            const data = await apiRes.json();
-            if (data && data.status && (data.HD || data.Normal_video)) {
-                directUrl = data.HD || data.Normal_video;
-                referer = 'https://www.facebook.com/';
+            try {
+                const apiRes = await fetch('https://backend1.tioo.eu.org/fbdown?url=' + encodeURIComponent(videoUrl), { timeout: 12000 });
+                if (apiRes.ok) {
+                    const data = await apiRes.json();
+                    if (data && data.status && (data.Normal_video || data.HD)) {
+                        directUrl = data.Normal_video || data.HD;
+                        referer = 'https://www.facebook.com/';
+                    }
+                }
+            } catch(eFb) {
+                console.warn('[!] Error conectando a API Facebook rescue:', eFb.message);
             }
-        } else if (plataforma === 'TikTok') {
-            return await downloadTikTokMedia(videoUrl);
         }
 
         if (directUrl) {
@@ -897,9 +957,14 @@ async function descargarViaApiRescue(videoUrl, plataforma) {
                     'Referer': referer,
                     'Accept': '*/*'
                 },
-                timeout: 60000
+                timeout: 45000
             });
             if (mediaRes.ok || mediaRes.status === 206) {
+                const cl = parseInt(mediaRes.headers.get('content-length') || '0', 10);
+                if (cl > 50 * 1024 * 1024) {
+                    console.warn(`[!] Video de rescate para ${plataforma} excede 50 MB (${cl} bytes).`);
+                    return null;
+                }
                 const buffer = await mediaRes.buffer();
                 if (buffer && buffer.length >= 10000) {
                     const filename = `${plataforma.toLowerCase()}_${Date.now()}.mp4`;
@@ -957,29 +1022,34 @@ async function descargarYEnviarVideo(rawUrl, msg) {
             await msg.reply(media, undefined, { sendMediaAsDocument: isDoc, caption: `🎬 *Video de ${plataforma}*` });
             return true;
         } catch (e1) {
+            console.error('[!] Error en safeSendMedia (intento normal):', e1.message);
             if (!isDoc) {
-                await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
-                return true;
+                try {
+                    await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `🎬 *Video de ${plataforma}*` });
+                    return true;
+                } catch (e2) {
+                    console.error('[!] Error en safeSendMedia (intento documento):', e2.message);
+                }
             }
-            throw e1;
+            return false;
         }
     };
 
-    // 1. Si es TikTok, intentar primero con API directa sin marca de agua
+    // 1. Si es TikTok, intentar primero con API directa sin marca de agua (ultra rápida: ~1.5 seg)
     if (_isTikTok) {
         try {
             const media = await downloadTikTokMedia(videoUrl);
             if (media) {
                 const asDoc = (media.filesize || 0) > 15 * 1024 * 1024;
-                await safeSendMedia(media, asDoc);
-                return true;
+                const sent = await safeSendMedia(media, asDoc);
+                if (sent) return true;
             }
         } catch (eTk) {
             console.error('[!] API TikTok falló, pasando a yt-dlp:', eTk.message);
         }
     }
 
-    // 2. Descarga con yt-dlp usando FFmpeg para mezcla automática de audio/video y sin límites restrictivos
+    // 2. Descarga con yt-dlp usando argumentos optimizados para evitar bloqueos y exceso de tamaño
     const outputFile = path.join(__dirname, 'video_' + Date.now() + '.mp4');
     const uaDesktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     const ffmpegDir = getFfmpegLocation();
@@ -988,6 +1058,8 @@ async function descargarYEnviarVideo(rawUrl, msg) {
         '--no-check-certificates',
         '--no-warnings',
         '--no-playlist',
+        '--socket-timeout', '15',
+        '--no-cache-dir',
         '--user-agent', uaDesktop
     ];
 
@@ -997,7 +1069,10 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
     if (_isYouTube) {
         _ytArgs.push(
-            '-f', 'bv*[height<=480][ext=mp4]+ba[ext=m4a]/bv*[height<=480]+ba/b[height<=480]/best',
+            '--js-runtimes', 'node',
+            '--extractor-args', 'youtube:player_client=android,web',
+            '-S', 'ext:mp4:m4a,res:480',
+            '-f', 'b[height<=480][ext=mp4]/best[height<=480][ext=mp4]/18/bv*[height<=360]+ba/b[height<=360]/bv*[height<=480]+ba/best',
             '--merge-output-format', 'mp4',
             '-o', outputFile,
             videoUrl
@@ -1014,78 +1089,110 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
     return new Promise((resolve) => {
         let stderrData = '';
+        let timer = null;
+        let finished = false;
+
+        const cleanupAndFinish = (val) => {
+            if (finished) return;
+            finished = true;
+            if (timer) clearTimeout(timer);
+            resolve(val);
+        };
+
         const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
+
+        // Temporizador de seguridad: si yt-dlp tarda más de 50 segundos, matar proceso y usar Rescate API
+        timer = setTimeout(() => {
+            console.warn(`[!] yt-dlp excedió tiempo límite (50s) para ${plataforma}. Abortando...`);
+            try { child.kill('SIGKILL'); } catch(e){}
+        }, 50000);
 
         if (child.stderr) {
             child.stderr.on('data', (d) => { stderrData += d.toString(); });
         }
 
-        child.on('error', async (err) => {
-            console.error('[!] Error ejecutando yt-dlp:', err.message);
-            // Intentar rescate vía API antes de fallar
+        const handleFallback = async () => {
+            if (fs.existsSync(outputFile)) {
+                try { fs.unlinkSync(outputFile); } catch(e){}
+            }
+            try {
+                const baseWithoutExt = outputFile.replace(/\.[^/.]+$/, "");
+                const dir = path.dirname(outputFile);
+                fs.readdirSync(dir).filter(f => path.join(dir, f).startsWith(baseWithoutExt)).forEach(f => {
+                    try { fs.unlinkSync(path.join(dir, f)); } catch(e){}
+                });
+            } catch(e){}
+
+            console.log(`[!] Iniciando Rescate API para ${plataforma}...`);
             const rescueMedia = await descargarViaApiRescue(videoUrl, plataforma);
             if (rescueMedia) {
-                try {
-                    const asDoc = (rescueMedia.filesize || 0) > 15 * 1024 * 1024;
-                    await safeSendMedia(rescueMedia, asDoc);
-                    return resolve(true);
-                } catch(eSend) {}
+                const asDoc = (rescueMedia.filesize || 0) > 15 * 1024 * 1024;
+                const sent = await safeSendMedia(rescueMedia, asDoc);
+                if (sent) {
+                    cleanupAndFinish(true);
+                    return;
+                }
             }
-            msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública y no requiera inicio de sesión._").catch(()=>{});
-            resolve(false);
+            await msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública, no requiera inicio de sesión y no supere los límites de tamaño._").catch(()=>{});
+            cleanupAndFinish(false);
+        };
+
+        child.on('error', async (err) => {
+            console.error('[!] Error ejecutando yt-dlp:', err.message);
+            await handleFallback();
         });
 
         child.on('close', async (code) => {
+            let actualFile = outputFile;
+            if (!fs.existsSync(actualFile)) {
+                try {
+                    const baseWithoutExt = outputFile.replace(/\.[^/.]+$/, "");
+                    const dir = path.dirname(outputFile);
+                    const candidates = fs.readdirSync(dir).filter(f => path.join(dir, f).startsWith(baseWithoutExt) && !f.endsWith('.part') && !f.endsWith('.ytdl'));
+                    if (candidates.length > 0) {
+                        actualFile = path.join(dir, candidates[0]);
+                    }
+                } catch(e){}
+            }
+
             let stats = null;
-            if (fs.existsSync(outputFile)) {
-                try { stats = fs.statSync(outputFile); } catch(e){}
+            if (fs.existsSync(actualFile)) {
+                try { stats = fs.statSync(actualFile); } catch(e){}
             }
 
             // Si yt-dlp generó un archivo válido (mayor a 10 KB)
             if (code === 0 && stats && stats.size >= 10000) {
                 const sizeMB = stats.size / (1024 * 1024);
-                if (sizeMB > 100) {
-                    try { fs.unlinkSync(outputFile); } catch(e){}
-                    await msg.reply(`⚠️ *El video excede el límite permitido (${sizeMB.toFixed(1)} MB).*`).catch(()=>{});
-                    resolve(false);
+                if (sizeMB > 80) {
+                    try { fs.unlinkSync(actualFile); } catch(e){}
+                    await msg.reply(`⚠️ *El video excede el límite permitido para WhatsApp (${sizeMB.toFixed(1)} MB).*`).catch(()=>{});
+                    cleanupAndFinish(false);
                     return;
                 }
 
                 try {
-                    const media = MessageMedia.fromFilePath(outputFile);
+                    const media = MessageMedia.fromFilePath(actualFile);
                     const asDoc = sizeMB > 15;
-                    await safeSendMedia(media, asDoc);
-                    resolve(true);
-                    return;
+                    const sent = await safeSendMedia(media, asDoc);
+                    if (sent) {
+                        cleanupAndFinish(true);
+                        return;
+                    }
                 } catch (err) {
                     console.error('[!] Error enviando video descargado por yt-dlp:', err);
                 } finally {
+                    if (fs.existsSync(actualFile)) {
+                        try { fs.unlinkSync(actualFile); } catch(e){}
+                    }
                     if (fs.existsSync(outputFile)) {
                         try { fs.unlinkSync(outputFile); } catch(e){}
                     }
                 }
             }
 
-            // Si yt-dlp falló o el archivo generado es nulo/corrupto (<10 KB), ejecutar Rescate vía API
-            console.warn(`[!] yt-dlp falló para ${plataforma} (código ${code}, tamaño ${stats ? stats.size : 0} bytes). Iniciando Rescate API...`);
-            if (fs.existsSync(outputFile)) {
-                try { fs.unlinkSync(outputFile); } catch(e){}
-            }
-
-            const rescueMedia = await descargarViaApiRescue(videoUrl, plataforma);
-            if (rescueMedia) {
-                try {
-                    const asDoc = (rescueMedia.filesize || 0) > 15 * 1024 * 1024;
-                    await safeSendMedia(rescueMedia, asDoc);
-                    resolve(true);
-                    return;
-                } catch (errRescue) {
-                    console.error('[!] Error enviando video de rescate:', errRescue);
-                }
-            }
-
-            await msg.reply("❌ *No se pudo descargar el video.*\n_Asegúrate de que la publicación sea pública y no requiera inicio de sesión._").catch(()=>{});
-            resolve(false);
+            // Si yt-dlp falló o el archivo generado no es válido, ejecutar Rescate vía API
+            console.warn(`[!] yt-dlp no completó con éxito para ${plataforma} (código ${code}). Pasando a Rescate API...`);
+            await handleFallback();
         });
     });
 }
@@ -2722,7 +2829,7 @@ client.on('message_create', async (msg) => {
                     if (_isTikTok) {
                         _ytArgs.push('--add-header', 'Referer:https://www.tiktok.com/', '-f', 'best[ext=mp4]/best', '-o', tmpVideo, urlDescargar);
                     } else {
-                        _ytArgs.push('-f', 'bv*[height<=480][ext=mp4]+ba[ext=m4a]/bv*[height<=480]+ba/b[height<=480]/best', '--merge-output-format', 'mp4', '-o', tmpVideo, urlDescargar);
+                        _ytArgs.push('-f', 'b[height<=480][ext=mp4]/best[height<=480][ext=mp4]/18/bv*[height<=480]+ba/b/best', '--merge-output-format', 'mp4', '-o', tmpVideo, urlDescargar);
                     }
                     
                     await new Promise((resolve, reject) => {
