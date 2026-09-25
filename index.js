@@ -31,12 +31,12 @@ const isTermux = process.platform === 'android' || !!process.env.PREFIX;
 
 function getRealChatId(msg) {
     if (!msg) return null;
-    if (msg.id && msg.id.remote && !msg.id.remote.includes('broadcast')) {
-        return msg.id.remote;
-    }
     if (msg.fromMe) {
         if (msg.to && !msg.to.includes('broadcast')) return msg.to;
         if (msg.from && !msg.from.includes('broadcast')) return msg.from;
+    }
+    if (msg.id && msg.id.remote && !msg.id.remote.includes('broadcast')) {
+        return msg.id.remote;
     }
     return msg.from || msg.to;
 }
@@ -988,7 +988,7 @@ async function descargarViaApiRescue(videoUrl, plataforma) {
                     'Referer': referer,
                     'Accept': '*/*'
                 },
-                timeout: 90000
+                timeout: 45000
             });
             if (mediaRes.ok || mediaRes.status === 206) {
                 const cl = parseInt(mediaRes.headers.get('content-length') || '0', 10);
@@ -1050,55 +1050,88 @@ async function descargarYEnviarVideo(rawUrl, msg) {
     const destChat = getRealChatId(msg) || (msg.fromMe ? msg.to : msg.from);
     const caption = `🎬 *Video de ${plataforma}*`;
 
+    // Helper de seguridad: garantiza que NINGÚN envío en Puppeteer se quede colgado
+    const withTimeout = (promise, ms, desc) => {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout (${ms}ms) en ${desc}`)), ms))
+        ]);
+    };
+
     // Función auxiliar para envío seguro de MessageMedia
     const safeSendMedia = async (media, isDoc) => {
         // En Termux / Android, Chromium carece de códecs H264 de canvas y cuelga el bot si se envía como video normal.
         // Forzar sendMediaAsDocument: true garantiza entrega instantánea y confiable.
         const preferDoc = isTermux ? true : (isDoc || (media.filesize && media.filesize > 15 * 1024 * 1024));
 
-        // 1. Enviar prioritariamente usando client.sendMessage al chat real (evita status@broadcast en self-chat)
-        if (destChat && !destChat.includes('broadcast')) {
-            try {
-                const resA = await client.sendMessage(destChat, media, {
-                    sendMediaAsDocument: preferDoc,
-                    caption: caption
-                });
-                if (resA) return true;
-            } catch (eA) {
-                console.warn('[!] safeSendMedia client.sendMessage falló:', eA.message);
+        // 1. Intento primario: msg.reply directo sin alterar chatId (método idéntico al que usa Kingbot para stickers y audios)
+        try {
+            console.log(`[safeSendMedia] Intento 1: msg.reply (doc: ${preferDoc})...`);
+            const resA = await withTimeout(
+                msg.reply(media, undefined, { sendMediaAsDocument: preferDoc, caption }),
+                25000,
+                'msg.reply primario'
+            );
+            if (resA && (resA.id || resA.body !== undefined || !resA.fake)) {
+                console.log('[safeSendMedia] Video enviado con éxito vía msg.reply primario.');
+                return true;
             }
+        } catch (eA) {
+            console.warn('[!] safeSendMedia intento 1 (msg.reply primario) falló:', eA.message);
+        }
 
-            // Si falló como video normal, forzar como documento
-            if (!preferDoc) {
-                try {
-                    const resB = await client.sendMessage(destChat, media, {
-                        sendMediaAsDocument: true,
-                        caption: caption
-                    });
-                    if (resB) return true;
-                } catch (eB) {
-                    console.warn('[!] safeSendMedia client.sendMessage doc falló:', eB.message);
+        // 2. Intento secundario: forzar como documento vía msg.reply si antes intentó como video
+        if (!preferDoc) {
+            try {
+                console.log('[safeSendMedia] Intento 2: msg.reply forzado como documento...');
+                const resB = await withTimeout(
+                    msg.reply(media, undefined, { sendMediaAsDocument: true, caption }),
+                    25000,
+                    'msg.reply como documento'
+                );
+                if (resB && (resB.id || resB.body !== undefined || !resB.fake)) {
+                    console.log('[safeSendMedia] Video enviado con éxito vía msg.reply como documento.');
+                    return true;
                 }
+            } catch (eB) {
+                console.warn('[!] safeSendMedia intento 2 (msg.reply doc) falló:', eB.message);
             }
         }
 
-        // 2. Fallback: msg.reply pasando destChat explícito (evita el desvío a status@broadcast)
-        try {
-            const resC = await msg.reply(media, destChat || undefined, {
-                sendMediaAsDocument: isTermux ? true : preferDoc,
-                caption: caption
-            });
-            if (resC) return true;
-        } catch (eC) {
-            console.warn('[!] safeSendMedia msg.reply con destChat falló:', eC.message);
-            if (!preferDoc) {
-                try {
-                    const resD = await msg.reply(media, destChat || undefined, {
-                        sendMediaAsDocument: true,
-                        caption: caption
-                    });
-                    if (resD) return true;
-                } catch (eD) {}
+        // 3. Intento terciario: client.sendMessage a targetChat real con timeout estricto de 20s
+        const targetChat = (msg.fromMe ? (msg.to && !msg.to.includes('broadcast') ? msg.to : msg.from) : (destChat || msg.from));
+        if (targetChat && !targetChat.includes('broadcast')) {
+            try {
+                console.log(`[safeSendMedia] Intento 3: client.sendMessage a ${targetChat} como documento...`);
+                const resC = await withTimeout(
+                    client.sendMessage(targetChat, media, { sendMediaAsDocument: true, caption, sendSeen: false }),
+                    20000,
+                    'client.sendMessage a targetChat'
+                );
+                if (resC && (resC.id || resC.body !== undefined)) {
+                    console.log('[safeSendMedia] Video enviado con éxito vía client.sendMessage.');
+                    return true;
+                }
+            } catch (eC) {
+                console.warn('[!] safeSendMedia intento 3 (client.sendMessage) falló:', eC.message);
+            }
+        }
+
+        // 4. Intento cuaternario: si targetChat era diferente a msg.from (ej. en self-chat), probar msg.from
+        if (msg.from && msg.from !== targetChat && !msg.from.includes('broadcast')) {
+            try {
+                console.log(`[safeSendMedia] Intento 4: client.sendMessage a msg.from (${msg.from})...`);
+                const resD = await withTimeout(
+                    client.sendMessage(msg.from, media, { sendMediaAsDocument: true, caption, sendSeen: false }),
+                    20000,
+                    'client.sendMessage a msg.from'
+                );
+                if (resD && (resD.id || resD.body !== undefined)) {
+                    console.log('[safeSendMedia] Video enviado con éxito vía client.sendMessage a msg.from.');
+                    return true;
+                }
+            } catch (eD) {
+                console.warn('[!] safeSendMedia intento 4 (client.sendMessage msg.from) falló:', eD.message);
             }
         }
 
@@ -1108,6 +1141,7 @@ async function descargarYEnviarVideo(rawUrl, msg) {
     // 1. Si es TikTok, intentar primero con API directa sin marca de agua (ultra rápida: ~1.5 seg)
     if (_isTikTok) {
         try {
+            console.log('[descargarYEnviarVideo] Intentando descarga directa TikTok API...');
             const media = await downloadTikTokMedia(videoUrl);
             if (media) {
                 const asDoc = isTermux || (media.filesize || 0) > 15 * 1024 * 1024;
@@ -1119,7 +1153,22 @@ async function descargarYEnviarVideo(rawUrl, msg) {
         }
     }
 
-    // 2. Descarga con yt-dlp usando argumentos optimizados para evitar bloqueos y exceso de tamaño
+    // 2. Si es YouTube, intentar primero con API directa de alta velocidad (~2.5 seg)
+    if (_isYouTube) {
+        try {
+            console.log('[descargarYEnviarVideo] Intentando descarga directa YouTube API...');
+            const media = await descargarViaApiRescue(videoUrl, 'YouTube');
+            if (media) {
+                const asDoc = isTermux || (media.filesize || 0) > 15 * 1024 * 1024;
+                const sent = await safeSendMedia(media, asDoc);
+                if (sent) return true;
+            }
+        } catch (eYt) {
+            console.error('[!] API directa YouTube falló, pasando a yt-dlp:', eYt.message);
+        }
+    }
+
+    // 3. Descarga con yt-dlp usando argumentos optimizados para evitar bloqueos y exceso de tamaño
     const outputFile = path.join(__dirname, 'video_' + Date.now() + '.mp4');
     const uaDesktop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     const ffmpegDir = getFfmpegLocation();
@@ -1169,11 +1218,11 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
         const child = spawn(getYtDlpBinary(), _ytArgs, { shell: false });
 
-        // Temporizador de seguridad: si yt-dlp tarda más de 75 segundos, matar proceso y usar Rescate API
+        // Temporizador de seguridad: si yt-dlp tarda más de 40 segundos, matar proceso y usar Rescate API
         timer = setTimeout(() => {
-            console.warn(`[!] yt-dlp excedió tiempo límite (75s) para ${plataforma}. Abortando...`);
+            console.warn(`[!] yt-dlp excedió tiempo límite (40s) para ${plataforma}. Abortando...`);
             try { child.kill('SIGKILL'); } catch(e){}
-        }, 75000);
+        }, 40000);
 
         if (child.stderr) {
             child.stderr.on('data', (d) => { stderrData += d.toString(); });
@@ -1240,7 +1289,8 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
                 try {
                     const media = MessageMedia.fromFilePath(actualFile);
-                    const asDoc = sizeMB > 15;
+                    media.filesize = stats.size;
+                    const asDoc = isTermux || sizeMB > 15;
                     const sent = await safeSendMedia(media, asDoc);
                     if (sent) {
                         cleanupAndFinish(true);
@@ -2624,15 +2674,21 @@ client.on('message_create', async (msg) => {
     const originalReply = msg.reply.bind(msg);
     msg.reply = async (...args) => {
         try {
-            const res = await originalReply(...args);
+            const res = await Promise.race([
+                originalReply(...args),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en originalReply (25s)')), 25000))
+            ]);
             if (res) return res;
         } catch (e) {
             console.error("[msg.reply fallback] Error:", e.message);
         }
         try {
-            const dest = getRealChatId(msg) || (msg.fromMe ? msg.to : msg.from);
+            const dest = (msg.fromMe ? (msg.to && !msg.to.includes('broadcast') ? msg.to : msg.from) : getRealChatId(msg)) || (msg.fromMe ? msg.to : msg.from);
             if (dest && !dest.includes('broadcast')) {
-                return await client.sendMessage(dest, args[0], args[2] || {});
+                return await Promise.race([
+                    client.sendMessage(dest, args[0], args[2] || {}),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en client.sendMessage fallback (20s)')), 20000))
+                ]);
             }
         } catch(e2) {
             console.error("[msg.reply fallback] Falló:", e2.message);
