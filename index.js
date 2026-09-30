@@ -350,20 +350,25 @@ const rssParser = new Parser();
 const ADMIN_NUMBERS = ['50378419704'];
 
 function esAdmin(chatId, msg) {
+    if (msg && (msg.fromMe === true || msg.id?.fromMe === true || msg._data?.id?.fromMe === true)) {
+        return true;
+    }
     const candidates = [];
     if (chatId) candidates.push(chatId);
     if (msg) {
+        if (msg.author) candidates.push(msg.author);
         if (msg.from) candidates.push(msg.from);
         if (msg.to) candidates.push(msg.to);
-        if (msg.author) candidates.push(msg.author);
+        if (msg.participant) candidates.push(msg.participant);
         if (msg.id) {
             if (msg.id.remote) candidates.push(msg.id.remote);
             if (msg.id.participant) candidates.push(msg.id.participant);
         }
         if (msg._data) {
+            if (msg._data.author) candidates.push(msg._data.author);
             if (msg._data.from) candidates.push(msg._data.from);
             if (msg._data.to) candidates.push(msg._data.to);
-            if (msg._data.author) candidates.push(msg._data.author);
+            if (msg._data.participant) candidates.push(msg._data.participant);
         }
     }
 
@@ -4382,9 +4387,6 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (primerPalabra === '!iniciarbot' || primerPalabra === '!botgrupal') {
-        if (primerPalabra === '!iniciarbot' && isGroup) return msg.reply(" Usa *!botgrupal* en grupos.");
-        if (primerPalabra === '!botgrupal' && !isGroup) return msg.reply(" Usa *!iniciarbot* en privado.");
-
         const partsInit = textoOriginal.split(' ');
         const nombreAgente = partsInit[1]?.toLowerCase() || 'kinbot';
 
@@ -4472,17 +4474,36 @@ Responde de forma clara, natural y concisa en español.`;
 
     let argumento = textoLimpio.substring(comando.length).trim();
 
-    // --- CONTROL DE ENERGÍA Y REPOSO (APAGAR / ENCENDER) ---
+    // --- CONTROL DE ENERGÍA Y REPOSO (APAGAR / ENCENDER / GRUPOS) ---
     if (comando === 'apagar' || comando === 'dormir' || comando === 'suspender') {
-        if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
+        if (!esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador.");
+        if (isGroup) {
+            chatsActivos.delete(chatId);
+            sesionesChat.delete(chatId);
+            return msg.reply("*Modo conversacional grupal DESACTIVADO.*");
+        }
         botPausado = true;
-        return msg.reply(" *Asistente:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
+        return msg.reply("*Asistente:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
     }
 
-    if (comando === 'encender' || comando === 'activar' || comando === 'despertar') {
-        if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
+    if (comando === 'encender' || comando === 'activar' || comando === 'despertar' || comando === 'iniciar') {
+        if (!esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador.");
         botPausado = false;
-        return msg.reply(" *Asistente:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
+        if (isGroup) {
+            chatsActivos.add(chatId);
+            const nombreAgente = 'kinbot';
+            const systemPromptFluid = `Eres Asistente, un asistente virtual de inteligencia artificial inteligente, amable, educado y altamente eficiente.
+Estás interactuando en un grupo de WhatsApp.
+NORMAS ESTRICTAS:
+1. No reveles finanzas, tarjetas bancarias, contraseñas ni notas personales de Geovanny Pacheco.
+2. Responde de forma clara, natural, útil y concisa en español, sin emojis.`;
+            sesionesChat.set(chatId, [
+                { role: "user", parts: [{ text: systemPromptFluid }] },
+                { role: "model", parts: [{ text: "Modo conversacional grupal activado y en línea." }] }
+            ]);
+            return msg.reply("*Modo conversacional grupal ACTIVADO.*");
+        }
+        return msg.reply("*Asistente:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
     }
 
     if (botPausado) {
