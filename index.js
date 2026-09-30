@@ -952,13 +952,15 @@ async function descifrarMediaWhatsApp(bufferEncrypted, mediaKeyBase64, mediaType
         
         let derived;
         if (typeof crypto.hkdfSync === 'function') {
-            derived = crypto.hkdfSync('sha256', mediaKey, Buffer.alloc(32), Buffer.from(infoStr, 'utf-8'), 112);
+            const arr = crypto.hkdfSync('sha256', mediaKey, Buffer.alloc(32), Buffer.from(infoStr, 'utf-8'), 112);
+            derived = Buffer.from(arr);
         } else {
             const { promisify } = require('util');
             const hkdfAsync = promisify(crypto.hkdf);
             const arrBuf = await hkdfAsync('sha256', mediaKey, Buffer.alloc(32), Buffer.from(infoStr, 'utf-8'), 112);
             derived = Buffer.from(arrBuf);
         }
+        derived = Buffer.isBuffer(derived) ? derived : Buffer.from(derived);
         const iv = derived.subarray(0, 16);
         const cipherKey = derived.subarray(16, 48);
         
