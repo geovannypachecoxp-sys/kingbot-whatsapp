@@ -1076,83 +1076,39 @@ async function descargarYEnviarVideo(rawUrl, msg) {
     };
 
     // Función auxiliar para envío seguro de MessageMedia
+    let videoYaEnviado = false;
     const safeSendMedia = async (media, isDoc) => {
-        // En Termux / Android, Chromium carece de códecs H264 de canvas y cuelga el bot si se envía como video normal.
-        // Forzar sendMediaAsDocument: true garantiza entrega instantánea y confiable.
+        if (videoYaEnviado) return true;
         const preferDoc = isTermux ? true : (isDoc || (media.filesize && media.filesize > 15 * 1024 * 1024));
+        const targetChat = (msg.fromMe ? (msg.to && !msg.to.includes('broadcast') ? msg.to : msg.from) : (destChat || msg.from));
+        
+        const sizeBytes = media.filesize || (media.data ? media.data.length * 0.75 : 10 * 1024 * 1024);
+        const sizeMB = sizeBytes / (1024 * 1024);
+        const timeoutMs = Math.min(180000, Math.max(60000, Math.round(sizeMB * 4000)));
 
-        // 1. Intento primario: msg.reply directo sin alterar chatId (método idéntico al que usa Asistente para stickers y audios)
+        console.log(`[safeSendMedia] Enviando video (${sizeMB.toFixed(1)} MB, doc: ${preferDoc}) a ${targetChat} con timeout de ${(timeoutMs/1000).toFixed(0)}s...`);
+
         try {
-            console.log(`[safeSendMedia] Intento 1: msg.reply (doc: ${preferDoc})...`);
-            const resA = await withTimeout(
-                msg.reply(media, undefined, { sendMediaAsDocument: preferDoc, caption }),
-                25000,
-                'msg.reply primario'
+            const res = await withTimeout(
+                client.sendMessage(targetChat, media, {
+                    sendMediaAsDocument: preferDoc,
+                    caption,
+                    sendSeen: false,
+                    quotedMessageId: msg.id ? msg.id._serialized : undefined
+                }),
+                timeoutMs,
+                'client.sendMessage'
             );
-            if (resA && (resA.id || resA.body !== undefined || !resA.fake)) {
-                console.log('[safeSendMedia] Video enviado con éxito vía msg.reply primario.');
+            if (res) {
+                videoYaEnviado = true;
+                console.log('[safeSendMedia] Video enviado con �xito.');
                 return true;
             }
-        } catch (eA) {
-            console.warn('[!] safeSendMedia intento 1 (msg.reply primario) falló:', eA.message);
+        } catch (err) {
+            console.warn('[!] safeSendMedia fallo:', err.message);
         }
 
-        // 2. Intento secundario: forzar como documento vía msg.reply si antes intentó como video
-        if (!preferDoc) {
-            try {
-                console.log('[safeSendMedia] Intento 2: msg.reply forzado como documento...');
-                const resB = await withTimeout(
-                    msg.reply(media, undefined, { sendMediaAsDocument: true, caption }),
-                    25000,
-                    'msg.reply como documento'
-                );
-                if (resB && (resB.id || resB.body !== undefined || !resB.fake)) {
-                    console.log('[safeSendMedia] Video enviado con éxito vía msg.reply como documento.');
-                    return true;
-                }
-            } catch (eB) {
-                console.warn('[!] safeSendMedia intento 2 (msg.reply doc) falló:', eB.message);
-            }
-        }
-
-        // 3. Intento terciario: client.sendMessage a targetChat real con timeout estricto de 20s
-        const targetChat = (msg.fromMe ? (msg.to && !msg.to.includes('broadcast') ? msg.to : msg.from) : (destChat || msg.from));
-        if (targetChat && !targetChat.includes('broadcast')) {
-            try {
-                console.log(`[safeSendMedia] Intento 3: client.sendMessage a ${targetChat} como documento...`);
-                const resC = await withTimeout(
-                    client.sendMessage(targetChat, media, { sendMediaAsDocument: true, caption, sendSeen: false }),
-                    20000,
-                    'client.sendMessage a targetChat'
-                );
-                if (resC && (resC.id || resC.body !== undefined)) {
-                    console.log('[safeSendMedia] Video enviado con éxito vía client.sendMessage.');
-                    return true;
-                }
-            } catch (eC) {
-                console.warn('[!] safeSendMedia intento 3 (client.sendMessage) falló:', eC.message);
-            }
-        }
-
-        // 4. Intento cuaternario: si targetChat era diferente a msg.from (ej. en self-chat), probar msg.from
-        if (msg.from && msg.from !== targetChat && !msg.from.includes('broadcast')) {
-            try {
-                console.log(`[safeSendMedia] Intento 4: client.sendMessage a msg.from (${msg.from})...`);
-                const resD = await withTimeout(
-                    client.sendMessage(msg.from, media, { sendMediaAsDocument: true, caption, sendSeen: false }),
-                    20000,
-                    'client.sendMessage a msg.from'
-                );
-                if (resD && (resD.id || resD.body !== undefined)) {
-                    console.log('[safeSendMedia] Video enviado con éxito vía client.sendMessage a msg.from.');
-                    return true;
-                }
-            } catch (eD) {
-                console.warn('[!] safeSendMedia intento 4 (client.sendMessage msg.from) falló:', eD.message);
-            }
-        }
-
-        return false;
+        return videoYaEnviado;
     };
 
     // 1. Si es TikTok, intentar primero con API directa sin marca de agua (ultra rápida: ~1.5 seg)
@@ -1250,13 +1206,14 @@ async function descargarYEnviarVideo(rawUrl, msg) {
         timer = setTimeout(() => {
             console.warn(`[!] yt-dlp excedió tiempo límite (40s) para ${plataforma}. Abortando...`);
             try { child.kill('SIGKILL'); } catch(e){}
-        }, 40000);
+        }, 120000);
 
         if (child.stderr) {
             child.stderr.on('data', (d) => { stderrData += d.toString(); });
         }
 
         const handleFallback = async () => {
+            if (videoYaEnviado) return;
             if (fs.existsSync(outputFile)) {
                 try { fs.unlinkSync(outputFile); } catch(e){}
             }
