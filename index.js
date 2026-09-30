@@ -2225,6 +2225,35 @@ try {
     console.warn("[TTS] msedge-tts no disponible directamente, se usarán fallbacks web.");
 }
 
+async function convertirAudioAMp3(bufferAudio) {
+    if (!bufferAudio || bufferAudio.length < 100) return bufferAudio;
+    if (bufferAudio.subarray(0, 3).toString() === 'ID3' || (bufferAudio[0] === 0xFF && (bufferAudio[1] & 0xE0) === 0xE0)) {
+        return bufferAudio;
+    }
+    return new Promise((resolve) => {
+        try {
+            const ff = spawn('ffmpeg', ['-y', '-i', 'pipe:0', '-codec:a', 'libmp3lame', '-qscale:a', '2', '-f', 'mp3', 'pipe:1']);
+            const chunks = [];
+            ff.stdout.on('data', c => chunks.push(c));
+            ff.on('close', code => {
+                if (code === 0 && chunks.length > 0) {
+                    resolve(Buffer.concat(chunks));
+                } else {
+                    resolve(bufferAudio);
+                }
+            });
+            ff.on('error', (err) => {
+                console.warn('[convertirAudioAMp3] Error llamando a ffmpeg:', err.message);
+                resolve(bufferAudio);
+            });
+            ff.stdin.write(bufferAudio);
+            ff.stdin.end();
+        } catch (e) {
+            resolve(bufferAudio);
+        }
+    });
+}
+
 async function obtenerAudioBufferTTS(texto, genero = 'hombre') {
     // 0. Si se especificó una voz clonada (que no sea predefinida 'hombre' o 'mujer')
     const esPredefinida = /^(hombre|h|masculino|male|mujer|m|femenino|female)$/i.test(genero);
@@ -2235,7 +2264,8 @@ async function obtenerAudioBufferTTS(texto, genero = 'hombre') {
                 console.log(`[ClonarVoz] Sintetizando con voz clonada: "${genero}"`);
                 const audioClonado = await clonarVozClient.sintetizarTexto(texto, genero);
                 if (audioClonado && audioClonado.length > 500) {
-                    return audioClonado;
+                    const audioMp3 = await convertirAudioAMp3(audioClonado);
+                    return audioMp3;
                 }
             }
         } catch (eClon) {
@@ -5478,12 +5508,19 @@ if (isTermux) {
             try {
                 const wavBuffer = await clonarVozClient.sintetizarTexto(textoDictar, targetVoz);
                 if (wavBuffer && wavBuffer.length > 500) {
-                    const media = new MessageMedia('audio/wav', wavBuffer.toString('base64'), 'voz_clonada.wav');
-                    return await msg.reply(media, undefined, { sendAudioAsVoice: true });
+                    const mp3Buffer = await convertirAudioAMp3(wavBuffer);
+                    const media = new MessageMedia('audio/mpeg', mp3Buffer.toString('base64'), 'voz_clonada.mp3');
+                    try {
+                        return await msg.reply(media, undefined, { sendAudioAsVoice: true });
+                    } catch (eSendVoice) {
+                        console.warn('[ClonarVoz] Error enviando sendAudioAsVoice, enviando como audio regular:', eSendVoice.message);
+                        return await msg.reply(media);
+                    }
                 } else {
                     return msg.reply("No se recibió audio válido del motor de síntesis.");
                 }
             } catch (errSin) {
+                console.error("[ClonarVoz] Error en síntesis:", errSin.message);
                 return msg.reply(`Error durante la síntesis de voz: ${errSin.message}`);
             }
         }

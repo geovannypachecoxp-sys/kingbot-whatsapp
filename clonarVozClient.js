@@ -128,14 +128,18 @@ class ClonarVozClient {
      */
     async sintetizarTexto(texto, idVoz = null, opciones = {}) {
         try {
-            // Si pasan un nombre en lugar de un ID, intentar buscar su ID
+            // Si pasan un nombre en lugar de un ID, intentar buscar su ID con normalización de acentos y mayúsculas
             let targetVozId = idVoz;
             if (idVoz) {
+                const norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
                 const lista = await this.listarVoces();
+                const targetNorm = norm(idVoz);
                 const coincidencia = lista.find(v => 
                     v.id === idVoz || 
-                    v.nombre.toLowerCase().trim() === idVoz.toLowerCase().trim() ||
-                    v.nombre.toLowerCase().includes(idVoz.toLowerCase().trim())
+                    norm(v.id) === targetNorm ||
+                    norm(v.nombre) === targetNorm ||
+                    norm(v.nombre).includes(targetNorm) ||
+                    targetNorm.includes(norm(v.nombre))
                 );
                 if (coincidencia) {
                     targetVozId = coincidencia.id;
