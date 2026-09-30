@@ -6815,6 +6815,18 @@ process.on('SIGINT', () => {
     client.destroy().finally(() => process.exit(0));
 });
 
-client.initialize();
+async function startBot() {
+    try {
+        await client.initialize();
+    } catch (e) {
+        console.error('Error in initialize:', e.message);
+        if (e.message.includes('Execution context was destroyed')) {
+            console.log('Reiniciando bot por error de contexto...');
+            setTimeout(() => { process.exit(1); }, 3000);
+        }
+    }
+}
+startBot();
+
 
 
