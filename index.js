@@ -389,6 +389,8 @@ let firebaseUid = "De3SAQbP7kbq9N2o31AEnIJuPlf1"; // UID por defecto de Geovanny
 let ultimoChequeoVencimientos = null;
 let telegramBotToken = null;
 let openaiApiKey = null;
+let hfToken = null;
+let pollinationsApiKey = null;
 let vozDefault = 'hombre'; // 'hombre' o 'mujer'
 let botPausado = false; // Estado de energía del bot (apagar / encender)
 if (fs.existsSync('admin.json')) {
@@ -399,12 +401,14 @@ if (fs.existsSync('admin.json')) {
         if (data.ultimoChequeoVencimientos) ultimoChequeoVencimientos = data.ultimoChequeoVencimientos;
         if (data.telegramBotToken) telegramBotToken = data.telegramBotToken;
         if (data.openaiApiKey) openaiApiKey = data.openaiApiKey;
+        if (data.hfToken) hfToken = data.hfToken;
+        if (data.pollinationsApiKey) pollinationsApiKey = data.pollinationsApiKey;
         if (data.vozDefault) vozDefault = data.vozDefault;
     } catch (e) { console.error("No se pudo cargar admin.json"); }
 }
 
 function guardarAdminJson() {
-    fs.writeFileSync('admin.json', JSON.stringify({ adminChatId, firebaseUid, ultimoChequeoVencimientos, telegramBotToken, openaiApiKey, vozDefault }, null, 2));
+    fs.writeFileSync('admin.json', JSON.stringify({ adminChatId, firebaseUid, ultimoChequeoVencimientos, telegramBotToken, openaiApiKey, hfToken, pollinationsApiKey, vozDefault }, null, 2));
 }
 
 // Inicialización dinámica de Firebase Admin SDK
@@ -925,6 +929,186 @@ Humedad: ${humedad}% | Viento: ${viento} km/h`;
     } catch (e) {
         console.error('Error al obtener clima:', e.message);
         return `No fue posible consultar el clima para "${ciudad}". Intenta de nuevo más tarde.`;
+    }
+}
+
+async function generarImagenIA(promptUsuario, msgRef) {
+    if (!promptUsuario || !String(promptUsuario).trim()) {
+        return msgRef.reply("Indica qué imagen deseas crear. Ejemplo: Crea una imagen de un gato samurai con armadura");
+    }
+
+    const textoPrompt = String(promptUsuario).trim();
+    await msgRef.reply("Generando imagen...");
+
+    try {
+        // 1. Optimizar y traducir el prompt respetando la intención y estilo exacto del usuario
+        let promptMejorado = textoPrompt;
+        try {
+            const promptExpansion = `You are an expert AI prompt engineer for state-of-the-art text-to-image models (FLUX.1 and SDXL).
+Translate and enhance the user's description into a high-detail, visually striking English prompt.
+
+CRITICAL RULES:
+1. STRICT RESPECT FOR USER INTENT & STYLE:
+   - Faithfully preserve the exact subject, art style, perspective, mood, lighting, and genre requested by the user.
+   - If the user specifies an art style (e.g., anime, manga, comic, watercolor, oil painting, cyberpunk, photorealistic, 3D Pixar, dark fantasy, pixel art, sketch, vintage photography, vector illustration), strictly maintain that style.
+   - NEVER impose commercial product photography, golden accents, or studio advertising setups unless the user explicitly requested it.
+2. ENHANCE VISUAL DETAILS:
+   - Clearly describe the focal subject, foreground, background, environmental atmosphere, lighting dynamics, and color palette.
+   - Add quality-boosting descriptors that fit the requested style (e.g., for realism: 'sharp focus, natural lighting, high dynamic range, intricate textures, 8k resolution'; for digital art: 'detailed digital illustration, vibrant colors, masterpiece').
+3. OUTPUT FORMAT:
+   - Output ONLY the final raw English prompt text.
+   - NO preamble, NO explanations, NO quotes, NO conversational text.
+
+User request: "${textoPrompt}"`;
+
+            const resOpt = await ejecutarGeminiConRetries(async (model) => {
+                const result = await model.generateContent([promptExpansion]);
+                return result.response.text();
+            });
+            if (resOpt && resOpt.trim()) {
+                promptMejorado = resOpt.trim().replace(/^["']|["']$/g, '');
+                console.log(`[Prompt Imagen Optimizado]: ${promptMejorado}`);
+            }
+        } catch (eOpt) {
+            console.error("No se pudo expandir el prompt con Gemini, usando original:", eOpt.message);
+        }
+
+        let imageBuffer = null;
+        let mimeType = 'image/jpeg';
+        let motorUsado = '';
+
+        // Motor 1: Hugging Face Inference (FLUX.1-schnell / SDXL)
+        if (hfToken && !imageBuffer) {
+            try {
+                console.log("[Imagen] Intentando generar con Hugging Face (FLUX.1)...");
+                const hfRes = await fetch("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${hfToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ inputs: promptMejorado })
+                });
+
+                if (hfRes.ok) {
+                    const buf = await hfRes.arrayBuffer();
+                    if (buf.byteLength > 1000) {
+                        imageBuffer = Buffer.from(buf);
+                        mimeType = hfRes.headers.get("content-type") || "image/jpeg";
+                        motorUsado = "FLUX.1 (Hugging Face)";
+                    }
+                } else {
+                    console.log(`[!] Hugging Face FLUX respondió ${hfRes.status}, probando SDXL...`);
+                    const sdxlRes = await fetch("https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${hfToken}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ inputs: promptMejorado })
+                    });
+                    if (sdxlRes.ok) {
+                        const buf = await sdxlRes.arrayBuffer();
+                        if (buf.byteLength > 1000) {
+                            imageBuffer = Buffer.from(buf);
+                            mimeType = sdxlRes.headers.get("content-type") || "image/jpeg";
+                            motorUsado = "SDXL (Hugging Face)";
+                        }
+                    }
+                }
+            } catch (errHf) {
+                console.error("[!] Error en motor Hugging Face:", errHf.message);
+            }
+        }
+
+        // Motor 2: Pollinations con clave de API
+        if (pollinationsApiKey && !imageBuffer) {
+            try {
+                console.log("[Imagen] Intentando generar con Pollinations API Key...");
+                const seed = Math.floor(Math.random() * 99999);
+                const url = `https://gen.pollinations.ai/image/${encodeURIComponent(promptMejorado)}?key=${pollinationsApiKey}&model=flux&seed=${seed}`;
+                const pRes = await fetch(url);
+                if (pRes.ok) {
+                    const buf = await pRes.arrayBuffer();
+                    if (buf.byteLength > 1000) {
+                        imageBuffer = Buffer.from(buf);
+                        mimeType = pRes.headers.get("content-type") || "image/jpeg";
+                        motorUsado = "FLUX (Pollinations)";
+                    }
+                }
+            } catch (errPol) {
+                console.error("[!] Error en Pollinations API:", errPol.message);
+            }
+        }
+
+        // Motor 3: OpenAI DALL-E (si está configurada)
+        if (openaiApiKey && !imageBuffer) {
+            try {
+                console.log("[Imagen] Intentando generar con OpenAI...");
+                const openAiRes = await fetch("https://api.openai.com/v1/images/generations", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${openaiApiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "dall-e-3",
+                        prompt: promptMejorado,
+                        n: 1,
+                        size: "1024x1024"
+                    })
+                });
+                const openAiData = await openAiRes.json();
+                if (openAiData.data && openAiData.data[0] && openAiData.data[0].url) {
+                    const imgResp = await fetch(openAiData.data[0].url);
+                    const buf = await imgResp.arrayBuffer();
+                    imageBuffer = Buffer.from(buf);
+                    mimeType = "image/png";
+                    motorUsado = "DALL-E 3 (OpenAI)";
+                }
+            } catch (errOai) {
+                console.error("[!] Error en OpenAI DALL-E:", errOai.message);
+            }
+        }
+
+        // Motor 4: Intentar con Pollinations libre (por si responde)
+        if (!imageBuffer) {
+            try {
+                const seed = Math.floor(Math.random() * 99999);
+                const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptMejorado)}?model=flux&seed=${seed}`;
+                const pRes = await fetch(url);
+                if (pRes.ok) {
+                    const buf = await pRes.arrayBuffer();
+                    if (buf.byteLength > 1000) {
+                        imageBuffer = Buffer.from(buf);
+                        mimeType = pRes.headers.get("content-type") || "image/jpeg";
+                        motorUsado = "FLUX";
+                    }
+                }
+            } catch (errP) {}
+        }
+
+        // Si se obtuvo imagen:
+        if (imageBuffer) {
+            const media = new MessageMedia(mimeType, imageBuffer.toString('base64'), 'imagen.jpg');
+            return msgRef.reply(media, undefined, { caption: `*Imagen:* ${textoPrompt}\n*Motor:* ${motorUsado}` });
+        }
+
+        // Si ningún servidor respondió:
+        return msgRef.reply(`No fue posible generar la imagen porque los servidores públicos gratuitos ahora requieren autenticación.
+
+Para habilitar la creación de imágenes en alta resolución (FLUX.1 y SDXL) 100% gratis:
+1. Crea una cuenta gratuita en huggingface.co (toma 30 segundos, sin tarjeta).
+2. Ve a huggingface.co/settings/tokens y genera un token tipo "Read".
+3. Envíame el comando:
+!bot sethf hf_tu_token
+
+Otras opciones compatibles:
+- Pollinations: !bot setpollinations <clave> (en enter.pollinations.ai)
+- OpenAI: !bot setopenai <clave>`);
+    } catch (e) {
+        console.error("Error general generando imagen:", e);
+        return msgRef.reply("Ocurrió un error al procesar la solicitud de imagen.");
     }
 }
 
@@ -1914,6 +2098,7 @@ function limpiarRespuestaGemini(texto) {
     
     // 4. Limpieza final de tags de acción agentica sobrantes
     limpio = limpio
+        .replace(/\[ACTION_IMAGE:[^\]]+\]/g, '')
         .replace(/\[ACTION_SEARCH:[^\]]+\]/g, '')
         .replace(/\[ACTION_NOTE_ADD:[^\]]+\]/g, '')
         .replace(/\[ACTION_NOTE_LIST\]/g, '')
@@ -4181,7 +4366,14 @@ Responde de forma clara, natural y concisa en español.`;
         return msg.reply(reporte);
     }
 
-        if (!msg.hasMedia) {
+    // --- GENERACIÓN DIRECTA DE IMÁGENES (LENGUAJE NATURAL) ---
+    const regexImagenNatural = /^(?:crea(?:r)?(?:\s+(?:una|la))?\s+imagen(?:\s+de)?|genera(?:r)?(?:\s+(?:una|la))?\s+imagen(?:\s+de)?|haz(?:me)?(?:\s+(?:una|la))?\s+imagen(?:\s+de)?|dibuja(?:r)?(?:me)?(?:\s+(?:un|una|el|la))?|imagina(?:r)?(?:\s+(?:un|una|el|la))?)\s+(.+)$/i;
+    const matchImagenNat = textoNormalizado.match(regexImagenNatural);
+    if (matchImagenNat) {
+        return generarImagenIA(matchImagenNat[1], msg);
+    }
+
+    if (!msg.hasMedia) {
         if (msg.hasQuotedMsg) {
             const quotedMsg = await msg.getQuotedMessage();
             if (quotedMsg.hasMedia) mensajeAProcesar = quotedMsg;
@@ -4274,66 +4466,8 @@ Estructura tu respuesta exactamente así:
             }
         }
 
-        if (comando === 'imagina' || comando === 'dibuja' || comando === 'crear') {
-            if (!argumento) return msg.reply(" *Asistente:* Dígame qué desea dibujar, Señor.");
-            await msg.reply(" *Asistente:* Diseñando el concepto artístico con IA, por favor espere...");
-            try {
-                // 1. Si hay clave de OpenAI configurada, intentar primero con OpenAI
-                if (openaiApiKey) {
-                    try {
-                        const openAiRes = await fetch("https://api.openai.com/v1/images/generations", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${openaiApiKey}`
-                            },
-                            body: JSON.stringify({
-                                model: "chatgpt-image-latest",
-                                prompt: argumento,
-                                n: 1,
-                                size: "1024x1024"
-                            })
-                        });
-                        const openAiData = await openAiRes.json();
-                        if (openAiData.data && openAiData.data[0] && openAiData.data[0].url) {
-                            const imgResp = await fetch(openAiData.data[0].url);
-                            const imgBuf = await imgResp.arrayBuffer();
-                            const media = new MessageMedia('image/png', Buffer.from(imgBuf).toString('base64'), 'imagen_chatgpt.png');
-                            return msg.reply(media, undefined, { caption: ` *Imagen generada con ChatGPT (OpenAI)*\n _Prompt: ${argumento}_` });
-                        }
-                    } catch (errOpenAi) {
-                        console.log("[!] OpenAI falló o sin saldo. Usando motor FLUX:", errOpenAi.message);
-                    }
-                }
-
-                // 2. Motor FLUX con prompt publicitario hiperrealista de Gemini
-                const promptExpansion = `Expand the following image prompt into a detailed, highly aesthetic, commercial product photography and advertising English prompt for an AI image generator (FLUX):
-"""${argumento}"""
-
-Create a visually stunning commercial product photograph: clean composition, studio lighting, golden accents, 8k resolution, elegant textures, photorealistic octane render. Respond ONLY with the expanded English prompt, no introduction, no quotes:`;
-                
-                let promptMejorado = argumento;
-                try {
-                    const resultText = await ejecutarGeminiConRetries(async (model) => {
-                        const result = await model.generateContent([promptExpansion]);
-                        return result.response.text();
-                    });
-                    if (resultText && resultText.trim()) {
-                        promptMejorado = resultText.trim();
-                        console.log(`[ Prompt Expandido]: ${promptMejorado}`);
-                    }
-                } catch (e) {
-                    console.error("No se pudo expandir el prompt con Gemini, usando original:", e);
-                }
-
-                const seed = Math.floor(Math.random() * 99999);
-                const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(promptMejorado) + `?width=1024&height=1024&nologo=true&model=flux&seed=${seed}`;
-                const response = await fetch(url);
-                const arrayBuffer = await response.arrayBuffer();
-                const base64 = Buffer.from(arrayBuffer).toString('base64');
-                const media = new MessageMedia('image/jpeg', base64, 'imagen.jpg');
-                return msg.reply(media, undefined, { caption: ` *Concepto visual generado por IA:*\n"${argumento}"\n\n_Tip: Para crear un flyer con textos y plantillas de diseño, usa: !bot flyer <tema>_` });
-            } catch (e) { return msg.reply(" *Asistente:* Fallo en el renderizado de los servidores gráficos."); }
+        if (comando === 'imagina' || comando === 'dibuja' || comando === 'crear' || comando === 'imagen') {
+            return generarImagenIA(argumento, msg);
         }
 
         // --- SISTEMA DE BATERÍA HÍBRIDO (Windows / Android) ---
@@ -5578,24 +5712,45 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             return msg.reply(` *ESTADO DE TELEGRAM (Finanzas King):*\n\n• Token: \`${mask}\`\n• Estado: *${estado}*\n\nPuedes enviar estados de cuenta (PDF o foto), comprobantes o tickets directamente a tu bot de Telegram y se sincronizarán automáticamente con Finanzas King.`);
         }
 
-        if (comando === 'setopenai' || comando === 'setopenaikey' || comando === 'openaikey') {
-            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
+        if (comando === 'sethf' || comando === 'sethftoken' || comando === 'tokenhf') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al administrador");
             const keyInput = argumento.trim();
             if (!keyInput) {
-                return msg.reply(" *Asistente:* Proporcione su clave de OpenAI (comienza con `sk-...`).");
+                return msg.reply("Uso: !bot sethf <token_huggingface>\nObtén tu token gratis en huggingface.co/settings/tokens");
+            }
+            hfToken = keyInput;
+            guardarAdminJson();
+            return msg.reply("Token de Hugging Face configurado con éxito. Motor FLUX.1 y SDXL activado.");
+        }
+
+        if (comando === 'setpollinations' || comando === 'pollinationskey') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al administrador");
+            const keyInput = argumento.trim();
+            if (!keyInput) {
+                return msg.reply("Uso: !bot setpollinations <clave>\nObtén tu clave en enter.pollinations.ai");
+            }
+            pollinationsApiKey = keyInput;
+            guardarAdminJson();
+            return msg.reply("Clave de Pollinations configurada con éxito.");
+        }
+
+        if (comando === 'setopenai' || comando === 'setopenaikey' || comando === 'openaikey') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al administrador");
+            const keyInput = argumento.trim();
+            if (!keyInput) {
+                return msg.reply("Uso: !bot setopenai <clave_openai>");
             }
             openaiApiKey = keyInput;
             guardarAdminJson();
-            return msg.reply(` *Asistente:* Clave de OpenAI registrada exitosamente.`);
+            return msg.reply("Clave de OpenAI registrada exitosamente.");
         }
 
-        if (comando === 'openai' || comando === 'estadoopenai') {
-            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
-            if (!openaiApiKey) {
-                return msg.reply("ℹ *Asistente:* OpenAI no está configurado actualmente.\nPara activarlo escribe: `!bot setopenai <TU_API_KEY>`");
-            }
-            const mask = openaiApiKey.substring(0, 7) + '...' + openaiApiKey.substring(openaiApiKey.length - 4);
-            return msg.reply(` *ESTADO DE OPENAI (ChatGPT):*\n\n• Clave: \`${mask}\`\n• Estado: *Configurada*\n\nLas imágenes con \`!bot imagina\` intentarán usar los modelos oficiales de OpenAI si la clave tiene saldo prepagado.`);
+        if (comando === 'openai' || comando === 'estadoopenai' || comando === 'motoresimagen' || comando === 'motores') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al administrador");
+            const hfStatus = hfToken ? `Activo (${hfToken.substring(0, 7)}...)` : "No configurado (recomendado: 100% gratis en huggingface.co)";
+            const polliStatus = pollinationsApiKey ? `Activo (${pollinationsApiKey.substring(0, 7)}...)` : "No configurado";
+            const oaiStatus = openaiApiKey ? `Activo (${openaiApiKey.substring(0, 7)}...)` : "No configurado";
+            return msg.reply(`*Motores de Generación de Imagen:*\n\n1. Hugging Face (FLUX.1 / SDXL): ${hfStatus}\n2. Pollinations: ${polliStatus}\n3. OpenAI (DALL-E): ${oaiStatus}\n\nPara activar Hugging Face gratis:\n1. Ve a huggingface.co/settings/tokens y crea un token tipo "Read".\n2. Envíame: !bot sethf hf_tu_token`);
         }
 
         if (comando === 'tarjetas' || comando === 'finanzas') {
@@ -6409,8 +6564,8 @@ ESTILO DE RESPUESTA OBLIGATORIO:
 - CERO drama, CERO relleno, CERO rodeos, CERO frases de cortesía innecesarias ("Estimado...", "Con gusto procedo...", "¡Hola Geovanny!").
 - ABSOLUTAMENTE CERO EMOJIS en todos tus mensajes. Queda estrictamente prohibido usar cualquier emoji.
 Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde con precisión directa. NUNCA menciones estos temas a menos que él lo pregunte. 
-Si Geovanny te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar videos, guardar datos en memoria, olvidar datos, consultar el clima, programar alarmas, tareas recurrentes, ver tarjetas o registrar gastos/abonos, usa los siguientes tags internos (sin explicarlos en el texto): 
-[ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_CLIMA: ciudad], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_SCHEDULE_LIST], [ACTION_SCHEDULE_DELETE: indice_o_todas], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
+Si Geovanny te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar videos, guardar datos en memoria, olvidar datos, consultar el clima, programar alarmas, tareas recurrentes, crear o dibujar imágenes, ver tarjetas o registrar gastos/abonos, usa los siguientes tags internos (sin explicarlos en el texto): 
+[ACTION_IMAGE: descripcion_detallada_en_espanol], [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_CLIMA: ciudad], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_SCHEDULE_LIST], [ACTION_SCHEDULE_DELETE: indice_o_todas], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
 IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe ser escrita directamente en español, como un mensaje de texto de WhatsApp normal. ${fechaContexto}${memoriaContexto}`;
                     }
                     contenidoCopia.unshift(promptStr);
@@ -6980,6 +7135,17 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 }
 
                 
+                // Imagen (Agentic)
+                if (respuestaTexto.includes('[ACTION_IMAGE:')) {
+                    const matchImg = respuestaTexto.match(/\[ACTION_IMAGE:\s*([^\]]+)\]/);
+                    if (matchImg) {
+                        const promptImg = matchImg[1].trim();
+                        console.log(`[Agentic Image]: Generando imagen para: ${promptImg}`);
+                        await generarImagenIA(promptImg, msg);
+                        respuestaTexto = respuestaTexto.replace(matchImg[0], '').trim();
+                    }
+                }
+
                 // Notas (Agentic)
                 if (respuestaTexto.includes('[ACTION_NOTE_ADD:')) {
                     const match = respuestaTexto.match(/\[ACTION_NOTE_ADD:\s*([^\]]+)\]/);
