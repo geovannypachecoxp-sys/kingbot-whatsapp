@@ -566,6 +566,34 @@ function formatearMemoriaParaPrompt() {
     return texto;
 }
 
+function formatearListaMemoria(items, titulo = "BASE DE DATOS Y MEMORIA PERSONAL") {
+    if (!items || items.length === 0) {
+        return `*${titulo}*\n\nActualmente no hay datos almacenados en memoria.\n\n_Puedes guardar información hablándome naturalmente o usando:_\n\`!bot guardar <tema> : <información>\``;
+    }
+
+    const cantidad = items.length;
+    let out = `*${titulo}*\n`;
+    out += `_Registros almacenados: ${cantidad}_\n\n`;
+
+    items.forEach((m, idx) => {
+        const num = String(idx + 1).padStart(2, '0');
+        const claveCap = m.clave ? (m.clave.charAt(0).toUpperCase() + m.clave.slice(1)) : 'Dato';
+        out += `*${num}. ${claveCap}*\n`;
+        out += `   Información: ${m.valor}\n`;
+        if (m.fecha) {
+            out += `   Fecha: ${m.fecha}\n`;
+        }
+        out += `\n`;
+    });
+
+    out += `────────────────────────────\n`;
+    out += `• *Guardar:* \`!bot guardar <tema> : <información>\`\n`;
+    out += `• *Eliminar:* \`!bot olvidar <número o tema>\`\n`;
+    out += `• *Búsqueda:* \`!bot memoria buscar <palabra>\`\n`;
+    out += `_También puedes preguntarme cualquier dato directamente en el chat._`;
+    return out.trim();
+}
+
 // Cargar comandos personalizados
 let comandosCustom = {};
 if (fs.existsSync('comandos_custom.json')) {
@@ -4774,7 +4802,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
                 if (subCmd === 'guardar' || subCmd === 'add' || subCmd === 'set') {
                     if (!subArg) {
-                        return msg.reply(" *Uso correcto:* `!bot memoria guardar <tema> : <información>`\n_Ejemplo:_ `!bot memoria guardar Wifi Casa : MiClave1234`");
+                        return msg.reply("*Asistente:* Uso correcto: `!bot memoria guardar <tema> : <información>`\n_Ejemplo:_ `!bot memoria guardar Wifi Casa : MiClave1234`");
                     }
                     let clave = 'Dato';
                     let valor = subArg;
@@ -4788,50 +4816,47 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
                         valor = s.slice(1).join('=').trim();
                     }
                     const res = guardarDatoEnMemoria(clave, valor);
-                    const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
-                    return msg.reply(` *Asistente:* ${label} con éxito, Señor:\n *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede consultármelo cuando lo desee hablando normalmente por chat._`);
+                    const claveCap = res.item.clave.charAt(0).toUpperCase() + res.item.clave.slice(1);
+                    const label = res.accion === 'actualizado' ? 'REGISTRO ACTUALIZADO' : 'REGISTRO GUARDADO';
+                    let rep = `*${label} EN MEMORIA*\n\n`;
+                    rep += `• *Tema:* ${claveCap}\n`;
+                    rep += `• *Información:* ${res.item.valor}\n`;
+                    rep += `• *Fecha:* ${res.item.fecha}\n\n`;
+                    rep += `_Dato archivado con éxito. Puedes consultármelo en cualquier momento en el chat o con !bot memoria._`;
+                    return msg.reply(rep);
                 }
 
                 if (subCmd === 'borrar' || subCmd === 'del' || subCmd === 'olvidar') {
-                    if (!subArg) return msg.reply(" Especifique el número o tema a borrar: `!bot memoria borrar <número/tema>`");
+                    if (!subArg) return msg.reply("*Asistente:* Especifique el número o tema a borrar: `!bot memoria borrar <número/tema>`");
                     const el = eliminarDatoDeMemoria(subArg);
-                    if (el) return msg.reply(` *Asistente:* He borrado de mi memoria: *${el.clave}* (${el.valor})`);
-                    return msg.reply(` *Asistente:* No encontré ningún dato en memoria que coincida con "${subArg}".`);
+                    if (el) {
+                        const claveCap = el.clave.charAt(0).toUpperCase() + el.clave.slice(1);
+                        let rep = `*REGISTRO ELIMINADO DE MEMORIA*\n\n`;
+                        rep += `• *Tema:* ${claveCap}\n`;
+                        rep += `• *Información anterior:* ${el.valor}\n\n`;
+                        rep += `_El dato ha sido retirado permanentemente de la base de memoria._`;
+                        return msg.reply(rep);
+                    }
+                    return msg.reply(`*Asistente:* No se encontró ningún dato en memoria que coincida con "${subArg}".`);
                 }
 
                 if (subCmd === 'buscar' || subCmd === 'find') {
-                    if (!subArg) return msg.reply(" Especifique qué buscar: `!bot memoria buscar <palabra>`");
+                    if (!subArg) return msg.reply("*Asistente:* Especifique el término de búsqueda: `!bot memoria buscar <palabra>`");
                     const q = subArg.toLowerCase();
                     const encontrados = memoriaGlobal.filter(m => m.clave.toLowerCase().includes(q) || m.valor.toLowerCase().includes(q));
-                    if (encontrados.length === 0) return msg.reply(` *Asistente:* No encontré ningún dato guardado sobre "${subArg}".`);
-                    let r = ` *RESULTADOS EN MEMORIA PARA "${subArg}":*\n\n`;
-                    encontrados.forEach((m, i) => {
-                        const f = m.fecha ? ` _(${m.fecha})_` : '';
-                        r += `*${i + 1}.*  *${m.clave}*${f}\n    ${m.valor}\n\n`;
-                    });
-                    return msg.reply(r);
+                    return msg.reply(formatearListaMemoria(encontrados, `RESULTADOS DE BÚSQUEDA: "${subArg}"`));
                 }
             }
 
-            if (memoriaGlobal.length === 0) {
-                return msg.reply(" *Asistente:* No tengo datos guardados en mi memoria actualmente.\n\n_Puedes guardar información hablándome con naturalidad:_\n• _\"Guarda que mi talla de camisa es M\"_\n• _\"Acuérdate de que la clave del wifi es 1234\"_\n• O con comando: `!bot guardar <tema> : <información>`");
-            }
-
-            let lista = ` *BASE DE DATOS Y MEMORIA PERSISTENTE:*\n\n`;
-            memoriaGlobal.forEach((m, idx) => {
-                const f = m.fecha ? ` _(${m.fecha})_` : '';
-                lista += `*${idx + 1}.*  *${m.clave}*${f}\n    ${m.valor}\n\n`;
-            });
-            lista += `_Para guardar un dato:_ \`!bot guardar <tema> : <información>\`\n_Para borrar un dato:_ \`!bot olvidar <número o tema>\`\n_O simplemente pregúntame cualquier dato en este chat._`;
-            return msg.reply(lista);
+            return msg.reply(formatearListaMemoria(memoriaGlobal));
         }
 
         if (comando === 'guardar' || comando === 'guardardato') {
             if (isGroup || !esAdmin(chatId, msg)) {
-                return msg.reply(" Comando restringido al administrador en chat privado.");
+                return msg.reply("*Asistente:* Comando restringido al administrador en chat privado.");
             }
             if (!argumento) {
-                return msg.reply(" *Uso correcto:* `!bot guardar <tema> : <información>`\n\n*Ejemplos prácticos:*\n• `!bot guardar Talla de camisa : M`\n• `!bot guardar Wifi Oficina : ClaveSegura2026!`\n• `!bot guardar Cumpleaños : 15 de marzo`\n• `!bot guardar Cliente Juan : Tel 7777-8888, interesado en producto B`");
+                return msg.reply("*Uso correcto:* `!bot guardar <tema> : <información>`\n\n*Ejemplos prácticos:*\n• `!bot guardar Talla de camisa : M`\n• `!bot guardar Wifi Oficina : ClaveSegura2026!`\n• `!bot guardar Cumpleaños : 15 de marzo`\n• `!bot guardar Cliente Juan : Tel 7777-8888, interesado en producto B`");
             }
             let clave = 'Dato Personal';
             let valor = argumento.trim();
@@ -4845,18 +4870,31 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
                 valor = parts.slice(1).join('=').trim();
             }
             const res = guardarDatoEnMemoria(clave, valor);
-            const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
-            return msg.reply(` *Asistente:* ${label} con éxito, Señor:\n *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede preguntarme sobre este tema cuando lo desee en la conversación._`);
+            const claveCap = res.item.clave.charAt(0).toUpperCase() + res.item.clave.slice(1);
+            const label = res.accion === 'actualizado' ? 'REGISTRO ACTUALIZADO' : 'REGISTRO GUARDADO';
+            let rep = `*${label} EN MEMORIA*\n\n`;
+            rep += `• *Tema:* ${claveCap}\n`;
+            rep += `• *Información:* ${res.item.valor}\n`;
+            rep += `• *Fecha:* ${res.item.fecha}\n\n`;
+            rep += `_Dato archivado con éxito. Puedes consultármelo en cualquier momento en el chat o con !bot memoria._`;
+            return msg.reply(rep);
         }
 
         if (comando === 'olvidar' || comando === 'olvidardato') {
             if (isGroup || !esAdmin(chatId, msg)) {
-                return msg.reply(" Comando restringido al administrador en chat privado.");
+                return msg.reply("*Asistente:* Comando restringido al administrador en chat privado.");
             }
-            if (!argumento) return msg.reply(" Especifique el número o tema del dato que desea olvidar:\n`!bot olvidar <número o tema>`\n_Usa *!bot memoria* para ver la lista._");
+            if (!argumento) return msg.reply("*Asistente:* Especifique el número o tema del dato que desea olvidar:\n`!bot olvidar <número o tema>`\n_Usa *!bot memoria* para ver la lista._");
             const el = eliminarDatoDeMemoria(argumento);
-            if (el) return msg.reply(` *Asistente:* He eliminado de mi memoria el dato sobre *${el.clave}* (${el.valor}).`);
-            return msg.reply(` *Asistente:* No encontré ningún dato en memoria que coincida con "${argumento}".`);
+            if (el) {
+                const claveCap = el.clave.charAt(0).toUpperCase() + el.clave.slice(1);
+                let rep = `*REGISTRO ELIMINADO DE MEMORIA*\n\n`;
+                rep += `• *Tema:* ${claveCap}\n`;
+                rep += `• *Información anterior:* ${el.valor}\n\n`;
+                rep += `_El dato ha sido retirado permanentemente de la base de memoria._`;
+                return msg.reply(rep);
+            }
+            return msg.reply(`*Asistente:* No se encontró ningún dato en memoria que coincida con "${argumento}".`);
         }
 
         // --- BLOC DE NOTAS ---
@@ -6393,11 +6431,11 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             const clave = match[1].trim();
                             const valor = match[2].trim();
                             const resultado = guardarDatoEnMemoria(clave, valor);
-                            const confirmacion = resultado && resultado.accion === 'actualizado'
-                                ? `\n\n *Memoria actualizada con éxito:*\n *${clave}*: ${valor}`
-                                : `\n\n *Dato guardado en memoria con éxito:*\n *${clave}*: ${valor}`;
+                            const claveCap = clave.charAt(0).toUpperCase() + clave.slice(1);
+                            const accionTxt = resultado && resultado.accion === 'actualizado' ? 'REGISTRO ACTUALIZADO' : 'REGISTRO GUARDADO';
+                            const confirmacion = `\n\n*${accionTxt} EN MEMORIA*\n• *Tema:* ${claveCap}\n• *Información:* ${valor}\n• *Fecha:* ${resultado.item.fecha}`;
                             respuestaTexto = respuestaTexto.replace(match[0], confirmacion).trim();
-                            console.log(`[ Memoria] Dato guardado (${resultado?.accion}): "${clave}" = "${valor}"`);
+                            console.log(`[Memoria] Dato guardado (${resultado?.accion}): "${clave}" = "${valor}"`);
                         }
                     }
                 }
@@ -6412,9 +6450,10 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             const target = match[1].trim();
                             const eliminado = eliminarDatoDeMemoria(target);
                             if (eliminado) {
-                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Dato eliminado de la memoria:* "${eliminado.clave}" (${eliminado.valor})`).trim();
+                                const claveCap = eliminado.clave.charAt(0).toUpperCase() + eliminado.clave.slice(1);
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n*REGISTRO ELIMINADO DE MEMORIA*\n• *Tema:* ${claveCap}\n• *Información anterior:* ${eliminado.valor}`).trim();
                             } else {
-                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n No encontré ningún dato en memoria que coincida con "${target}".`).trim();
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n*Asistente:* No se encontró ningún dato en memoria que coincida con "${target}".`).trim();
                             }
                         }
                     }
@@ -6425,17 +6464,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                     if (!esAdmin(chatId, msg)) {
                         respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', '').trim();
                     } else {
-                        if (memoriaGlobal.length === 0) {
-                            respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', `\n\n *No tienes datos guardados en la memoria actualmente.*`).trim();
-                        } else {
-                            let listStr = `\n\n *DATOS GUARDADOS EN MEMORIA:*\n\n`;
-                            memoriaGlobal.forEach((m, idx) => {
-                                const f = m.fecha ? ` _(${m.fecha})_` : '';
-                                listStr += `*${idx + 1}.*  *${m.clave}*${f}\n    ${m.valor}\n\n`;
-                            });
-                            listStr += `_Para borrar un dato:_ \`!bot olvidar <número o tema>\``;
-                            respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', listStr).trim();
-                        }
+                        const listStr = `\n\n` + formatearListaMemoria(memoriaGlobal);
+                        respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', listStr).trim();
                     }
                 }
 
