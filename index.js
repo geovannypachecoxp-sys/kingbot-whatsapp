@@ -1205,10 +1205,13 @@ async function descargarYEnviarVideo(rawUrl, msg) {
 
     const localCookies = path.join(__dirname, 'cookies.txt');
     const homeCookies = '/home/ubuntu/cookies.txt';
+    const snapChromiumProfile = '/home/ubuntu/snap/chromium/common/chromium';
     if (fs.existsSync(localCookies)) {
         _ytArgs.push('--cookies', localCookies);
     } else if (fs.existsSync(homeCookies)) {
         _ytArgs.push('--cookies', homeCookies);
+    } else if (fs.existsSync(snapChromiumProfile)) {
+        _ytArgs.push('--cookies-from-browser', 'chromium:' + snapChromiumProfile);
     }
 
     if (_isYouTube) {
