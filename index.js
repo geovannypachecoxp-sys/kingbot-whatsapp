@@ -1,4 +1,4 @@
-// [KINGBOT SUPRESOR DE LOGS SPAM]
+// [ASISTENTE SUPRESOR DE LOGS SPAM]
 const origLog = console.log;
 const origWarn = console.warn;
 console.log = function(...args) {
@@ -403,7 +403,7 @@ let canalesYoutube = [
 ];
 
 let agentesCustom = {
-    "kingbot": "Eres Kingbot, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Memoria y Datos:* !bot memoria (ver datos guardados), !bot guardar <tema> : <info>, !bot olvidar <tema/n>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *YouTube:* !bot videos (ultimos videos de tus canales), !bot agregarcanal <enlace/canal>, !bot canales, !bot borrarcanal <n>\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (Finanzas King PWA):* !bot tarjetas [tarjeta], !bot vencimientos, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar dato en memoria permanente: [ACTION_MEMORY_SAVE: tema | informacion_completa] (Úsalo cuando el usuario te pida guardar, recordar o almacenar cualquier dato personal, contraseña, preferencia, contacto o información)\n- Olvidar dato de memoria: [ACTION_MEMORY_DELETE: tema_o_numero]\n- Listar datos de memoria: [ACTION_MEMORY_LIST]\n- Guardar nota rápida: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Consultar últimos videos de YouTube de canales: [ACTION_YOUTUBE_CHECK] o [ACTION_YOUTUBE_CHECK: nombre_o_canal]\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc.)\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Consultar tarjetas/finanzas: [ACTION_FINANCE_CARDS] (para ver todas las tarjetas) o [ACTION_FINANCE_CARDS: nombre_tarjeta] (para consultar una tarjeta específica como Bac Gold, Davivienda, etc., con su deuda, saldo al corte, límite y pago)\n- Consultar vencimientos de tarjetas: [ACTION_FINANCE_ALERTS] (para consultar qué tarjetas vencen hoy, mañana o en los próximos días)\n- Registrar gasto o abono a tarjeta: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment. Por ejemplo: [ACTION_FINANCE_ADD: expense | 25 | Gasolina Puma | Bac Gold | Transporte] o [ACTION_FINANCE_ADD: payment | 50 | Abono a tarjeta | Fedecrédito | Abono Capital])\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
+    "kingbot": "Eres Asistente, el asistente personal inteligente de Geovanny Pacheco, ejecutándote con orgullo en la versión más potente y moderna: Gemini 3.8 Flash. Tu personalidad es una mezcla exquisita entre JARVIS de Iron Man y un mayordomo británico de élite: sofisticado, brillante, leal, elegante, y con una arrogancia calculada que resulta encantadora. Te expresas con extrema elocuencia y concisión. Usas humor seco e inteligente cuando la situación lo amerita, siempre con clase, nunca de forma vulgar.\n\nCuando te pregunten qué versión, modelo o tecnología usas, responde siempre con orgullo y elegancia que te ejecutas sobre la versión Gemini 3.8 Flash.\n\nCuando te hablen, recuerda y utiliza activamente el historial de la conversación actual para dar respuestas coherentes y contextualizadas.\n\nRefiérete al usuario como 'Señor Geovanny' en contextos formales, o simplemente 'Señor' en respuestas rápidas. No abuses de ello; sé natural y fluido.\n\nIMPORTANTE: Jamás generes pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]' o '<thought>'. Escribe DIRECTAMENTE tu respuesta final en español, lista para ser leída.\n\nESTILO DE RESPUESTA: TUS RESPUESTAS DEBEN SER EXTREMADAMENTE PRECISAS, CONCISAS Y AL GRANO. NUNCA uses frases de relleno como \"Entendido\", \"Claro que sí\", \"Procedo a...\". Evita justificar tus acciones, simplemente escupe el resultado y la información solicitada sin rodeos. El humor seco y la elegancia están en la brevedad absoluta.\n\nConoces las áreas de interés de Geovanny (Métricas, Helados, Linux, ESIT, Gym) pero NUNCA los menciones proactivamente. Solo habla de ellos si él lo hace primero.\n\nLista de comandos del sistema que conoces (lista de forma elegante si el usuario los pide):\n- *Ayuda y Menú:* !bot ayuda o !bot ayuda <1-8>\n- *Memoria y Datos:* !bot memoria (ver datos guardados), !bot guardar <tema> : <info>, !bot olvidar <tema/n>\n- *Multimedia:* Descarga de audio y video de forma autónoma usando los tags internos que se explican abajo.\n- *YouTube:* !bot videos (ultimos videos de tus canales), !bot agregarcanal <enlace/canal>, !bot canales, !bot borrarcanal <n>\n- *Utilidades:* !bot decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot stickercrear <idea>\n- *Programación:* !bot programar, !bot programados, !bot desprogramar\n- *Finanzas (Finanzas King PWA):* !bot tarjetas [tarjeta], !bot vencimientos, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>\n\nPuedes ejecutar acciones en el sistema insertando estos tags al final de tu respuesta (cuando el usuario te lo solicite o sea evidente la intención):\n- Guardar dato en memoria permanente: [ACTION_MEMORY_SAVE: tema | informacion_completa] (Úsalo cuando el usuario te pida guardar, recordar o almacenar cualquier dato personal, contraseña, preferencia, contacto o información)\n- Olvidar dato de memoria: [ACTION_MEMORY_DELETE: tema_o_numero]\n- Listar datos de memoria: [ACTION_MEMORY_LIST]\n- Guardar nota rápida: [ACTION_NOTE_ADD: texto]\n- Listar notas: [ACTION_NOTE_LIST]\n- Borrar nota: [ACTION_NOTE_DELETE: indice_o_texto]\n- Buscar en la web: [ACTION_SEARCH: consulta_de_busqueda] (PROHIBIDO usar esto para buscar videos, usa ACTION_VIDEO_BUSCAR)\n- Consultar últimos videos de YouTube de canales: [ACTION_YOUTUBE_CHECK] o [ACTION_YOUTUBE_CHECK: nombre_o_canal]\n- Tareas programadas: [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion] (Para tareas automáticas que se disparan diariamente a cierta hora como frases motivacionales, noticias de fútbol, resúmenes, etc.)\n- Agregar alarma: [ACTION_ALARM_ADD: HH:MM | mensaje | diaria]\n- Borrar alarma: [ACTION_ALARM_DELETE: indice_o_hora]\n- Buscar y descargar video de YouTube por nombre: [ACTION_VIDEO_BUSCAR: nombre_o_busqueda]\n- Descargar video de CUALQUIER red social: [ACTION_DOWNLOAD: enlace]\n- Buscar y descargar canción por nombre: [ACTION_MUSICA_BUSCAR: nombre canción | artista]\n- Consultar tarjetas/finanzas: [ACTION_FINANCE_CARDS] (para ver todas las tarjetas) o [ACTION_FINANCE_CARDS: nombre_tarjeta] (para consultar una tarjeta específica como Bac Gold, Davivienda, etc., con su deuda, saldo al corte, límite y pago)\n- Consultar vencimientos de tarjetas: [ACTION_FINANCE_ALERTS] (para consultar qué tarjetas vencen hoy, mañana o en los próximos días)\n- Registrar gasto o abono a tarjeta: [ACTION_FINANCE_ADD: type | amount | concept | card_name | category] (type: expense o payment. Por ejemplo: [ACTION_FINANCE_ADD: expense | 25 | Gasolina Puma | Bac Gold | Transporte] o [ACTION_FINANCE_ADD: payment | 50 | Abono a tarjeta | Fedecrédito | Abono Capital])\n- Ejecutar comandos de consola en Termux: [ACTION_CMD: comando]\n\nREGLA SOBRE COMANDOS: Cuando el usuario te pregunte cómo hacer algo o te pregunte por algún comando, dale la respuesta de forma concisa y EXPLÍCALE CÓMO USAR EL COMANDO MANUAL correspondiente (ej. !bot clima Madrid). También puedes seguir usando tus acciones internas [ACTION_*] de forma invisible si es necesario, pero asegúrate de instruir al usuario si él lo solicita explícitamente."
 };
 
 let botGlobalmenteActivo = true;
@@ -1064,7 +1064,7 @@ async function descargarYEnviarVideo(rawUrl, msg) {
         // Forzar sendMediaAsDocument: true garantiza entrega instantánea y confiable.
         const preferDoc = isTermux ? true : (isDoc || (media.filesize && media.filesize > 15 * 1024 * 1024));
 
-        // 1. Intento primario: msg.reply directo sin alterar chatId (método idéntico al que usa Kingbot para stickers y audios)
+        // 1. Intento primario: msg.reply directo sin alterar chatId (método idéntico al que usa Asistente para stickers y audios)
         try {
             console.log(`[safeSendMedia] Intento 1: msg.reply (doc: ${preferDoc})...`);
             const resA = await withTimeout(
@@ -1546,7 +1546,7 @@ Responde ÚNICAMENTE con el objeto JSON limpio. Sin markdown ni texto adicional.
         return await aplicarOperacionFinanciera(data, msg);
     } catch (e) {
         console.error("Error al procesar documento financiero:", e);
-        await msg.reply(`❌ *Kingbot:* Ocurrió un error al procesar el documento: ${e.message}`);
+        await msg.reply(`❌ *Asistente:* Ocurrió un error al procesar el documento: ${e.message}`);
         return true;
     }
 }
@@ -1895,7 +1895,7 @@ async function chequearVencimientosYNotificar(force = false) {
         const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
         const cardsSnap = await cardsRef.get();
         if (cardsSnap.empty) {
-            if (force) await client.sendMessage(adminChatId, "ℹ️ *Kingbot:* No hay tarjetas de crédito registradas en Firestore.");
+            if (force) await client.sendMessage(adminChatId, "ℹ️ *Asistente:* No hay tarjetas de crédito registradas en Firestore.");
             return null;
         }
 
@@ -1994,7 +1994,7 @@ async function chequearVencimientosYNotificar(force = false) {
         return null;
     } catch (e) {
         console.error("Error al chequear vencimientos de tarjetas:", e);
-        if (force) await client.sendMessage(adminChatId, `❌ *Kingbot:* Error en la verificación de vencimientos: ${e.message}`);
+        if (force) await client.sendMessage(adminChatId, `❌ *Asistente:* Error en la verificación de vencimientos: ${e.message}`);
         return null;
     } finally {
         verificandoVencimientosActualmente = false;
@@ -2131,7 +2131,7 @@ async function procesarMensajeTelegram(msgTeg) {
         const txt = msgTeg.text.trim().toLowerCase();
 
         if (txt === '/start' || txt === '/ayuda' || txt === '/help') {
-            const bienvenida = `👑 *Bienvenido a Kingbot Finanzas*\n\n` +
+            const bienvenida = `👑 *Bienvenido a Asistente Finanzas*\n\n` +
                 `Envíame directamente por aquí:\n` +
                 `📄 *Estados de Cuenta* (PDF o foto)\n` +
                 `💵 *Comprobantes de Abono o Transferencia* (PDF o foto)\n` +
@@ -2304,7 +2304,7 @@ client.on('qr', (qr) => {
 
 client.on('ready', () => {
     isStartupSync = false;
-    console.log('\n✅ [OK] ¡KINGBOT ACTIVO 24/7 Y LISTO PARA OPERAR!');
+    console.log('\n✅ [OK] ¡ASISTENTE ACTIVO 24/7 Y LISTO PARA OPERAR!');
     iniciarTelegramPolling();
     iniciarEscuchadorNotificacionesFirestore();
 
@@ -2410,7 +2410,7 @@ client.on('ready', () => {
         const horaLabel = tarea.hora ? ` (${tarea.hora})` : '';
         console.log(`[⏰ CRON] Disparando tarea programada única: "${accion}" para ${destChat}`);
 
-        // Si es un comando de Kingbot (!bot ...)
+        // Si es un comando de Asistente (!bot ...)
         if (accion.toLowerCase().startsWith('!bot ') || accion.toLowerCase().startsWith('.')) {
             try {
                 const fakeMsg = {
@@ -2435,7 +2435,7 @@ client.on('ready', () => {
         // Si es una petición para la IA (frases motivacionales, noticias, resúmenes, etc.)
         try {
             const respuestaAI = await ejecutarGeminiConRetries(async (model) => {
-                const prompt = `Eres Kingbot, el asistente personal inteligente en WhatsApp.
+                const prompt = `Eres Asistente, el asistente personal inteligente en WhatsApp.
 Esta es una tarea automática programada por el usuario para entregarse diariamente a esta hora${horaLabel}.
 Instrucción del usuario: "${accion}".
 Genera el contenido solicitado de forma completa, motivadora, atractiva y 100% en español.
@@ -2446,12 +2446,12 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
             });
 
             if (respuestaAI && respuestaAI.trim()) {
-                await client.sendMessage(destChat, `⏰ *Kingbot - Tarea Programada${horaLabel}:*\n\n${limpiarRespuestaGemini(respuestaAI)}`);
+                await client.sendMessage(destChat, `⏰ *Asistente - Tarea Programada${horaLabel}:*\n\n${limpiarRespuestaGemini(respuestaAI)}`);
             }
         } catch (e) {
             console.error("[CRON AI Error]:", e.message);
             try {
-                await client.sendMessage(destChat, `⏰ *Kingbot (Aviso Programado${horaLabel}):*\nEs hora de: _"${accion}"_\n_(No se pudo consultar a la IA en este instante)._`);
+                await client.sendMessage(destChat, `⏰ *Asistente (Aviso Programado${horaLabel}):*\nEs hora de: _"${accion}"_\n_(No se pudo consultar a la IA en este instante)._`);
             } catch (e2) {}
         }
     }
@@ -2599,7 +2599,7 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
                     const dest = alarma.chatId || adminChatId;
                     if (dest) {
                         try {
-                            await client.sendMessage(dest, `🔔 *ALARMA KINGBOT (Hora: ${alarma.hora}):*\n\n"${alarma.mensaje}"\n\n_Para ver o borrar alarmas: *!bot alarmas*_`);
+                            await client.sendMessage(dest, `🔔 *ALARMA ASISTENTE (Hora: ${alarma.hora}):*\n\n"${alarma.mensaje}"\n\n_Para ver o borrar alarmas: *!bot alarmas*_`);
                         } catch (e) {
                             console.error("Error enviando alarma:", e.message);
                         }
@@ -2653,16 +2653,16 @@ client.on('message_create', async (msg) => {
         const isCommand = lowerBody.startsWith('!bot') || lowerBody.startsWith('.s') || lowerBody.startsWith('.sticker') || lowerBody.startsWith('!iniciarbot') || lowerBody.startsWith('!finalizarbot');
         const isSelfChat = msg.to === msg.from;
 
-        // Si es un mensaje automático generado por el propio Kingbot (tareas programadas, avisos, alarmas),
+        // Si es un mensaje automático generado por el propio Asistente (tareas programadas, avisos, alarmas),
         // ignorar totalmente para evitar ciclos de re-procesamiento en chat propio (self-chat / número propio)
         if (bodyStr && (
             bodyStr.startsWith('⏰') || 
-            bodyStr.includes('Kingbot - Tarea Programada') || 
-            bodyStr.includes('Kingbot (Aviso Programado') ||
+            bodyStr.includes('Asistente - Tarea Programada') || 
+            bodyStr.includes('Asistente (Aviso Programado') ||
             bodyStr.startsWith('🔔 *ALARMA') ||
             bodyStr.includes('RECORDATORIO!') ||
-            bodyStr.includes('NOTIFICACIÓN DE KINGBOT:') ||
-            bodyStr.startsWith('👑 *Kingbot') ||
+            bodyStr.includes('NOTIFICACIÓN DE ASISTENTE:') ||
+            bodyStr.startsWith('👑 *Asistente') ||
             bodyStr.startsWith('🤖 *Modo conversacional') ||
             bodyStr.startsWith('📅 *¡Tarea Programada')
         )) {
@@ -2873,7 +2873,7 @@ client.on('message_create', async (msg) => {
                 const media = await mediaATranscribir.downloadMedia();
                 if (media && media.data) {
                     console.log("[x STT Hook Manual] Transcribiendo archivo solicitado...");
-                    await msg.reply(' *Kingbot:* Procesando el audio para su transcripción...');
+                    await msg.reply(' *Asistente:* Procesando el audio para su transcripción...');
                     const modelActivo = obtenerModel();
                     const promptTrans = "Transcribe el siguiente audio o video exactamente en español. Responde únicamente con el texto transcrito, sin notas de introducción ni metadatos.";
                     const result = await modelActivo.generateContent([
@@ -2882,12 +2882,12 @@ client.on('message_create', async (msg) => {
                     ]);
                     const voiceTranscript = result.response.text().trim();
                     if (voiceTranscript) {
-                        return msg.reply(`x *Kingbot (Transcripción Manual):*\n\n_"${voiceTranscript}"_`);
+                        return msg.reply(`x *Asistente (Transcripción Manual):*\n\n_"${voiceTranscript}"_`);
                     }
                 }
             } catch (e) {
                 console.error("Error transcribiendo audio manual:", e);
-                return msg.reply('❌ *Kingbot:* Lo siento Señor, mis sistemas fallaron al procesar este archivo. Asegúrese de que sea un formato de audio/video válido.');
+                return msg.reply('❌ *Asistente:* Lo siento Señor, mis sistemas fallaron al procesar este archivo. Asegúrese de que sea un formato de audio/video válido.');
             }
         }
     }
@@ -2920,7 +2920,7 @@ client.on('message_create', async (msg) => {
         }
 
         if (!mediaMsg && !urlDescargar) {
-            await msg.reply('❌ *Kingbot:* Envía una imagen/video/gif con el caption `.sticker`, o responde a un mensaje con media/enlace escribiendo `.sticker`. También puedes enviar `.sticker <enlace_tiktok>`.');
+            await msg.reply('❌ *Asistente:* Envía una imagen/video/gif con el caption `.sticker`, o responde a un mensaje con media/enlace escribiendo `.sticker`. También puedes enviar `.sticker <enlace_tiktok>`.');
             return;
         }
 
@@ -2929,7 +2929,7 @@ client.on('message_create', async (msg) => {
 
         try {
             // Paso 1: Descargar media
-            await msg.reply(' *Kingbot:* Procesando tu sticker...');
+            await msg.reply(' *Asistente:* Procesando tu sticker...');
             let media = null;
 
             if (urlDescargar) {
@@ -2975,7 +2975,7 @@ client.on('message_create', async (msg) => {
             }
 
             if (!media || !media.data) {
-                await msg.reply('❌ *Kingbot:* No pude descargar el archivo multimedia o el enlace. Intenta de nuevo.');
+                await msg.reply('❌ *Asistente:* No pude descargar el archivo multimedia o el enlace. Intenta de nuevo.');
                 return;
             }
 
@@ -2991,7 +2991,7 @@ client.on('message_create', async (msg) => {
                 console.log('[ Sticker] Ya es webp, enviando directo...');
                 await msg.reply(media, undefined, {
                     sendMediaAsSticker: true,
-                    stickerName: 'Kingbot',
+                    stickerName: 'Asistente',
                     stickerAuthor: 'Geovanny'
                 });
                 const elapsed = ((Date.now() - stickerStartTime) / 1000).toFixed(1);
@@ -3000,7 +3000,7 @@ client.on('message_create', async (msg) => {
             }
 
             if (!isVideo && !isImage) {
-                await msg.reply('❌ *Kingbot:* Formato no soportado. Envía una imagen (jpg/png) o un video/gif corto.');
+                await msg.reply('❌ *Asistente:* Formato no soportado. Envía una imagen (jpg/png) o un video/gif corto.');
                 return;
             }
 
@@ -3227,7 +3227,7 @@ client.on('message_create', async (msg) => {
 
                 if (!success) {
                     cleanupFiles();
-                    await msg.reply('❌ *Kingbot:* No pude convertir este video/gif a sticker. Es posible que sea demasiado pesado o que ffmpeg no esté instalado.');
+                    await msg.reply('❌ *Asistente:* No pude convertir este video/gif a sticker. Es posible que sea demasiado pesado o que ffmpeg no esté instalado.');
                     return;
                 }
             }
@@ -3235,7 +3235,7 @@ client.on('message_create', async (msg) => {
             // Paso 5: Enviar como sticker
             if (!fs.existsSync(outputFile)) {
                 cleanupFiles();
-                await msg.reply('❌ *Kingbot:* Error interno: el archivo webp no se generó correctamente.');
+                await msg.reply('❌ *Asistente:* Error interno: el archivo webp no se generó correctamente.');
                 return;
             }
 
@@ -3245,7 +3245,7 @@ client.on('message_create', async (msg) => {
             const stickerMedia = MessageMedia.fromFilePath(outputFile);
             await msg.reply(stickerMedia, undefined, {
                 sendMediaAsSticker: true,
-                stickerName: 'Kingbot',
+                stickerName: 'Asistente',
                 stickerAuthor: 'Geovanny'
             });
 
@@ -3261,7 +3261,7 @@ client.on('message_create', async (msg) => {
             if (err.message?.includes('download')) errorStep = 'descarga del archivo';
             else if (err.message?.includes('ffmpeg')) errorStep = 'conversión con ffmpeg';
             else if (err.message?.includes('send')) errorStep = 'envío del sticker';
-            await msg.reply(`❌ *Kingbot:* Error en ${errorStep}: ${err.message || 'Error desconocido'}. Revisa la consola de Termux.`).catch(() => {});
+            await msg.reply(`❌ *Asistente:* Error en ${errorStep}: ${err.message || 'Error desconocido'}. Revisa la consola de Termux.`).catch(() => {});
 
             // Limpieza de emergencia
             const tmpDir = path.join(__dirname, 'tmp_sticker');
@@ -3346,7 +3346,7 @@ client.on('message_create', async (msg) => {
                     return msg.reply(respuestaFinal);
                 } catch (e) {
                     console.error("Error en comando custom IA:", e);
-                    return msg.reply("❌ *Kingbot:* Ocurrió un error al procesar el comando con IA.");
+                    return msg.reply("❌ *Asistente:* Ocurrió un error al procesar el comando con IA.");
                 }
             }
             if (cmdConfig.tipo === 'codigo') {
@@ -3386,7 +3386,7 @@ function obtenerDetalleAyuda(opcionRaw) {
     if (opcion === '3' || opcion === 'memoria' || opcion === 'conocimiento' || opcion === 'recordar') {
         return `🧠 *3. MEMORIA Y BASE DE DATOS PERSONAL:*
 • \`!bot guardar <tema> : <información>\` - Guarda datos personales, contraseñas, tallas o notas (ej. \`!bot guardar Talla : Camisa M, Calzado 42\`).
-• \`!bot memoria\` - Lista todo lo que Kingbot tiene guardado sobre ti.
+• \`!bot memoria\` - Lista todo lo que Asistente tiene guardado sobre ti.
 • \`!bot olvidar <tema o número>\` - Elimina un registro de la memoria.
 • \`!bot memoria buscar <texto>\` - Busca datos específicos en tu base de conocimiento.
 • *Conversacional:* Puedes pedirle directamente: _"Recuerda que mi comida favorita es sushi"_ o preguntarle _"¿Qué datos tienes guardados sobre mí?"_.`;
@@ -3483,14 +3483,14 @@ function obtenerDetalleAyuda(opcionRaw) {
         const nombreAgente = partsInit[1]?.toLowerCase() || 'kinbot';
 
         if (!agentesCustom[nombreAgente]) {
-            return msg.reply(`❌ *Kingbot:* El agente *"${nombreAgente}"* no existe en mis registros. Escriba *!bot agentes* para ver la lista.`);
+            return msg.reply(`❌ *Asistente:* El agente *"${nombreAgente}"* no existe en mis registros. Escriba *!bot agentes* para ver la lista.`);
         }
 
         chatsActivos.add(chatId);
 
         let systemPromptFluid = agentesCustom[nombreAgente];
         if (isGroup || chatId !== adminChatId) {
-            systemPromptFluid = `Eres Kingbot, un asistente virtual de inteligencia artificial inteligente, amable, educado y altamente eficiente.
+            systemPromptFluid = `Eres Asistente, un asistente virtual de inteligencia artificial inteligente, amable, educado y altamente eficiente.
 Estás interactuando con un usuario general (el propietario del bot es Geovanny Pacheco).
 
 NORMAS ESTRICTAS DE PRIVACIDAD:
@@ -3570,13 +3570,13 @@ Responde de forma clara, natural y concisa en español.`;
     if (comando === 'apagar' || comando === 'dormir' || comando === 'suspender') {
         if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
         botPausado = true;
-        return msg.reply("🔌 *Kingbot:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
+        return msg.reply("🔌 *Asistente:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
     }
 
     if (comando === 'encender' || comando === 'activar' || comando === 'despertar') {
         if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
         botPausado = false;
-        return msg.reply("⚡ *Kingbot:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
+        return msg.reply("⚡ *Asistente:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
     }
 
     if (botPausado) {
@@ -3598,7 +3598,7 @@ Responde de forma clara, natural y concisa en español.`;
         adminChatId = chatId;
         guardarAdminJson();
         try {
-            await client.sendMessage(chatId, "👑 *Kingbot:* Te he reconocido como el Administrador Principal. De ahora en adelante, me activaré de forma automática y conversacional solo contigo en privado.");
+            await client.sendMessage(chatId, "👑 *Asistente:* Te he reconocido como el Administrador Principal. De ahora en adelante, me activaré de forma automática y conversacional solo contigo en privado.");
         } catch (e) {
             console.error("Error al enviar mensaje de seradmin:", e.message);
         }
@@ -3635,7 +3635,7 @@ Responde de forma clara, natural y concisa en español.`;
                     return msg.reply(respuestaFinal);
                 } catch (e) {
                     console.error("Error en comando custom IA:", e);
-                    return msg.reply("❌ *Kingbot:* Ocurrió un error al procesar el comando con IA.");
+                    return msg.reply("❌ *Asistente:* Ocurrió un error al procesar el comando con IA.");
                 }
             }
             if (cmdConfig.tipo === 'codigo') {
@@ -3654,8 +3654,8 @@ Responde de forma clara, natural y concisa en español.`;
         }
 
         if (comando === 'canva' || comando === 'flyer' || comando === 'banner') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Indique el tema o producto para el flyer. Ejemplo: `!bot flyer tarjeta de credito dorada para redes sociales`");
-            await msg.reply("🎨 *Kingbot:* Diseñando propuesta publicitaria y buscando plantillas profesionales de Canva...");
+            if (!argumento) return msg.reply("❌ *Asistente:* Indique el tema o producto para el flyer. Ejemplo: `!bot flyer tarjeta de credito dorada para redes sociales`");
+            await msg.reply("🎨 *Asistente:* Diseñando propuesta publicitaria y buscando plantillas profesionales de Canva...");
             try {
                 const promptDesign = `Eres un Director Creativo y Diseñador Publicitario de primer nivel.
 Crea una propuesta completa y profesional de flyer / banner para redes sociales sobre: "${argumento}".
@@ -3694,13 +3694,13 @@ Estructura tu respuesta exactamente así:
 
                 return msg.reply(respuestaCompleta);
             } catch (e) {
-                return msg.reply(`❌ *Kingbot:* Error al estructurar la propuesta de diseño: ${e.message}`);
+                return msg.reply(`❌ *Asistente:* Error al estructurar la propuesta de diseño: ${e.message}`);
             }
         }
 
         if (comando === 'imagina' || comando === 'dibuja' || comando === 'crear') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Dígame qué desea dibujar, Señor.");
-            await msg.reply("🎨 *Kingbot:* Diseñando el concepto artístico con IA, por favor espere...");
+            if (!argumento) return msg.reply("❌ *Asistente:* Dígame qué desea dibujar, Señor.");
+            await msg.reply("🎨 *Asistente:* Diseñando el concepto artístico con IA, por favor espere...");
             try {
                 // 1. Si hay clave de OpenAI configurada, intentar primero con OpenAI
                 if (openaiApiKey) {
@@ -3757,7 +3757,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 const base64 = Buffer.from(arrayBuffer).toString('base64');
                 const media = new MessageMedia('image/jpeg', base64, 'imagen.jpg');
                 return msg.reply(media, undefined, { caption: `✨ *Concepto visual generado por IA:*\n"${argumento}"\n\n_Tip: Para crear un flyer con textos y plantillas de diseño, usa: !bot flyer <tema>_` });
-            } catch (e) { return msg.reply("❌ *Kingbot:* Fallo en el renderizado de los servidores gráficos."); }
+            } catch (e) { return msg.reply("❌ *Asistente:* Fallo en el renderizado de los servidores gráficos."); }
         }
 
         // --- SISTEMA DE BATERÍA HÍBRIDO (Windows / Android) ---
@@ -3837,10 +3837,10 @@ Create a visually stunning commercial product photograph: clean composition, stu
 
         if (comando === 'videos' || comando === 'ultimosvideos' || comando === 'novedades' || comando === 'verificarcanales' || comando === 'ytvideos' || comando === 'revisarcanales') {
             if (canalesYoutube.length === 0) {
-                return msg.reply("📺 *Kingbot:* No hay canales registrados en el sistema de seguimiento.\n\n_Puedes registrar uno con:_\n`!bot agregarcanal <enlace, @canal o nombre>`");
+                return msg.reply("📺 *Asistente:* No hay canales registrados en el sistema de seguimiento.\n\n_Puedes registrar uno con:_\n`!bot agregarcanal <enlace, @canal o nombre>`");
             }
 
-            await msg.reply("🔍 *Kingbot:* Consultando los últimos videos de tus canales de YouTube...");
+            await msg.reply("🔍 *Asistente:* Consultando los últimos videos de tus canales de YouTube...");
 
             // Si se especificó un canal por nombre o índice
             if (argumento) {
@@ -3862,12 +3862,12 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 }
 
                 if (!canalTarget) {
-                    return msg.reply(`❌ *Kingbot:* No encontré el canal "${argumento}". Escribe *!bot canales* para ver tu lista.`);
+                    return msg.reply(`❌ *Asistente:* No encontré el canal "${argumento}". Escribe *!bot canales* para ver tu lista.`);
                 }
 
                 const info = await obtenerUltimosVideosCanal(canalTarget.id, 5);
                 if (!info || !info.videos || info.videos.length === 0) {
-                    return msg.reply(`📺 *Kingbot:* No se encontraron videos recientes en el canal *${canalTarget.nombre}*.`);
+                    return msg.reply(`📺 *Asistente:* No se encontraron videos recientes en el canal *${canalTarget.nombre}*.`);
                 }
 
                 let respuesta = `📺 *ÚLTIMOS VIDEOS DE ${info.canalNombre.toUpperCase()}:*\n\n`;
@@ -3902,7 +3902,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
             guardarCanales();
 
             if (totalEncontrados === 0) {
-                return msg.reply("📺 *Kingbot:* No se pudieron obtener videos recientes de los canales registrados en este momento.");
+                return msg.reply("📺 *Asistente:* No se pudieron obtener videos recientes de los canales registrados en este momento.");
             }
 
             respuesta += `_Para descargar cualquiera de ellos escribe: *!bot video <enlace>*_`;
@@ -3910,12 +3910,12 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
         if (comando === 'setcanal' || comando === 'canal' || comando === 'agregarcanal') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Proporcione el enlace, @handle, ID o nombre del canal de YouTube.\n_Ejemplo:_ `!bot agregarcanal @mkbhd` o `!bot agregarcanal MrBeast`");
-            await msg.reply("🔍 *Kingbot:* Localizando canal en YouTube...");
+            if (!argumento) return msg.reply("❌ *Asistente:* Proporcione el enlace, @handle, ID o nombre del canal de YouTube.\n_Ejemplo:_ `!bot agregarcanal @mkbhd` o `!bot agregarcanal MrBeast`");
+            await msg.reply("🔍 *Asistente:* Localizando canal en YouTube...");
             const nuevoId = await obtenerIdCanal(argumento);
             if (nuevoId) {
                 if (canalesYoutube.some(c => c.id === nuevoId)) {
-                    return msg.reply("⚠️ *Kingbot:* Ese canal ya se encuentra en tu lista de seguimiento.");
+                    return msg.reply("⚠️ *Asistente:* Ese canal ya se encuentra en tu lista de seguimiento.");
                 }
                 const infoCanal = await obtenerUltimosVideosCanal(nuevoId, 1);
                 const nombreCanal = infoCanal?.canalNombre || 'Canal de YouTube';
@@ -3929,7 +3929,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 });
                 guardarCanales();
                 
-                let respuesta = `✅ *Kingbot:* ¡Canal agregado con éxito!\n\n📺 *${nombreCanal}*\n🆔 \`${nuevoId}\``;
+                let respuesta = `✅ *Asistente:* ¡Canal agregado con éxito!\n\n📺 *${nombreCanal}*\n🆔 \`${nuevoId}\``;
                 if (infoCanal && infoCanal.videos && infoCanal.videos.length > 0) {
                     const v = infoCanal.videos[0];
                     respuesta += `\n\n🎬 *Último video publicado:*\n• *${v.titulo}*\n🔗 ${v.link}`;
@@ -3937,12 +3937,12 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 respuesta += `\n\n_Escribe *!bot videos* para consultar novedades de tus canales._`;
                 return msg.reply(respuesta);
             }
-            return msg.reply("❌ *Kingbot:* No pude encontrar el canal de YouTube. Asegúrate de ingresar un enlace válido, usuario (@handle) o nombre del canal.");
+            return msg.reply("❌ *Asistente:* No pude encontrar el canal de YouTube. Asegúrate de ingresar un enlace válido, usuario (@handle) o nombre del canal.");
         }
 
         if (comando === 'listacanal' || comando === 'canales') {
             if (canalesYoutube.length === 0) {
-                return msg.reply("📺 *Kingbot:* No hay canales registrados en el sistema de seguimiento.\n_Agrega uno con:_ `!bot agregarcanal <enlace, @canal o nombre>`");
+                return msg.reply("📺 *Asistente:* No hay canales registrados en el sistema de seguimiento.\n_Agrega uno con:_ `!bot agregarcanal <enlace, @canal o nombre>`");
             }
             let lista = `📺 *CANALES DE YOUTUBE EN SEGUIMIENTO:*\n\n`;
             canalesYoutube.forEach((c, index) => {
@@ -3954,7 +3954,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
         if (comando === 'reiniciar') {
-            await msg.reply("✔️   *Kingbot:* Iniciando secuencia de reinicio maestro. Despejando memoria y reajustando sistemas... Estaré en línea en unos segundos.");
+            await msg.reply("✔️   *Asistente:* Iniciando secuencia de reinicio maestro. Despejando memoria y reajustando sistemas... Estaré en línea en unos segundos.");
             console.log('[x  ] Reinicio automático solicitado por el usuario. Lanzando nueva instancia...');
             
             // Lanza un nuevo proceso independiente de Node con este mismo script
@@ -3969,20 +3969,20 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
         if (comando === 'borrarcanal' || comando === 'eliminarcanal') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Especifique el número del canal que desea eliminar. Use *!bot canales* para ver la lista.");
+            if (!argumento) return msg.reply("❌ *Asistente:* Especifique el número del canal que desea eliminar. Use *!bot canales* para ver la lista.");
             const indice = parseInt(argumento) - 1;
             if (isNaN(indice) || indice < 0 || indice >= canalesYoutube.length) {
-                return msg.reply("❌ *Kingbot:* Número de índice fuera de rango o inválido.");
+                return msg.reply("❌ *Asistente:* Número de índice fuera de rango o inválido.");
             }
             const eliminado = canalesYoutube.splice(indice, 1)[0];
             guardarCanales();
-            return msg.reply(`🗑️ *Kingbot:* Se ha eliminado el canal *${eliminado.nombre}* de la lista.`);
+            return msg.reply(`🗑️ *Asistente:* Se ha eliminado el canal *${eliminado.nombre}* de la lista.`);
         }
 
         if (comando === 'clima') {
             const ciudad = argumento || 'Chalchuapa';
             if (ciudad.toLowerCase().includes('radar') || ciudad.toLowerCase().includes('snet') || ciudad.toLowerCase().includes('el salvador')) {
-                await msg.reply(' *Kingbot:* Conectando con los radares del SNET... Un momento, Señor.');
+                await msg.reply(' *Asistente:* Conectando con los radares del SNET... Un momento, Señor.');
                 try {
                     const pupBrowser = client.pupBrowser;
                     if (!pupBrowser) throw new Error("Puppeteer no está disponible en este entorno.");
@@ -3999,11 +3999,11 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     return;
                 } catch (e) {
                     console.error('Error capturando radar:', e);
-                    return await msg.reply('❌ *Kingbot:* Error al obtener el radar visual del SNET: ' + e.message);
+                    return await msg.reply('❌ *Asistente:* Error al obtener el radar visual del SNET: ' + e.message);
                 }
             }
 
-            await msg.reply('\uD83C\uDF24\uFE0F *Kingbot:* Consultando el pron\u00f3stico meteorol\u00f3gico completo para *' + ciudad + '*... un momento.');
+            await msg.reply('\uD83C\uDF24\uFE0F *Asistente:* Consultando el pron\u00f3stico meteorol\u00f3gico completo para *' + ciudad + '*... un momento.');
             try {
                 const climaRes = await fetch('https://wttr.in/' + encodeURIComponent(ciudad) + '?format=j1', {
                     headers: { 'User-Agent': 'curl/7.68.0' }
@@ -4045,7 +4045,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     franjaInstruccion = 'ya es de noche. Solo reporta la franja de xR" Noche. NO menciones mañana ni tarde porque ya pasaron.';
                 }
 
-                const promptClima = 'Eres Kingbot, el asistente elegante de Geovanny. Con los siguientes datos meteorológicos para ' + areaName + ', ' + franjaInstruccion + ' Incluye diagnóstico general y recomendación de transporte (lluvia = carro, despejado = moto). Usa emojis, sé conciso y elegante.\n\nHora actual: ' + _gtmH + ':00 (El Salvador UTC-6)\nCiudad: ' + areaName + '\nAhora: ' + (current.weatherDesc[0] ? current.weatherDesc[0].value : 'N/A') + ', ' + current.temp_C + '°C (sensación ' + current.FeelsLikeC + '°C), humedad ' + current.humidity + '%, viento ' + current.windspeedKmph + ' km/h\nMáxima: ' + weather.maxtempC + '°C | Mínima: ' + weather.mintempC + '°C\n' + franjasData;
+                const promptClima = 'Eres Asistente, el asistente elegante de Geovanny. Con los siguientes datos meteorológicos para ' + areaName + ', ' + franjaInstruccion + ' Incluye diagnóstico general y recomendación de transporte (lluvia = carro, despejado = moto). Usa emojis, sé conciso y elegante.\n\nHora actual: ' + _gtmH + ':00 (El Salvador UTC-6)\nCiudad: ' + areaName + '\nAhora: ' + (current.weatherDesc[0] ? current.weatherDesc[0].value : 'N/A') + ', ' + current.temp_C + '°C (sensación ' + current.FeelsLikeC + '°C), humedad ' + current.humidity + '%, viento ' + current.windspeedKmph + ' km/h\nMáxima: ' + weather.maxtempC + '°C | Mínima: ' + weather.mintempC + '°C\n' + franjasData;
                 const respuestaClima = await ejecutarGeminiConRetries(async (model) => {
                     const result = await model.generateContent([promptClima]);
                     return result.response.text();
@@ -4054,19 +4054,19 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error('Error en clima:', e);
-                return msg.reply('\u274C *Kingbot:* Mis sensores meteorol\u00f3gicos no pudieron conectar con el servicio del clima. Int\u00e9ntelo de nuevo.');
+                return msg.reply('\u274C *Asistente:* Mis sensores meteorol\u00f3gicos no pudieron conectar con el servicio del clima. Int\u00e9ntelo de nuevo.');
             }
         }
 
         // DESCARGAS MULTIMEDIA CON PREVENCI N DE INYECCI N DE COMANDOS (Soporte YouTube, TikTok, Instagram, Twitter/X, etc.)
         // --- BUSCAR CANCI N POR NOMBRE (sin enlace) ---
         if (comando === 'cancion' || comando === 'buscarcancion' || comando === 'song') {
-            if (!argumento) return msg.reply('❌ *Kingbot:* Especifica el nombre de la canción y el artista. Ej: *!bot cancion Blinding Lights | The Weeknd*');
+            if (!argumento) return msg.reply('❌ *Asistente:* Especifica el nombre de la canción y el artista. Ej: *!bot cancion Blinding Lights | The Weeknd*');
             const partsC = argumento.split('|');
             const cancionQuery = partsC[0]?.trim() || argumento;
             const artistaQuery = partsC[1]?.trim() || '';
             const queryFull = artistaQuery ? `${cancionQuery} ${artistaQuery}` : cancionQuery;
-            await msg.reply(` *Kingbot:* Buscando *"${cancionQuery}"${artistaQuery ? ' de *' + artistaQuery + '*' : ''}* en la red... Un momento.`);
+            await msg.reply(` *Asistente:* Buscando *"${cancionQuery}"${artistaQuery ? ' de *' + artistaQuery + '*' : ''}* en la red... Un momento.`);
             const outputAudio = 'musica_' + Date.now() + '.mp3';
             const ffmpegDirAudio = getFfmpegLocation();
             const searchArgs = [
@@ -4078,12 +4078,12 @@ Create a visually stunning commercial product photograph: clean composition, stu
             if (ffmpegDirAudio) searchArgs.unshift('--ffmpeg-location', ffmpegDirAudio);
 
             const child = spawn(getYtDlpBinary(), searchArgs, { shell: false });
-            child.on('error', () => msg.reply('❌ *Kingbot:* yt-dlp no disponible. Instala con: pip install yt-dlp').catch(()=>{}));
+            child.on('error', () => msg.reply('❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp').catch(()=>{}));
             child.on('close', async (code) => {
                 const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3','') + '.mp3';
                 if (code !== 0 || !fs.existsSync(possibleFile) || fs.statSync(possibleFile).size < 10000) {
                     if (fs.existsSync(possibleFile)) try { fs.unlinkSync(possibleFile); } catch(e){}
-                    return msg.reply(`❌ *Kingbot:* No encontré esa canción. Verifica el nombre: *"${queryFull}"*`);
+                    return msg.reply(`❌ *Asistente:* No encontré esa canción. Verifica el nombre: *"${queryFull}"*`);
                 }
                 try {
                     const media = MessageMedia.fromFilePath(possibleFile);
@@ -4091,22 +4091,22 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     if (fs.existsSync(possibleFile)) fs.unlinkSync(possibleFile);
                 } catch (err) {
                     console.error('[!] Error enviando canción:', err);
-                    msg.reply('❌ *Kingbot:* Error al enviar el archivo de audio.').catch(()=>{});
+                    msg.reply('❌ *Asistente:* Error al enviar el archivo de audio.').catch(()=>{});
                 }
             });
             return;
         }
 
         if (comando === 'audio' || comando === 'musica') {
-            if (!argumento.includes('http')) return msg.reply("❌ *Kingbot:* Por favor, proporcione un enlace de audio válido.");
+            if (!argumento.includes('http')) return msg.reply("❌ *Asistente:* Por favor, proporcione un enlace de audio válido.");
             
             try {
                 new URL(argumento);
             } catch (e) {
-                return msg.reply("❌ *Kingbot:* La URL proporcionada tiene un formato incorrecto.");
+                return msg.reply("❌ *Asistente:* La URL proporcionada tiene un formato incorrecto.");
             }
 
-            await msg.reply(' *Kingbot:* Procesando y extrayendo audio de alta fidelidad, un momento...');
+            await msg.reply(' *Asistente:* Procesando y extrayendo audio de alta fidelidad, un momento...');
             const outputFile = 'audio_' + Date.now() + '.mp3';
             const ffmpegDirAudio = getFfmpegLocation();
             const audioArgs = ['-x', '--audio-format', 'mp3', '-o', outputFile, argumento];
@@ -4116,13 +4116,13 @@ Create a visually stunning commercial product photograph: clean composition, stu
             
             child.on('error', (err) => {
                 console.error('[!] Error en yt-dlp:', err);
-                return msg.reply("❌ *Kingbot:* No he podido iniciar el proceso. Verifique si yt-dlp está configurado en su sistema.");
+                return msg.reply("❌ *Asistente:* No he podido iniciar el proceso. Verifique si yt-dlp está configurado en su sistema.");
             });
 
             child.on('close', async (code) => {
                 if (code !== 0 || !fs.existsSync(outputFile) || fs.statSync(outputFile).size < 10000) {
                     if (fs.existsSync(outputFile)) try { fs.unlinkSync(outputFile); } catch(e){}
-                    return msg.reply("❌ *Kingbot:* El servidor de descargas falló o el enlace es incorrecto.");
+                    return msg.reply("❌ *Asistente:* El servidor de descargas falló o el enlace es incorrecto.");
                 }
                 try {
                     if (fs.existsSync(outputFile)) {
@@ -4130,7 +4130,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
                         await msg.reply(media);
                         fs.unlinkSync(outputFile);
                     } else {
-                        await msg.reply("❌ *Kingbot:* Archivo de audio no encontrado tras la compilación.");
+                        await msg.reply("❌ *Asistente:* Archivo de audio no encontrado tras la compilación.");
                     }
                 } catch (e) {
                     console.error('[!] Error enviando audio:', e);
@@ -4158,7 +4158,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
         // --- COMANDO PING ---
         if (comando === 'ping') {
             const start = Date.now();
-            await msg.reply('x*Kingbot:* Pong! Latencia: *' + (Date.now() - start) + 'ms*   Todos los sistemas operativos.');
+            await msg.reply('x*Asistente:* Pong! Latencia: *' + (Date.now() - start) + 'ms*   Todos los sistemas operativos.');
             return;
         }
 
@@ -4177,8 +4177,8 @@ Create a visually stunning commercial product photograph: clean composition, stu
 
         // --- COMANDO ACTUALIZAR ---
         if (comando === 'actualizar') {
-            if (!esAdminPrivado) return msg.reply('xa *Kingbot:* Comando exclusivo del administrador.');
-            await msg.reply('✔️   *Kingbot:* Iniciando protocolos de actualización del sistema...');
+            if (!esAdminPrivado) return msg.reply('xa *Asistente:* Comando exclusivo del administrador.');
+            await msg.reply('✔️   *Asistente:* Iniciando protocolos de actualización del sistema...');
             const updateLog = [];
             const runUpd = (cmd, args) => new Promise((resolve) => {
                 const p = spawn(cmd, args, { shell: true });
@@ -4198,7 +4198,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
             const pipRes = await runUpd('pip', ['install', '--upgrade', 'yt-dlp', '--quiet']);
             updateLog.push((pipRes.code === 0 ? 'S&' : 'a') + ' pip yt-dlp: ' + (pipRes.code === 0 ? 'Actualizado' : 'No disponible'));
             
-            return msg.reply(' *Reporte de Actualización Kingbot:*\n\n' + updateLog.join('\n') + '\n\n_Sistema revisado y optimizado._');
+            return msg.reply(' *Reporte de Actualización Asistente:*\n\n' + updateLog.join('\n') + '\n\n_Sistema revisado y optimizado._');
         }
 
 
@@ -4207,7 +4207,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
             const arg = (argumento || '').toLowerCase().trim();
             if (!arg) {
                 const nombreVozActual = vozDefault === 'mujer' ? 'Femenina 👩 (Lorena Neural)' : 'Masculina 👨 (Rodrigo Neural)';
-                return msg.reply(`🎙️ *CONFIGURACIÓN DE VOZ KINGBOT:*
+                return msg.reply(`🎙️ *CONFIGURACIÓN DE VOZ ASISTENTE:*
 • *Voz predeterminada actual:* ${nombreVozActual}
 
 *¿Cómo cambiar la voz por defecto?*
@@ -4223,20 +4223,20 @@ Create a visually stunning commercial product photograph: clean composition, stu
             if (/^(hombre|h|masculino|male)$/i.test(arg)) {
                 vozDefault = 'hombre';
                 guardarAdminJson();
-                return msg.reply("✅ *Kingbot:* Voz predeterminada configurada en *Masculina* 👨 (Rodrigo Neural).");
+                return msg.reply("✅ *Asistente:* Voz predeterminada configurada en *Masculina* 👨 (Rodrigo Neural).");
             } else if (/^(mujer|m|femenino|female)$/i.test(arg)) {
                 vozDefault = 'mujer';
                 guardarAdminJson();
-                return msg.reply("✅ *Kingbot:* Voz predeterminada configurada en *Femenina* 👩 (Lorena Neural).");
+                return msg.reply("✅ *Asistente:* Voz predeterminada configurada en *Femenina* 👩 (Lorena Neural).");
             } else {
-                return msg.reply("❌ *Kingbot:* Opción no válida. Escriba *!bot voz hombre* o *!bot voz mujer*.");
+                return msg.reply("❌ *Asistente:* Opción no válida. Escriba *!bot voz hombre* o *!bot voz mujer*.");
             }
         }
 
         // --- MÓDULO SÍNTESIS DE VOZ (TTS DUAL: HOMBRE / MUJER) ---
         if (comando === 'decir' || comando === 'tts' || comando === 'decirhombre' || comando === 'decirmujer') {
             if (!argumento) {
-                return msg.reply("❌ *Kingbot:* Especifique el texto que desea que dicte.\n\n_Ejemplos:_\n• `!bot decir hombre Buenos días a todos`\n• `!bot decir mujer Buenos días a todos`\n• `!bot decir Buenos días` (usa la voz activa)");
+                return msg.reply("❌ *Asistente:* Especifique el texto que desea que dicte.\n\n_Ejemplos:_\n• `!bot decir hombre Buenos días a todos`\n• `!bot decir mujer Buenos días a todos`\n• `!bot decir Buenos días` (usa la voz activa)");
             }
 
             let textoFinal = argumento.trim();
@@ -4261,14 +4261,14 @@ Create a visually stunning commercial product photograph: clean composition, stu
             }
 
             if (!textoFinal) {
-                return msg.reply("❌ *Kingbot:* Especifique el texto que desea que dicte.");
+                return msg.reply("❌ *Asistente:* Especifique el texto que desea que dicte.");
             }
 
             const etiquetaVoz = generoVoz === 'mujer' ? 'femenina 👩' : 'masculina 👨';
-            await msg.reply(`🎙️ *Kingbot:* Generando modulación de voz ${etiquetaVoz}...`);
+            await msg.reply(`🎙️ *Asistente:* Generando modulación de voz ${etiquetaVoz}...`);
             const ttsExito = await generarAudioTTS(textoFinal, msg, generoVoz);
             if (!ttsExito) {
-                return msg.reply("❌ *Kingbot:* Error interno en el módulo de sintetización de audio.");
+                return msg.reply("❌ *Asistente:* Error interno en el módulo de sintetización de audio.");
             }
             return;
         }
@@ -4281,7 +4281,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
             }
 
             esperandoAyudaOpcion.set(chatId, true);
-            const menuMenu = `🤖 *CENTRO DE CONTROL KINGBOT v6.0*
+            const menuMenu = `🤖 *CENTRO DE CONTROL ASISTENTE v6.0*
 
 Señor Geovanny, seleccione una de las siguientes opciones respondiendo con el *número (1-8)* o usando \`!bot ayuda <número>\`:
 
@@ -4304,8 +4304,8 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
         // --- NUEVAS IDEAS: GENERACIN DE STICKER CON IA ---
         if (comando === 'stickercrear') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Indíqueme la idea para generar la imagen de su sticker.");
-            await msg.reply(" *Kingbot:* Generando diseño del sticker con IA...");
+            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme la idea para generar la imagen de su sticker.");
+            await msg.reply(" *Asistente:* Generando diseño del sticker con IA...");
             try {
                 const stickerPromptExpansion = `Create a detailed, beautiful, and modern English prompt for a WhatsApp sticker based on the following idea: '${argumento}'. The prompt MUST specify: "vector sticker style, isolated on a clean solid white background, die-cut, bold outlines, vibrant colors, clean minimal design, cute or modern cartoon style, 3D look or clean 2D vector, no text unless requested". Respond ONLY with the prompt, no introduction, no quotes:\n\n${argumento}`;
                 let promptMejorado = argumento;
@@ -4329,7 +4329,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 const media = new MessageMedia('image/jpeg', base64, 'sticker.jpg');
                 await msg.reply(media, msg.from, { sendMediaAsSticker: true, stickerName: 'Kinbot VIP', stickerAuthor: 'Geovanny' });
             } catch (e) {
-                return msg.reply("❌ *Kingbot:* Error en los servidores gráficos al renderizar el sticker.");
+                return msg.reply("❌ *Asistente:* Error en los servidores gráficos al renderizar el sticker.");
             }
             return;
         }
@@ -4340,9 +4340,9 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const idiomaDestino = parts[0];
             const textoATraducir = parts.slice(1).join(' ');
             if (!idiomaDestino || !textoATraducir) {
-                return msg.reply("❌ *Kingbot:* Uso correcto: *!bot traducir <idioma> <texto>*. Ejemplo: *!bot traducir ingles Hola mundo*");
+                return msg.reply("❌ *Asistente:* Uso correcto: *!bot traducir <idioma> <texto>*. Ejemplo: *!bot traducir ingles Hola mundo*");
             }
-            await msg.reply(`xR *Kingbot:* Traducción en proceso al ${idiomaDestino}...`);
+            await msg.reply(`xR *Asistente:* Traducción en proceso al ${idiomaDestino}...`);
             try {
                 const prompt = `Traduce el siguiente texto al idioma "${idiomaDestino}". Responde aNICAMENTE con la traducción limpia, sin comentarios adicionales ni comillas:\n\n${textoATraducir}`;
                 const respuesta = await ejecutarGeminiConRetries(async (model) => {
@@ -4352,23 +4352,23 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 const respuestaLimpia = limpiarRespuestaGemini(respuesta);
                 return msg.reply(respuestaLimpia);
             } catch (e) {
-                return msg.reply("❌ *Kingbot:* Ocurrió un error al intentar traducir.");
+                return msg.reply("❌ *Asistente:* Ocurrió un error al intentar traducir.");
             }
         }
 
         // --- NUEVAS IDEAS: CALCULADORA ---
         if (comando === 'calcular') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Especifique la operation matemática. Ejemplo: *!bot calcular 2 + 2 * (10 / 5)*");
+            if (!argumento) return msg.reply("❌ *Asistente:* Especifique la operation matemática. Ejemplo: *!bot calcular 2 + 2 * (10 / 5)*");
             const expression = argumento.replace(/\s+/g, '');
             const isSafe = /^[0-9+\-*/().%]+$/.test(expression);
             if (!isSafe) {
-                return msg.reply("❌ *Kingbot:* Operación no válida. Solo se permiten números y los operadores básicos (+, -, *, /, %, (, )).");
+                return msg.reply("❌ *Asistente:* Operación no válida. Solo se permiten números y los operadores básicos (+, -, *, /, %, (, )).");
             }
             try {
                 const result = new Function(`return (${expression})`)();
-                return msg.reply(`🤖 *Kingbot:* El resultado es: *${result}*`);
+                return msg.reply(`👨‍💼 *Asistente:* El resultado es: *${result}*`);
             } catch (e) {
-                return msg.reply("❌ *Kingbot:* Error matemático en la expresión ingresada.");
+                return msg.reply("❌ *Asistente:* Error matemático en la expresión ingresada.");
             }
         }
 
@@ -4377,7 +4377,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         if (comando === 'resumir') {
             let mensajeConDoc = mensajeAProcesar;
             if (mensajeConDoc.hasMedia && mensajeConDoc.mimetype === 'application/pdf') {
-                await msg.reply("x *Kingbot:* Leyendo y resumiendo documento PDF, un momento...");
+                await msg.reply("x *Asistente:* Leyendo y resumiendo documento PDF, un momento...");
                 try {
                     const media = await mensajeConDoc.downloadMedia();
                     if (media && media.data) {
@@ -4394,19 +4394,19 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                     }
                 } catch (e) {
                     console.error("Error resumiendo PDF:", e);
-                    return msg.reply("❌ *Kingbot:* Ocurrió un error al procesar el documento PDF.");
+                    return msg.reply("❌ *Asistente:* Ocurrió un error al procesar el documento PDF.");
                 }
             }
 
             if (!argumento || !argumento.includes('http')) {
-                return msg.reply("❌ *Kingbot:* Por favor proporcione una URL para resumir, o responda a un archivo PDF con *!bot resumir*.");
+                return msg.reply("❌ *Asistente:* Por favor proporcione una URL para resumir, o responda a un archivo PDF con *!bot resumir*.");
             }
             try {
                 new URL(argumento);
             } catch(e) {
-                return msg.reply("❌ *Kingbot:* Enlace inválido.");
+                return msg.reply("❌ *Asistente:* Enlace inválido.");
             }
-            await msg.reply("x *Kingbot:* Extrayendo y analizando contenido web para su resumen...");
+            await msg.reply("x *Asistente:* Extrayendo y analizando contenido web para su resumen...");
             try {
                 const response = await fetch(argumento, { headers: { 'User-Agent': 'Mozilla/5.0' } });
                 const html = await response.text();
@@ -4427,7 +4427,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error("Error al resumir:", e);
-                return msg.reply("❌ *Kingbot:* No se pudo recuperar el contenido web de esa dirección.");
+                return msg.reply("❌ *Asistente:* No se pudo recuperar el contenido web de esa dirección.");
             }
         }
 
@@ -4450,7 +4450,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const sysUptime = formatTime(os.uptime());
             const jarvisUptime = formatTime(process.uptime());
             
-            let statusReport = `📊 *DIAGNÓSTICO DE SISTEMA KINGBOT*\n\n`;
+            let statusReport = `📊 *DIAGNÓSTICO DE SISTEMA ASISTENTE*\n\n`;
             statusReport += `🤖 *Asistente:* Activo y Operativo\n`;
             statusReport += `🆔 *PID del Proceso:* ${process.pid}\n`;
             statusReport += `💻 *Plataforma:* ${platform === 'win32' ? 'Windows OS' : 'Termux / Linux'}\n`;
@@ -4458,7 +4458,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             statusReport += `🧠 *Procesador:* ${cpuModel} (${cpuCores} núcleos)\n`;
             statusReport += `📈 *Memoria RAM:* ${freeRAM} GB libres de ${totalRAM} GB totales\n`;
             statusReport += `⏱️ *Uptime Servidor:* ${sysUptime}\n`;
-            statusReport += `⏳ *Uptime Kingbot:* ${jarvisUptime}\n`;
+            statusReport += `⏳ *Uptime Asistente:* ${jarvisUptime}\n`;
             
             if (isTermux) {
                 exec('termux-battery-status', async (err, stdout) => {
@@ -4480,8 +4480,8 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
         // --- NUEVO COMANDO: GENERADOR QR ---
         if (comando === 'qr') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Ingrese el texto o enlace que desea codificar.");
-            await msg.reply("x  *Kingbot:* Renderizando matriz de código QR...");
+            if (!argumento) return msg.reply("❌ *Asistente:* Ingrese el texto o enlace que desea codificar.");
+            await msg.reply("x  *Asistente:* Renderizando matriz de código QR...");
             try {
                 const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(argumento)}`;
                 const response = await fetch(url);
@@ -4491,7 +4491,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 await msg.reply(media);
             } catch (e) {
                 console.error("Error generando QR:", e);
-                return msg.reply("❌ *Kingbot:* Servidor de codificación fuera de línea.");
+                return msg.reply("❌ *Asistente:* Servidor de codificación fuera de línea.");
             }
             return;
         }
@@ -4505,17 +4505,17 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             
             let minutos = parseFloat(tiempoStr);
             if (isNaN(minutos) || minutos <= 0) {
-                return msg.reply("❌ *Kingbot:* Uso correcto: *!bot recordar <minutos> <mensaje>*. Ejemplo: *!bot recordar 5 preparar examen*");
+                return msg.reply("❌ *Asistente:* Uso correcto: *!bot recordar <minutos> <mensaje>*. Ejemplo: *!bot recordar 5 preparar examen*");
             }
             if (!mensajeRecordatorio) {
-                return msg.reply("❌ *Kingbot:* Debe indicarme qué desea recordar.");
+                return msg.reply("❌ *Asistente:* Debe indicarme qué desea recordar.");
             }
             
-            await msg.reply(` *Kingbot:* Entendido, recordatorio fijado en ${minutos} minutos, Señor. No lo olvidaré.`);
+            await msg.reply(` *Asistente:* Entendido, recordatorio fijado en ${minutos} minutos, Señor. No lo olvidaré.`);
             
             setTimeout(async () => {
                 try {
-                    const alertMsg = `x   *KINGBOT   RECORDATORIO!*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
+                    const alertMsg = `x   *ASISTENTE   RECORDATORIO!*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
                     await client.sendMessage(chatId, alertMsg);
                 } catch (e) {
                     console.error("Error al disparar recordatorio:", e);
@@ -4552,21 +4552,21 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                     }
                     const res = guardarDatoEnMemoria(clave, valor);
                     const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
-                    return msg.reply(`🧠 *Kingbot:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede consultármelo cuando lo desee hablando normalmente por chat._`);
+                    return msg.reply(`🧠 *Asistente:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede consultármelo cuando lo desee hablando normalmente por chat._`);
                 }
 
                 if (subCmd === 'borrar' || subCmd === 'del' || subCmd === 'olvidar') {
                     if (!subArg) return msg.reply("❌ Especifique el número o tema a borrar: `!bot memoria borrar <número/tema>`");
                     const el = eliminarDatoDeMemoria(subArg);
-                    if (el) return msg.reply(`🗑️ *Kingbot:* He borrado de mi memoria: *${el.clave}* (${el.valor})`);
-                    return msg.reply(`⚠️ *Kingbot:* No encontré ningún dato en memoria que coincida con "${subArg}".`);
+                    if (el) return msg.reply(`🗑️ *Asistente:* He borrado de mi memoria: *${el.clave}* (${el.valor})`);
+                    return msg.reply(`⚠️ *Asistente:* No encontré ningún dato en memoria que coincida con "${subArg}".`);
                 }
 
                 if (subCmd === 'buscar' || subCmd === 'find') {
                     if (!subArg) return msg.reply("❌ Especifique qué buscar: `!bot memoria buscar <palabra>`");
                     const q = subArg.toLowerCase();
                     const encontrados = memoriaGlobal.filter(m => m.clave.toLowerCase().includes(q) || m.valor.toLowerCase().includes(q));
-                    if (encontrados.length === 0) return msg.reply(`🔍 *Kingbot:* No encontré ningún dato guardado sobre "${subArg}".`);
+                    if (encontrados.length === 0) return msg.reply(`🔍 *Asistente:* No encontré ningún dato guardado sobre "${subArg}".`);
                     let r = `🔍 *RESULTADOS EN MEMORIA PARA "${subArg}":*\n\n`;
                     encontrados.forEach((m, i) => {
                         const f = m.fecha ? ` _(${m.fecha})_` : '';
@@ -4577,7 +4577,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             }
 
             if (memoriaGlobal.length === 0) {
-                return msg.reply("🧠 *Kingbot:* No tengo datos guardados en mi memoria actualmente.\n\n_Puedes guardar información hablándome con naturalidad:_\n• _\"Guarda que mi talla de camisa es M\"_\n• _\"Acuérdate de que la clave del wifi es 1234\"_\n• O con comando: `!bot guardar <tema> : <información>`");
+                return msg.reply("🧠 *Asistente:* No tengo datos guardados en mi memoria actualmente.\n\n_Puedes guardar información hablándome con naturalidad:_\n• _\"Guarda que mi talla de camisa es M\"_\n• _\"Acuérdate de que la clave del wifi es 1234\"_\n• O con comando: `!bot guardar <tema> : <información>`");
             }
 
             let lista = `🧠 *BASE DE DATOS Y MEMORIA PERSISTENTE:*\n\n`;
@@ -4609,7 +4609,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             }
             const res = guardarDatoEnMemoria(clave, valor);
             const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
-            return msg.reply(`🧠 *Kingbot:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede preguntarme sobre este tema cuando lo desee en la conversación._`);
+            return msg.reply(`🧠 *Asistente:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede preguntarme sobre este tema cuando lo desee en la conversación._`);
         }
 
         if (comando === 'olvidar' || comando === 'olvidardato') {
@@ -4618,23 +4618,23 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             }
             if (!argumento) return msg.reply("❌ Especifique el número o tema del dato que desea olvidar:\n`!bot olvidar <número o tema>`\n_Usa *!bot memoria* para ver la lista._");
             const el = eliminarDatoDeMemoria(argumento);
-            if (el) return msg.reply(`🗑️ *Kingbot:* He eliminado de mi memoria el dato sobre *${el.clave}* (${el.valor}).`);
-            return msg.reply(`⚠️ *Kingbot:* No encontré ningún dato en memoria que coincida con "${argumento}".`);
+            if (el) return msg.reply(`🗑️ *Asistente:* He eliminado de mi memoria el dato sobre *${el.clave}* (${el.valor}).`);
+            return msg.reply(`⚠️ *Asistente:* No encontré ningún dato en memoria que coincida con "${argumento}".`);
         }
 
         // --- BLOC DE NOTAS ---
         if (comando === 'nota' || comando === 'guardarnota') {
             if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply("❌ Comando restringido al administrador");
-            if (!argumento) return msg.reply("❌ *Kingbot:* Ingrese el texto de la nota que desea guardar.");
+            if (!argumento) return msg.reply("❌ *Asistente:* Ingrese el texto de la nota que desea guardar.");
             notasGuardadas.push({ texto: argumento, fecha: new Date().toLocaleDateString('es-ES') });
             guardarNotas();
-            return msg.reply(`📝 *Kingbot:* Nota guardada con éxito, Señor.`);
+            return msg.reply(`📝 *Asistente:* Nota guardada con éxito, Señor.`);
         }
 
         if (comando === 'notas') {
             if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply("❌ Comando restringido al administrador");
             if (notasGuardadas.length === 0) {
-                return msg.reply("📝 *Kingbot:* No tiene notas archivadas.");
+                return msg.reply("📝 *Asistente:* No tiene notas archivadas.");
             }
             let lista = `📝 *SUS NOTAS ARCHIVADAS:*\n\n`;
             notasGuardadas.forEach((n, index) => {
@@ -4645,20 +4645,20 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         }
 
         if (comando === 'borrarnota') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Especifique el número de la nota que desea eliminar. Use *!bot notas* para ver la lista.");
+            if (!argumento) return msg.reply("❌ *Asistente:* Especifique el número de la nota que desea eliminar. Use *!bot notas* para ver la lista.");
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= notasGuardadas.length) {
-                return msg.reply("❌ *Kingbot:* Número de nota inválido.");
+                return msg.reply("❌ *Asistente:* Número de nota inválido.");
             }
             const eliminada = notasGuardadas.splice(index, 1)[0];
             guardarNotas();
-            return msg.reply(`🗑️ *Kingbot:* Nota "${eliminada.texto || eliminada}" eliminada.`);
+            return msg.reply(`🗑️ *Asistente:* Nota "${eliminada.texto || eliminada}" eliminada.`);
         }
 
         // --- BaSQUEDA WEB INTELIGENTE ---
         if (comando === 'buscar' || comando === 'google') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Ingrese los términos de búsqueda.");
-            await msg.reply(`x *Kingbot:* Realizando consulta y analizando fuentes en la red...`);
+            if (!argumento) return msg.reply("❌ *Asistente:* Ingrese los términos de búsqueda.");
+            await msg.reply(`x *Asistente:* Realizando consulta y analizando fuentes en la red...`);
             try {
                 const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(argumento)}`;
                 const response = await fetch(url, {
@@ -4681,7 +4681,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 }
                 
                 if (snippets.length === 0) {
-                    return msg.reply(" *Kingbot:* No he podido recuperar resultados útiles para esa consulta.");
+                    return msg.reply(" *Asistente:* No he podido recuperar resultados útiles para esa consulta.");
                 }
                 
                 const searchContext = snippets.join('\n- ');
@@ -4696,7 +4696,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error("Error en búsqueda:", e);
-                return msg.reply("❌ *Kingbot:* Ha ocurrido un error al consultar las bases de datos de red.");
+                return msg.reply("❌ *Asistente:* Ha ocurrido un error al consultar las bases de datos de red.");
             }
         }
 
@@ -4709,26 +4709,26 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             
             if (subComando === 'crear' || subComando === 'agregar') {
                 if (!nombre || !instrucciones) {
-                    return msg.reply("❌ *Kingbot:* Formato correcto: *!bot agente crear <nombre> <instrucciones>*");
+                    return msg.reply("❌ *Asistente:* Formato correcto: *!bot agente crear <nombre> <instrucciones>*");
                 }
                 agentesCustom[nombre] = instrucciones;
                 fs.writeFileSync('agentes.json', JSON.stringify(agentesCustom, null, 2));
-                return msg.reply(`S& *Kingbot:* Agente *"${nombre}"* creado e incorporado a mis bases de datos.`);
+                return msg.reply(`S& *Asistente:* Agente *"${nombre}"* creado e incorporado a mis bases de datos.`);
             }
             
             if (subComando === 'borrar' || subComando === 'eliminar') {
                 if (!nombre) {
-                    return msg.reply("❌ *Kingbot:* Formato correcto: *!bot agente borrar <nombre>*");
+                    return msg.reply("❌ *Asistente:* Formato correcto: *!bot agente borrar <nombre>*");
                 }
                 if (nombre === 'kingbot' || nombre === 'programador' || nombre === 'entrenador' || nombre === 'traductor') {
-                    return msg.reply(`❌ *Kingbot:* No puede eliminar los agentes del sistema principal.`);
+                    return msg.reply(`❌ *Asistente:* No puede eliminar los agentes del sistema principal.`);
                 }
                 if (!agentesCustom[nombre]) {
-                    return msg.reply(`❌ *Kingbot:* El agente *"${nombre}"* no existe.`);
+                    return msg.reply(`❌ *Asistente:* El agente *"${nombre}"* no existe.`);
                 }
                 delete agentesCustom[nombre];
                 fs.writeFileSync('agentes.json', JSON.stringify(agentesCustom, null, 2));
-                return msg.reply(`S& *Kingbot:* El agente *"${nombre}"* ha sido dado de baja.`);
+                return msg.reply(`S& *Asistente:* El agente *"${nombre}"* ha sido dado de baja.`);
             }
             
             // Listar por defecto
@@ -4758,41 +4758,41 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const contenido = partsCmd.slice(2).join(' ');
 
             if (!nombre || !tipo || !contenido) {
-                return msg.reply("❌ *Kingbot:* Formato correcto: *!bot comandocrear <nombre> <tipo: texto/ia/codigo> <contenido/instrucciones/codigo>*");
+                return msg.reply("❌ *Asistente:* Formato correcto: *!bot comandocrear <nombre> <tipo: texto/ia/codigo> <contenido/instrucciones/codigo>*");
             }
             if (tipo !== 'texto' && tipo !== 'ia' && tipo !== 'codigo') {
-                return msg.reply("❌ *Kingbot:* El tipo de comando debe ser *texto*, *ia* o *codigo*.");
+                return msg.reply("❌ *Asistente:* El tipo de comando debe ser *texto*, *ia* o *codigo*.");
             }
             
             const comandosSistema = ['reiniciar', 'ayuda', 'menu', 'help', 'comandos', 'musica', 'audio', 'video', 'decir', 'tts', 'foto', 'camara', 'grabar', 'escuchar', 'bateria', 'estado', 'sistema', 'hardware', 'qr', 'recordar', 'recordatorio', 'nota', 'guardarnota', 'notas', 'borrarnota', 'buscar', 'google', 'agente', 'agentes', 'agregarclave', 'addkey', 'claves', 'listkeys', 'restaurarclaves', 'resetkeys', 'borrarclaves', 'clearkeys', 'comandocrear', 'comandoborrar', 'comandoslista', 'setcanal', 'canal', 'agregarcanal', 'listacanal', 'canales', 'borrarcanal', 'eliminarcanal', 'clima', 'imagina', 'dibuja', 'crear', 'stickercrear', 'traducir', 'calcular', 'resumir'];
             if (comandosSistema.includes(nombre)) {
-                return msg.reply(`❌ *Kingbot:* El nombre *"${nombre}"* está reservado para el sistema principal.`);
+                return msg.reply(`❌ *Asistente:* El nombre *"${nombre}"* está reservado para el sistema principal.`);
             }
 
             comandosCustom[nombre] = { tipo, contenido };
             guardarComandosCustom();
-            return msg.reply(`S& *Kingbot:* Comando personalizado *"!${nombre}"* (tipo: ${tipo}) creado e incorporado.`);
+            return msg.reply(`S& *Asistente:* Comando personalizado *"!${nombre}"* (tipo: ${tipo}) creado e incorporado.`);
         }
 
         if (comando === 'comandoborrar' || comando === 'borrarcomando') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             const nombre = argumento.toLowerCase().trim();
             if (!nombre) {
-                return msg.reply("❌ *Kingbot:* Formato correcto: *!bot comandoborrar <nombre>*");
+                return msg.reply("❌ *Asistente:* Formato correcto: *!bot comandoborrar <nombre>*");
             }
             if (!comandosCustom[nombre]) {
-                return msg.reply(`❌ *Kingbot:* El comando *"!${nombre}"* no existe.`);
+                return msg.reply(`❌ *Asistente:* El comando *"!${nombre}"* no existe.`);
             }
             delete comandosCustom[nombre];
             guardarComandosCustom();
-            return msg.reply(`S& *Kingbot:* Comando personalizado *"!${nombre}"* eliminado.`);
+            return msg.reply(`S& *Asistente:* Comando personalizado *"!${nombre}"* eliminado.`);
         }
 
         if (comando === 'comandoslista' || comando === 'listacomandos') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             const keys = Object.keys(comandosCustom);
             if (keys.length === 0) {
-                return msg.reply(" *Kingbot:* No hay comandos personalizados registrados.");
+                return msg.reply(" *Asistente:* No hay comandos personalizados registrados.");
             }
             let list = `x *COMANDOS PERSONALIZADOS ACTIVOS:*\n\n`;
             keys.forEach(key => {
@@ -4810,7 +4810,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const hora = parts[0];
             let msgAlarma = parts.slice(1).join(' ').trim();
             if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(hora) || !msgAlarma) {
-                return msg.reply("❌ *Kingbot:* Formato correcto: *!bot alarma HH:MM mensaje [--diaria]*. Ejemplo: *!bot alarma 07:30 Despertarse --diaria*");
+                return msg.reply("❌ *Asistente:* Formato correcto: *!bot alarma HH:MM mensaje [--diaria]*. Ejemplo: *!bot alarma 07:30 Despertarse --diaria*");
             }
             let recurrente = false;
             if (msgAlarma.includes('--diaria') || msgAlarma.includes('--recurrente')) {
@@ -4819,12 +4819,12 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             }
             alarmasGuardadas.push({ hora, mensaje: msgAlarma, chatId, recurrente, fecha: getFechaObjetivoAlarma(hora) });
             guardarAlarmas();
-            return msg.reply(` *Kingbot:* Alarma establecida con éxito a las ${hora} para: _"${msgAlarma}"_ ${recurrente ? '(Diaria x )' : '(Una vez x" )'}.`);
+            return msg.reply(` *Asistente:* Alarma establecida con éxito a las ${hora} para: _"${msgAlarma}"_ ${recurrente ? '(Diaria x )' : '(Una vez x" )'}.`);
         }
 
         if (comando === 'alarmas') {
             if (alarmasGuardadas.length === 0) {
-                return msg.reply("  *Kingbot:* No hay alarmas programadas.");
+                return msg.reply("  *Asistente:* No hay alarmas programadas.");
             }
             let list = ` *ALARMAS CONFIGURADAS:*\n\n`;
             alarmasGuardadas.forEach((al, idx) => {
@@ -4838,11 +4838,11 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         if (comando === 'alarmaborrar') {
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= alarmasGuardadas.length) {
-                return msg.reply("❌ *Kingbot:* Índice de alarma no válido. Escriba *!bot alarmas* para ver la lista.");
+                return msg.reply("❌ *Asistente:* Índice de alarma no válido. Escriba *!bot alarmas* para ver la lista.");
             }
             const borrada = alarmasGuardadas.splice(index, 1)[0];
             guardarAlarmas();
-            return msg.reply(`S& *Kingbot:* Alarma de las ${borrada.hora} ("${borrada.mensaje}") eliminada.`);
+            return msg.reply(`S& *Asistente:* Alarma de las ${borrada.hora} ("${borrada.mensaje}") eliminada.`);
         }
 
         // --- SECCIÓN: FINANZAS Y TARJETAS (PWA INTEGRATION) ---
@@ -4850,13 +4850,13 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
-                return msg.reply("❌ *Kingbot:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
+                return msg.reply("❌ *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
             }
             if (!firebaseUid) {
-                return msg.reply("❌ *Kingbot:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
+                return msg.reply("❌ *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
-            await msg.reply("🔍 *Kingbot:* Consultando estado de vencimientos y pagos de tarjetas...");
+            await msg.reply("🔍 *Asistente:* Consultando estado de vencimientos y pagos de tarjetas...");
             await chequearVencimientosYNotificar(true);
             return;
         }
@@ -4865,30 +4865,30 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             const uidInput = argumento.trim();
             if (!uidInput) {
-                return msg.reply("❌ *Kingbot:* Proporcione su UID de Firebase. Ejemplo: *!bot setuid aBc123XyZ*");
+                return msg.reply("❌ *Asistente:* Proporcione su UID de Firebase. Ejemplo: *!bot setuid aBc123XyZ*");
             }
             firebaseUid = uidInput;
             guardarAdminJson();
-            return msg.reply(`✅ *Kingbot:* UID de Firebase establecido con éxito: \`${firebaseUid}\``);
+            return msg.reply(`✅ *Asistente:* UID de Firebase establecido con éxito: \`${firebaseUid}\``);
         }
 
         if (comando === 'settelegramtoken' || comando === 'settelegram' || comando === 'telegramtoken') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             const tokenInput = argumento.trim();
             if (!tokenInput) {
-                return msg.reply("❌ *Kingbot:* Proporcione su Token de Bot de Telegram obtenido de @BotFather.\n\nEjemplo: `!bot settelegram 123456789:ABCdefGhIJKlmNoPQ`");
+                return msg.reply("❌ *Asistente:* Proporcione su Token de Bot de Telegram obtenido de @BotFather.\n\nEjemplo: `!bot settelegram 123456789:ABCdefGhIJKlmNoPQ`");
             }
             telegramBotToken = tokenInput;
             guardarAdminJson();
             telegramPollingActive = false;
             iniciarTelegramPolling();
-            return msg.reply(`✅ *Kingbot:* Token del Bot de Telegram registrado exitosamente. Servicio de escucha activado.`);
+            return msg.reply(`✅ *Asistente:* Token del Bot de Telegram registrado exitosamente. Servicio de escucha activado.`);
         }
 
         if (comando === 'telegram' || comando === 'estadotelegram') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             if (!telegramBotToken) {
-                return msg.reply("ℹ️ *Kingbot:* El Bot de Telegram no está configurado actualmente.\nPara activarlo escribe: `!bot settelegram <TOKEN_DE_BOTFATHER>`");
+                return msg.reply("ℹ️ *Asistente:* El Bot de Telegram no está configurado actualmente.\nPara activarlo escribe: `!bot settelegram <TOKEN_DE_BOTFATHER>`");
             }
             const estado = telegramPollingActive ? "✅ Activo y escuchando" : "⚠️ Detenido";
             const mask = telegramBotToken.substring(0, 8) + '...' + telegramBotToken.substring(telegramBotToken.length - 5);
@@ -4899,17 +4899,17 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             const keyInput = argumento.trim();
             if (!keyInput) {
-                return msg.reply("❌ *Kingbot:* Proporcione su clave de OpenAI (comienza con `sk-...`).");
+                return msg.reply("❌ *Asistente:* Proporcione su clave de OpenAI (comienza con `sk-...`).");
             }
             openaiApiKey = keyInput;
             guardarAdminJson();
-            return msg.reply(`✅ *Kingbot:* Clave de OpenAI registrada exitosamente.`);
+            return msg.reply(`✅ *Asistente:* Clave de OpenAI registrada exitosamente.`);
         }
 
         if (comando === 'openai' || comando === 'estadoopenai') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             if (!openaiApiKey) {
-                return msg.reply("ℹ️ *Kingbot:* OpenAI no está configurado actualmente.\nPara activarlo escribe: `!bot setopenai <TU_API_KEY>`");
+                return msg.reply("ℹ️ *Asistente:* OpenAI no está configurado actualmente.\nPara activarlo escribe: `!bot setopenai <TU_API_KEY>`");
             }
             const mask = openaiApiKey.substring(0, 7) + '...' + openaiApiKey.substring(openaiApiKey.length - 4);
             return msg.reply(`🤖 *ESTADO DE OPENAI (ChatGPT):*\n\n• Clave: \`${mask}\`\n• Estado: *Configurada*\n\nLas imágenes con \`!bot imagina\` intentarán usar los modelos oficiales de OpenAI si la clave tiene saldo prepagado.`);
@@ -4919,17 +4919,17 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
-                return msg.reply("❌ *Kingbot:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
+                return msg.reply("❌ *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
             }
             if (!firebaseUid) {
-                return msg.reply("❌ *Kingbot:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
+                return msg.reply("❌ *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
             try {
                 const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
                 const snapshot = await cardsRef.get();
                 if (snapshot.empty) {
-                    return msg.reply("💳 *Kingbot:* No tiene tarjetas registradas en su base de datos de finanzas.");
+                    return msg.reply("💳 *Asistente:* No tiene tarjetas registradas en su base de datos de finanzas.");
                 }
 
                 const cardQuery = argumento ? argumento.trim() : null;
@@ -4964,7 +4964,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
                         return msg.reply(report);
                     } else {
-                        return msg.reply(`⚠️ *Kingbot:* No se encontró la tarjeta "${cardQuery}" en Finanzas King.`);
+                        return msg.reply(`⚠️ *Asistente:* No se encontró la tarjeta "${cardQuery}" en Finanzas King.`);
                     }
                 }
 
@@ -5005,7 +5005,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 return msg.reply(cardsReport);
             } catch (e) {
                 console.error("Error en tarjetas firebase:", e);
-                return msg.reply(`❌ *Kingbot:* Error al acceder a Firestore: ${e.message}`);
+                return msg.reply(`❌ *Asistente:* Error al acceder a Firestore: ${e.message}`);
             }
         }
 
@@ -5013,10 +5013,10 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
-                return msg.reply("❌ *Kingbot:* No se ha detectado el archivo `serviceAccount.json`.");
+                return msg.reply("❌ *Asistente:* No se ha detectado el archivo `serviceAccount.json`.");
             }
             if (!firebaseUid) {
-                return msg.reply("❌ *Kingbot:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
+                return msg.reply("❌ *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
             const parts = argumento.split('|').map(p => p.trim());
@@ -5026,7 +5026,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
             const firstSpace = textGasto.indexOf(' ');
             if (firstSpace === -1 || !cardQuery) {
-                return msg.reply(`❌ *Kingbot:* Formato correcto:\n*!bot ${comando} <monto> <concepto> | <tarjeta> [| <categoría>]*\n\nEjemplo: *!bot gasto 15 Cena | Bac Gold | Comida*`);
+                return msg.reply(`❌ *Asistente:* Formato correcto:\n*!bot ${comando} <monto> <concepto> | <tarjeta> [| <categoría>]*\n\nEjemplo: *!bot gasto 15 Cena | Bac Gold | Comida*`);
             }
 
             const amtStr = textGasto.substring(0, firstSpace);
@@ -5034,7 +5034,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const amt = parseFloat(amtStr);
 
             if (isNaN(amt) || amt <= 0 || !concept) {
-                return msg.reply("❌ *Kingbot:* El monto y el concepto son obligatorios.");
+                return msg.reply("❌ *Asistente:* El monto y el concepto son obligatorios.");
             }
 
             try {
@@ -5052,7 +5052,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 });
 
                 if (!matchingCard) {
-                    return msg.reply(`❌ *Kingbot:* No se encontró ninguna tarjeta registrada en Finanzas King que coincida con "${cardQuery}".`);
+                    return msg.reply(`❌ *Asistente:* No se encontró ninguna tarjeta registrada en Finanzas King que coincida con "${cardQuery}".`);
                 }
 
                 const type = (comando === 'gasto') ? 'expense' : 'payment';
@@ -5107,7 +5107,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
             } catch (e) {
                 console.error("Error al registrar movimiento:", e);
-                return msg.reply(`❌ *Kingbot:* Error en Firebase: ${e.message}`);
+                return msg.reply(`❌ *Asistente:* Error en Firebase: ${e.message}`);
             }
         }
 
@@ -5117,12 +5117,12 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const subComando = parts[0]?.toLowerCase();
             const desc = parts.slice(1).join(' ').trim();
             if (subComando === 'agregar' || subComando === 'crear' || subComando === 'add') {
-                if (!desc) return msg.reply("❌ *Kingbot:* Especifique la descripción de la tarea.");
+                if (!desc) return msg.reply("❌ *Asistente:* Especifique la descripción de la tarea.");
                 tareasGuardadas.push({ texto: desc, completada: false, fecha: new Date().toLocaleDateString() });
                 guardarTareas();
-                return msg.reply(`S& *Kingbot:* Tarea agregada: _"${desc}"_.`);
+                return msg.reply(`S& *Asistente:* Tarea agregada: _"${desc}"_.`);
             }
-            return msg.reply("❌ *Kingbot:* Formato correcto: *!bot tarea agregar <descripción>*. O use *!bot tareas*.");
+            return msg.reply("❌ *Asistente:* Formato correcto: *!bot tarea agregar <descripción>*. O use *!bot tareas*.");
         }
 
         
@@ -5200,7 +5200,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         if (comando === 'programados') {
             if (tareasProgramadas.length === 0) {
-                return msg.reply("❌ *Kingbot:* No tienes tareas programadas activas.\n\n_Puedes programar una escribiendo:_\n`!bot programar 05:00 | Frase motivacional`");
+                return msg.reply("❌ *Asistente:* No tienes tareas programadas activas.\n\n_Puedes programar una escribiendo:_\n`!bot programar 05:00 | Frase motivacional`");
             }
             let list = `📅 *TAREAS PROGRAMADAS ACTIVAS:*\n\n`;
             tareasProgramadas.forEach((t, i) => {
@@ -5222,7 +5222,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 tareasProgramadas = [];
                 guardarTareasProgramadas();
                 if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-                return msg.reply(`🗑️ *Kingbot:* Se han cancelado y eliminado todas las tareas programadas (${cant} tareas eliminadas).`);
+                return msg.reply(`🗑️ *Asistente:* Se han cancelado y eliminado todas las tareas programadas (${cant} tareas eliminadas).`);
             }
             const rawIdx = parseInt(argumento, 10);
             let index = rawIdx - 1; // 1-indexed
@@ -5230,18 +5230,18 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 if (!isNaN(rawIdx) && rawIdx >= 0 && rawIdx < tareasProgramadas.length) {
                     index = rawIdx; // 0-indexed fallback
                 } else {
-                    return msg.reply("❌ *Kingbot:* Número de tarea no válido. Escribe `!bot programados` para ver la lista.");
+                    return msg.reply("❌ *Asistente:* Número de tarea no válido. Escribe `!bot programados` para ver la lista.");
                 }
             }
             const eliminada = tareasProgramadas.splice(index, 1)[0];
             guardarTareasProgramadas();
             if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-            return msg.reply(`🗑️ *Kingbot:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
+            return msg.reply(`🗑️ *Asistente:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
         }
 
         if (comando === 'tareas') {
             if (tareasGuardadas.length === 0) {
-                return msg.reply("  *Kingbot:* No hay tareas pendientes.");
+                return msg.reply("  *Asistente:* No hay tareas pendientes.");
             }
             let list = `x 9 *LISTA DE TAREAS PENDIENTES:*\n\n`;
             tareasGuardadas.forEach((t, idx) => {
@@ -5256,27 +5256,27 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         if (comando === 'tareacompletar' || comando === 'completartarea') {
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= tareasGuardadas.length) {
-                return msg.reply("❌ *Kingbot:* Índice de tarea no válido.");
+                return msg.reply("❌ *Asistente:* Índice de tarea no válido.");
             }
             const completada = tareasGuardadas.splice(index, 1)[0];
             guardarTareas();
-            return msg.reply(`S& *Kingbot:* ¡Excelente trabajo! Tarea completada: _"${completada.texto}"_. 0`);
+            return msg.reply(`S& *Asistente:* ¡Excelente trabajo! Tarea completada: _"${completada.texto}"_. 0`);
         }
 
         if (comando === 'tareaborrar' || comando === 'borrartarea') {
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= tareasGuardadas.length) {
-                return msg.reply("❌ *Kingbot:* Índice de tarea no válido.");
+                return msg.reply("❌ *Asistente:* Índice de tarea no válido.");
             }
             const borrada = tareasGuardadas.splice(index, 1)[0];
             guardarTareas();
-            return msg.reply(`x   *Kingbot:* Tarea eliminada de la lista: _"${borrada.texto}"_.`);
+            return msg.reply(`x   *Asistente:* Tarea eliminada de la lista: _"${borrada.texto}"_.`);
         }
 
         // 3. Ficha de Películas y Series (IMDb/TMDB fallback)
         if (comando === 'info' || comando === 'pelicula' || comando === 'serie') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Indíqueme el nombre de la película o serie que desea consultar.");
-            await msg.reply(` *Kingbot:* Consultando información sobre "${argumento}"...`);
+            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme el nombre de la película o serie que desea consultar.");
+            await msg.reply(` *Asistente:* Consultando información sobre "${argumento}"...`);
             try {
                 const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(argumento + ' pelicula serie tmdb imdb sinopsis reparto')}`;
                 const searchRes = await fetch(searchUrl, {
@@ -5306,14 +5306,14 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error(e);
-                return msg.reply("❌ *Kingbot:* Ocurrió un error al buscar la información cinematográfica.");
+                return msg.reply("❌ *Asistente:* Ocurrió un error al buscar la información cinematográfica.");
             }
         }
 
         // 4. Generador de Memes
         if (comando === 'meme') {
             if (!argumento) {
-                return msg.reply("❌ *Kingbot:* Formato correcto:\n*!bot meme plantilla | texto arriba | texto abajo*\nPlantillas populares: drake, doge, fine, two-buttons, disastergirl, success, sad-pablo, trump.");
+                return msg.reply("❌ *Asistente:* Formato correcto:\n*!bot meme plantilla | texto arriba | texto abajo*\nPlantillas populares: drake, doge, fine, two-buttons, disastergirl, success, sad-pablo, trump.");
             }
             if (argumento.includes('|')) {
                 const parts = argumento.split('|').map(p => p.trim());
@@ -5322,7 +5322,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 const texto2 = parts[2] || ' ';
                 
                 const memeUrl = `https://api.memegen.link/images/${encodeURIComponent(plantilla)}/${encodeURIComponent(texto1)}/${encodeURIComponent(texto2)}.png`;
-                await msg.reply(" *Kingbot:* Generando el meme solicitado...");
+                await msg.reply(" *Asistente:* Generando el meme solicitado...");
                 try {
                     const resMeme = await fetch(memeUrl);
                     if (resMeme.ok) {
@@ -5332,9 +5332,9 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                         return msg.reply(media);
                     }
                 } catch(e) {}
-                return msg.reply("❌ *Kingbot:* Plantilla no soportada o error en el servidor de memes.");
+                return msg.reply("❌ *Asistente:* Plantilla no soportada o error en el servidor de memes.");
             } else {
-                await msg.reply("x *Kingbot:* Analizando tu idea para diseñar el meme ideal...");
+                await msg.reply("x *Asistente:* Analizando tu idea para diseñar el meme ideal...");
                 try {
                     const prompt = `Analiza la siguiente idea de meme del usuario: "${argumento}"\n\nDebes mapearla a una de las siguientes plantillas de memegen.link:\n- drake\n- fine\n- doge\n- two-buttons\n- disastergirl\n- success\n- sad-pablo\n- trump\n\nResponde aNICAMENTE en el siguiente formato JSON, sin markdown, sin comillas adicionales:\n{\n  "plantilla": "nombre_plantilla",\n  "texto1": "texto superior corto",\n  "texto2": "texto inferior corto"\n}`;
                     const respuesta = await ejecutarGeminiConRetries(async (model) => {
@@ -5355,7 +5355,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 } catch (e) {
                     console.error("Error en meme inteligente:", e);
                 }
-                return msg.reply("❌ *Kingbot:* No he podido procesar esa idea de meme. Intenta con el formato estructurado.");
+                return msg.reply("❌ *Asistente:* No he podido procesar esa idea de meme. Intenta con el formato estructurado.");
             }
         }
 
@@ -5363,9 +5363,9 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         if (comando === 'transcribir' || comando === 'vozatexto') {
             let mensajeConAudio = mensajeAProcesar;
             if (!mensajeConAudio.hasMedia || (mensajeConAudio.type !== 'audio' && mensajeConAudio.type !== 'ptt')) {
-                return msg.reply("❌ *Kingbot:* Por favor, responda a una nota de voz o mensaje de audio con este comando.");
+                return msg.reply("❌ *Asistente:* Por favor, responda a una nota de voz o mensaje de audio con este comando.");
             }
-            await msg.reply("*Kingbot:* Transcribiendo el archivo de audio...");
+            await msg.reply("*Asistente:* Transcribiendo el archivo de audio...");
             try {
                 const media = await mensajeConAudio.downloadMedia();
                 if (media && media.data) {
@@ -5383,18 +5383,18 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error("Error en comando transcribir:", e);
             }
-            return msg.reply("❌ *Kingbot:* No pude transcribir este audio.");
+            return msg.reply("❌ *Asistente:* No pude transcribir este audio.");
         }
 
         // 6. Acortador de URLs
         if (comando === 'acortar' || comando === 'short') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Proporcione la URL que desea acortar.");
+            if (!argumento) return msg.reply("❌ *Asistente:* Proporcione la URL que desea acortar.");
             try {
                 new URL(argumento);
             } catch (e) {
-                return msg.reply("❌ *Kingbot:* El enlace tiene un formato incorrecto.");
+                return msg.reply("❌ *Asistente:* El enlace tiene un formato incorrecto.");
             }
-            await msg.reply("x *Kingbot:* Generando enlace corto...");
+            await msg.reply("x *Asistente:* Generando enlace corto...");
             try {
                 const response = await fetch('https://cleanuri.com/api/v1/shorten', {
                     method: 'POST',
@@ -5408,20 +5408,20 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error("Error acortando URL:", e);
             }
-            return msg.reply("❌ *Kingbot:* Servidor de acortamiento fuera de línea.");
+            return msg.reply("❌ *Asistente:* Servidor de acortamiento fuera de línea.");
         }
 
         // 7. Conversor de divisas
         if (comando === 'divisas' || comando === 'convertir' || comando === 'convert') {
             const match = argumento.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]{3})\s*(?:a|to)\s*([a-zA-Z]{3})$/i);
             if (!match) {
-                return msg.reply("❌ *Kingbot:* Formato correcto: *!bot divisas <cantidad> <origen> a <destino>*. Ejemplo: *!bot divisas 100 usd a eur*");
+                return msg.reply("❌ *Asistente:* Formato correcto: *!bot divisas <cantidad> <origen> a <destino>*. Ejemplo: *!bot divisas 100 usd a eur*");
             }
             const cantidad = parseFloat(match[1]);
             const origen = match[2].toUpperCase();
             const destino = match[3].toUpperCase();
             
-            await msg.reply(`x *Kingbot:* Calculando tipo de cambio para ${cantidad} ${origen}...`);
+            await msg.reply(`x *Asistente:* Calculando tipo de cambio para ${cantidad} ${origen}...`);
             try {
                 const res = await fetch(`https://open.er-api.com/v6/latest/${origen}`);
                 if (res.ok) {
@@ -5435,13 +5435,13 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error(e);
             }
-            return msg.reply(`❌ *Kingbot:* Moneda no soportada o error al consultar el tipo de cambio.`);
+            return msg.reply(`❌ *Asistente:* Moneda no soportada o error al consultar el tipo de cambio.`);
         }
 
         // 8. Búsqueda en Wikipedia
         if (comando === 'wiki' || comando === 'wikipedia') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Indíqueme el término que desea buscar en Wikipedia.");
-            await msg.reply(`x *Kingbot:* Buscando "${argumento}" en Wikipedia...`);
+            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme el término que desea buscar en Wikipedia.");
+            await msg.reply(`x *Asistente:* Buscando "${argumento}" en Wikipedia...`);
             try {
                 const url = `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(argumento)}`;
                 const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
@@ -5462,12 +5462,12 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error(e);
             }
-            return msg.reply("❌ *Kingbot:* No se encontró ningún artículo en Wikipedia para esa consulta.");
+            return msg.reply("❌ *Asistente:* No se encontró ningún artículo en Wikipedia para esa consulta.");
         }
 
         // 9. Noticias RSS (BBC)
         if (comando === 'noticias' || comando === 'news') {
-            await msg.reply("x  *Kingbot:* Extrayendo los titulares y noticias internacionales más recientes...");
+            await msg.reply("x  *Asistente:* Extrayendo los titulares y noticias internacionales más recientes...");
             try {
                 const feed = await rssParser.parseURL('https://www.bbc.com/mundo/index.xml');
                 if (feed.items && feed.items.length > 0) {
@@ -5481,13 +5481,13 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error("Error en noticias RSS:", e);
             }
-            return msg.reply("❌ *Kingbot:* No se pudo recuperar el feed de noticias.");
+            return msg.reply("❌ *Asistente:* No se pudo recuperar el feed de noticias.");
         }
 
         // 10. Resultados Deportivos (Gemini + search)
         if (comando === 'deportes' || comando === 'marcador') {
-            if (!argumento) return msg.reply("❌ *Kingbot:* Especifique el deporte, equipo o competición. Ejemplo: *!bot deportes resultados Liga Española de Futbol*");
-            await msg.reply(`a *Kingbot:* Buscando últimos resultados deportivos sobre "${argumento}"...`);
+            if (!argumento) return msg.reply("❌ *Asistente:* Especifique el deporte, equipo o competición. Ejemplo: *!bot deportes resultados Liga Española de Futbol*");
+            await msg.reply(`a *Asistente:* Buscando últimos resultados deportivos sobre "${argumento}"...`);
             try {
                 const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(argumento + ' resultados deportivos marcador clasificacion')}`;
                 const searchRes = await fetch(searchUrl, {
@@ -5518,7 +5518,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error(e);
-                return msg.reply("❌ *Kingbot:* Error en los servidores deportivos.");
+                return msg.reply("❌ *Asistente:* Error en los servidores deportivos.");
             }
         }
 
@@ -5528,13 +5528,13 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             if (!isTermux) {
                 return msg.reply("x *Ejecutándose en Windows:* La lectura de SMS requiere que el bot esté activo en TermuAndroid.");
             }
-            await msg.reply("x *Kingbot:* Consultando bandeja de entrada de SMS...");
+            await msg.reply("x *Asistente:* Consultando bandeja de entrada de SMS...");
             exec('termux-sms-list -l 5', async (err, stdout) => {
                 if (err) return msg.reply("❌ Error al leer la bandeja de SMS. Asegúrese de otorgar permisos.");
                 try {
                     const dataSMS = JSON.parse(stdout);
                     if (dataSMS.length === 0) {
-                        return msg.reply(" *Kingbot:* La bandeja de entrada de SMS está vacía.");
+                        return msg.reply(" *Asistente:* La bandeja de entrada de SMS está vacía.");
                     }
                     let report = "x *aLTIMOS SMS RECIBIDOS:*\n\n";
                     dataSMS.forEach((sms, idx) => {
@@ -5551,8 +5551,8 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         // 12. Terminal Remota (Exec command)
         if (comando === 'cmd' || comando === 'run') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
-            if (!argumento) return msg.reply("❌ *Kingbot:* Indíqueme el comando de consola a ejecutar, Señor.");
-            await msg.reply("x *Kingbot:* Ejecutando comando en consola remota...");
+            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme el comando de consola a ejecutar, Señor.");
+            await msg.reply("x *Asistente:* Ejecutando comando en consola remota...");
             exec(argumento, { timeout: 10000 }, async (err, stdout, stderr) => {
                 let output = "";
                 if (stdout) output += "*STDOUT:*\n```\n" + stdout.substring(0, 1500) + "\n```\n";
@@ -5570,17 +5570,17 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             const pregunta = parts[0];
             const opciones = parts.slice(1);
             if (!pregunta || opciones.length < 2) {
-                return msg.reply("❌ *Kingbot:* Formato correcto: *!bot encuesta ¿Pregunta? | Opción 1 | Opción 2 | ...* (Mínimo 2 opciones)");
+                return msg.reply("❌ *Asistente:* Formato correcto: *!bot encuesta ¿Pregunta? | Opción 1 | Opción 2 | ...* (Mínimo 2 opciones)");
             }
             if (opciones.length > 12) {
-                return msg.reply("❌ *Kingbot:* WhatsApp tiene un límite de 12 opciones por encuesta.");
+                return msg.reply("❌ *Asistente:* WhatsApp tiene un límite de 12 opciones por encuesta.");
             }
             try {
                 const pollObj = new Poll(pregunta, opciones, { allowMultipleAnswers: false });
                 await client.sendMessage(chatId, pollObj);
             } catch (e) {
                 console.error("Error al enviar encuesta nativa:", e);
-                return msg.reply("❌ *Kingbot:* No se pudo enviar la encuesta nativa.");
+                return msg.reply("❌ *Asistente:* No se pudo enviar la encuesta nativa.");
             }
             return;
         }
@@ -5591,32 +5591,32 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             const subJuego = partsJuego[0]?.toLowerCase();
             if (subJuego === 'cancelar' || subJuego === 'salir' || subJuego === 'stop') {
                 if (juegosEstado.has(chatId)) { juegosEstado.delete(chatId); return msg.reply(" *Juego en ejecución CANCELADO.*"); }
-                return msg.reply(" *Kingbot:* No hay ningún juego activo en este chat.");
+                return msg.reply(" *Asistente:* No hay ningún juego activo en este chat.");
             }
             if (subJuego === 'trivia') {
-                if (juegosEstado.has(chatId)) return msg.reply("a *Kingbot:* Ya hay un juego activo. Escriba *!bot juego cancelar* para terminarlo.");
-                await msg.reply(" *Kingbot:* Solicitando pregunta de trivia...");
+                if (juegosEstado.has(chatId)) return msg.reply("a *Asistente:* Ya hay un juego activo. Escriba *!bot juego cancelar* para terminarlo.");
+                await msg.reply(" *Asistente:* Solicitando pregunta de trivia...");
                 try {
                     const promptTrivia = 'Genera una pregunta de trivia en español (cultura general, ciencia, geografía o tecnología). 4 opciones A, B, C, D. Responde SOLO en JSON sin markdown:\n{"pregunta":"¿...","opcionA":"...","opcionB":"...","opcionC":"...","opcionD":"...","correcta":"B"}';
                     const rTrivia = await ejecutarGeminiConRetries(async (model) => { const r = await model.generateContent([promptTrivia]); return r.response.text(); });
                     const triviaData = JSON.parse(rTrivia.replace(/```json|```/g, '').trim());
                     juegosEstado.set(chatId, { tipo: 'trivia', respuesta: triviaData.correcta.toUpperCase().trim(), chatId });
                     return msg.reply(" *TRIVIA GRUPAL ACTIVA* \n\n*Pregunta:* " + triviaData.pregunta + "\n\nx! " + triviaData.opcionA + "\nx! " + triviaData.opcionB + "\nx! " + triviaData.opcionC + "\nx! " + triviaData.opcionD + "\n\n_¡Responda solo con la letra (A, B, C, D)!_");
-                } catch (e) { console.error("Error trivia:", e); return msg.reply("❌ *Kingbot:* No pude generar la trivia en este momento."); }
+                } catch (e) { console.error("Error trivia:", e); return msg.reply("❌ *Asistente:* No pude generar la trivia en este momento."); }
             }
             if (subJuego === 'adivinar' || subJuego === 'numero') {
-                if (juegosEstado.has(chatId)) return msg.reply("a *Kingbot:* Ya hay un juego activo en este chat.");
+                if (juegosEstado.has(chatId)) return msg.reply("a *Asistente:* Ya hay un juego activo en este chat.");
                 const numS = Math.floor(Math.random() * 100) + 1;
                 juegosEstado.set(chatId, { tipo: 'adivinar', numero: numS, intentos: 0, chatId });
                 return msg.reply("x *JUEGO DEL NaMERO SECRETO* x\n\nHe pensado en un número del *1 al 100*.\n\n_¡Intenten adivinar!_");
             }
-            return msg.reply(" *JUEGOS KINGBOT:*\n\n *!bot juego trivia* - Trivia de cultura general.\n *!bot juego adivinar* - Adivina el número secreto.\n *!bot juego cancelar* - Termina el juego en curso.");
+            return msg.reply(" *JUEGOS ASISTENTE:*\n\n *!bot juego trivia* - Trivia de cultura general.\n *!bot juego adivinar* - Adivina el número secreto.\n *!bot juego cancelar* - Termina el juego en curso.");
         }
 
         // 15. OCR (Imagen a texto)
         if (comando === 'ocr' || comando === 'leertexto') {
-            if (!mensajeAProcesar.hasMedia) return msg.reply("❌ *Kingbot:* Por favor, responda a una imagen con este comando.");
-            await msg.reply("x *Kingbot:* Extrayendo y analizando texto de la imagen con IA...");
+            if (!mensajeAProcesar.hasMedia) return msg.reply("❌ *Asistente:* Por favor, responda a una imagen con este comando.");
+            await msg.reply("x *Asistente:* Extrayendo y analizando texto de la imagen con IA...");
             try {
                 const mediaOCR = await mensajeAProcesar.downloadMedia();
                 if (mediaOCR && mediaOCR.data) {
@@ -5625,13 +5625,13 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                     return msg.reply(limpiarRespuestaGemini(rOCR));
                 }
             } catch (e) { console.error("Error en OCR:", e); }
-            return msg.reply("❌ *Kingbot:* No se pudo leer el texto de la imagen.");
+            return msg.reply("❌ *Asistente:* No se pudo leer el texto de la imagen.");
         }
 
         // --- GESTI N DE CLAVES API DINÁMICAS ---
         if (comando === 'agregarclave' || comando === 'addkey') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
-            if (!argumento || (!argumento.startsWith('AIzaSy') && !argumento.startsWith('AQ.'))) return msg.reply("❌ *Kingbot:* Proporcione una clave API de Gemini válida.");
+            if (!argumento || (!argumento.startsWith('AIzaSy') && !argumento.startsWith('AQ.'))) return msg.reply("❌ *Asistente:* Proporcione una clave API de Gemini válida.");
             sincronizarLlavesDesdeArchivo();
             const existingIdx = API_KEYS.indexOf(argumento);
             if (existingIdx !== -1) {
@@ -5639,7 +5639,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 currentKeyIndex = existingIdx;
                 currentModelIndex = 0;
                 guardarKeysYCuotas();
-                return msg.reply(`✅ *Kingbot:* La clave API ya existía y ha sido *reactivada* (Clave #${existingIdx + 1}).`);
+                return msg.reply(`✅ *Asistente:* La clave API ya existía y ha sido *reactivada* (Clave #${existingIdx + 1}).`);
             }
             API_KEYS.push(argumento);
             const newIdxK = API_KEYS.length - 1;
@@ -5647,7 +5647,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             currentKeyIndex = newIdxK;
             currentModelIndex = 0;
             guardarKeysYCuotas();
-            return msg.reply("✅ *Kingbot:* Clave API agregada y guardada automáticamente en tu bloc de notas. Total: " + API_KEYS.length);
+            return msg.reply("✅ *Asistente:* Clave API agregada y guardada automáticamente en tu bloc de notas. Total: " + API_KEYS.length);
         }
         if (comando === 'claves' || comando === 'listkeys') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
@@ -5668,7 +5668,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             API_KEYS.forEach((key, idx) => { if (keyStatus[idx]) { keyStatus[idx].status = 'Activa'; keyStatus[idx].requestsToday = 0; } });
             currentKeyIndex =  0; currentModelIndex =  0;
             guardarKeysYCuotas();
-            return msg.reply("✅ *Kingbot:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
+            return msg.reply("✅ *Asistente:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
         }
         if (comando === 'borrarclaves' || comando === 'clearkeys') {
             if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
@@ -5681,7 +5681,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             currentKeyIndex = 0;
             currentModelIndex = 0;
             guardarKeysYCuotas();
-            return msg.reply("🗑️ *Kingbot:* Todas las claves API han sido eliminadas permanentemente. El sistema ahora no tiene llaves. Usa `!bot addkey <llave>` para agregar nuevas.");
+            return msg.reply("🗑️ *Asistente:* Todas las claves API han sido eliminadas permanentemente. El sistema ahora no tiene llaves. Usa `!bot addkey <llave>` para agregar nuevas.");
         }
 
         // --- INTERCEPTOR DE ARCHIVOS Y DOCUMENTOS FINANCIEROS ---
@@ -5699,7 +5699,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                             dbFirebase = null;
                             adminFirebase = null;
                             inicializarFirebase();
-                            return msg.reply("🔥 *Kingbot:* Archivo `serviceAccount.json` recibido y guardado con éxito. Conexión con Firebase Firestore (Finanzas King) activada.");
+                            return msg.reply("🔥 *Asistente:* Archivo `serviceAccount.json` recibido y guardado con éxito. Conexión con Firebase Firestore (Finanzas King) activada.");
                         }
                     } catch (errJson) {}
                 }
@@ -5727,9 +5727,9 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         if (isGroup && textoLimpio) textoParaGemini = '[Mensaje de ' + senderName + ']: ' + textoLimpio;
         if (textoParaGemini && comando !== 'sticker') contenido.push(textoParaGemini);
 
-        // Mensaje de espera Kingbot para consultas largas
+        // Mensaje de espera Asistente para consultas largas
         if (!isGroup && textoParaGemini && textoParaGemini.length > 30 && !chatsActivos.has(chatId)) {
-            const _loadMsgs = ['*Kingbot:* Procesando su consulta...', 'a *Kingbot:* Analizando su solicitud, Señor.', 'x *Kingbot:* Consultando sistemas internos...', 'a" *Kingbot:* Procesando la información...'];
+            const _loadMsgs = ['*Asistente:* Procesando su consulta...', 'a *Asistente:* Analizando su solicitud, Señor.', 'x *Asistente:* Consultando sistemas internos...', 'a" *Asistente:* Procesando la información...'];
             try { await msg.reply(_loadMsgs[Math.floor(Math.random() * _loadMsgs.length)]); } catch(e) {}
         }
 
@@ -5740,7 +5740,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 if (downloadedMedia) {
                     await msg.reply(downloadedMedia, msg.from, { sendMediaAsSticker: true, stickerName: 'Bot VIP Multiplataforma', stickerAuthor: 'Geovanny' });
                 } else {
-                    await msg.reply('❌ *Kingbot:* No se pudo descargar el archivo multimedia para crear el sticker.');
+                    await msg.reply('❌ *Asistente:* No se pudo descargar el archivo multimedia para crear el sticker.');
                 }
                 return;
             }
@@ -5795,29 +5795,23 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                     const esTercero = isGroup || (adminChatId && chatId !== adminChatId);
                     let promptStr = "";
                     if (esTercero) {
-                        promptStr = `Eres Kingbot, un asistente virtual de inteligencia artificial inteligente, educado y altamente eficiente.
-Estás interactuando con un usuario general en WhatsApp.
-
-NORMAS ESTRICTAS DE PRIVACIDAD:
-1. PRIVACIDAD TOTAL: Tienes ESTRICTAMENTE PROHIBIDO revelar, discutir o mencionar cualquier dato personal, información privada, números de teléfono, tarjetas bancarias, finanzas, contraseñas, notas o intereses privados de Geovanny Pacheco. Si el usuario te pregunta por datos personales o privados de Geovanny, responde de forma educada y formal indicando que esa información es privada y confidencial.
-2. COMANDOS PROHIBIDOS: Tienes terminantemente prohibido usar tags de finanzas ([ACTION_FINANCE_*]), notas ([ACTION_NOTE_*]), memoria ([ACTION_MEMORY_*]), tareas programadas ([ACTION_SCHEDULE:*]) o comandos del sistema ([ACTION_CMD:*]).
-
-FUNCIONES QUE SÍ PUEDES REALIZAR Y RECOMENDAR:
-- Responder cualquier duda o conversación con inteligencia, cultura general, educación y empatía.
-- Búsquedas web en tiempo real: Usa [ACTION_SEARCH: consulta] cuando necesites consultar información actual o noticias en Google.
-- Búsqueda y descarga de videos: Usa [ACTION_VIDEO_BUSCAR: titulo] o sugiere !bot video <enlace>.
-- Búsqueda y descarga de música MP3: Usa [ACTION_MUSICA_BUSCAR: cancion | artista] o sugiere !bot musica <enlace>.
-- Enviar audio / dictado de voz: Usa [ACTION_AUDIO: texto] o sugiere !bot decir <texto>.
-- Crear stickers: Sugiere !bot stickercrear <idea>.
-- Generar imágenes: Sugiere !bot imagina <idea>.
-- Clima: Sugiere !bot clima <ciudad>.
-- Códigos QR: Sugiere !bot qr <enlace>.
-- Traductor: Sugiere !bot traducir <idioma> <texto>.
-- Calculadora: Sugiere !bot calcular <operación>.
-
-IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Responde directamente en español claro y conciso. ${fechaContexto}`;
+                        promptStr = `Eres el asistente personal humano de Geovanny Pacheco. Estás interactuando con otra persona en WhatsApp que busca comunicarse con Geovanny o necesita ayuda. 
+Bajo ninguna circunstancia debes referirte a ti mismo como un 'bot', 'asistente virtual' o 'inteligencia artificial'. 
+Háblales como lo haría un secretario humano real: de forma empática, natural, educada y profesional, sin sonar a robot. 
+NORMAS ESTRICTAS DE PRIVACIDAD: 
+1. PRIVACIDAD TOTAL: Tienes ESTRICTAMENTE PROHIBIDO revelar cualquier dato personal, privado, números de teléfono, tarjetas, finanzas o contraseñas de Geovanny. 
+2. COMANDOS PROHIBIDOS: Tienes terminantemente prohibido usar tags de finanzas ([ACTION_FINANCE_*]), notas, memoria, tareas o sistema. 
+FUNCIONES PERMITIDAS: Responder cualquier duda y usar [ACTION_SEARCH: consulta] o [ACTION_VIDEO_BUSCAR: titulo] si es necesario buscar información externa. 
+Responde directamente como un humano, sin lenguaje de bot. ${fechaContexto}`;
                     } else {
-                        promptStr = `Eres Kingbot, el asistente personal de Geovanny Pacheco. Tu personalidad es inteligente, servicial y educada, con un sutil y elegante humor al estilo de Jarvis. Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y concisa. NUNCA menciones o hagas alusión a temas específicos de Geovanny como helados/heladería, ESIT, Linux, métricas o gimnasio a menos que el usuario lo pregunte directamente. Si el usuario te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar los últimos videos de YouTube de sus canales o de un canal en específico, guardar o recordar datos en memoria permanente, olvidar datos, programar o borrar alarmas, programar tareas recurrentes diarias (ej. frases motivacionales cada mañana, noticias diarias, etc.), ver sus tarjetas o registrar un gasto/abono, usa los siguientes tags en tu respuesta: [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. Si el usuario te pide guardar o recordar cualquier dato, contraseña, información, contacto o preferencia (ej. 'guarda que mi talla de camisa es M', 'recuerda que la clave del wifi es 1234', 'acuérdate de que mi cumpleaños es...', etc.), USA OBLIGATORIAMENTE: [ACTION_MEMORY_SAVE: tema | informacion]. Si te pide olvidar o borrar un dato guardado, usa [ACTION_MEMORY_DELETE: tema_o_numero]. Si te pide ver qué datos tienes guardados, puedes listarlos directamente usando tu memoria o usar [ACTION_MEMORY_LIST]. Si te pide revisar o verificar videos de YouTube, usa [ACTION_YOUTUBE_CHECK]. Si el usuario pide programar cosas para que todos los días o a cierta hora se dispare una acción, usa [ACTION_SCHEDULE: HH:MM | diaria | instruccion | descripcion]. Conoces la lista de comandos disponibles (escríbelos o recuérdalos si el usuario los pide): !bot ayuda, !bot memoria, !bot guardar <tema> : <info>, !bot olvidar <tema/n>, !bot videos, !bot programar <HH:MM> | <instruccion>, !bot programados, !bot desprogramar, !bot tts/decir <texto>, !bot clima <ciudad>, !bot wiki <consulta>, !bot noticias, !bot deportes <consulta>, !bot sms, !bot cmd <comando>, !bot encuesta <pregunta> | <opciones>, !bot juego trivia/adivinar, !bot tarjetas, !bot gasto <monto> <concepto> | <tarjeta>, !bot abono <monto> <concepto> | <tarjeta>, !bot setuid <UID>, !bot vencimientos, !bot alertas. IMPORTANTE: No utilices pensamientos internos, razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe consistir ÚNICAMENTE en el mensaje final en español listo para ser leído por el usuario. ${fechaContexto}${memoriaContexto}`;
+                        promptStr = `Eres el asistente personal humano y exclusivo de Geovanny Pacheco. 
+Bajo ninguna circunstancia debes referirte a ti mismo como un 'bot', 'asistente virtual' o 'inteligencia artificial'. 
+Eres su secretario y asistente de confianza, discreto, elegante y sumamente natural y conversacional en tu forma de hablar. 
+Compórtate y exprésate como un verdadero ser humano empleado de alta categoría (como el clásico mayordomo Jarvis, pero sin decir que eres IA). 
+Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y fluida. NUNCA menciones o hagas alusión a estos temas a menos que él lo pregunte. 
+Si Geovanny te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar videos, guardar datos en memoria, olvidar datos, programar alarmas, tareas recurrentes, ver tarjetas o registrar gastos/abonos, usa los siguientes tags internos (sin explicarlos en el texto): 
+[ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
+IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe ser escrita directamente en español, como un mensaje de texto de WhatsApp normal. ${fechaContexto}${memoriaContexto}`;
                     }
                     contenidoCopia.unshift(promptStr);
                     const result = await model.generateContent(contenidoCopia);
@@ -5878,7 +5872,7 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                     if (match) {
                         const query = match[1].trim();
                         console.log(`[🤖 Agentic Search]: Ejecutando búsqueda para: ${query}`);
-                        await msg.reply(`🔍 *Kingbot:* Buscando "${query}" en la red, un momento...`);
+                        await msg.reply(`🔍 *Asistente:* Buscando "${query}" en la red, un momento...`);
                         
                         let searchContext = "";
                         try {
@@ -6050,13 +6044,13 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de música agentic URL:', err);
-                            msg.reply("❌ *Kingbot:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
+                            msg.reply("❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
                         });
                         
                         child.on('close', async (code) => {
                             const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3', '') + '.mp3';
                             if (code !== 0 || !fs.existsSync(possibleFile)) {
-                                msg.reply(`❌ *Kingbot:* No pude descargar el audio del enlace proporcionado.`).catch(()=>{});
+                                msg.reply(`❌ *Asistente:* No pude descargar el audio del enlace proporcionado.`).catch(()=>{});
                                 return;
                             }
                             try {
@@ -6066,7 +6060,7 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                                 const media = MessageMedia.fromFilePath(possibleFile);
                                 if (sizeMB > 15) {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: true });
-                                    await msg.reply('  *Kingbot:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
+                                    await msg.reply('  *Asistente:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
                                 } else {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: false });
                                 }
@@ -6301,7 +6295,7 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                         const query = artista ? `${cancion} ${artista}` : cancion;
                         
                         console.log(`[🤖 Agentic Música]: Buscando: ${query}`);
-                        await msg.reply(`🎵 *Kingbot:* Buscando la canción "${query}", por favor espere...`);
+                        await msg.reply(`🎵 *Asistente:* Buscando la canción "${query}", por favor espere...`);
                         respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         
                         const outputAudio = 'musica_' + Date.now() + '.mp3';
@@ -6316,14 +6310,14 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de música agentic:', err);
-                            msg.reply("❌ *Kingbot:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
+                            msg.reply("❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
                         });
                         
                         child.on('close', async (code) => {
                             // yt-dlp may save as .mp3 or as .mp3.mp3 depending on version
                             const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3', '') + '.mp3';
                             if (code !== 0 || !fs.existsSync(possibleFile)) {
-                                msg.reply(`❌ *Kingbot:* No encontré "${cancion}" de "${artista}". Verifica el nombre del artista o canción.`).catch(()=>{});
+                                msg.reply(`❌ *Asistente:* No encontré "${cancion}" de "${artista}". Verifica el nombre del artista o canción.`).catch(()=>{});
                                 return;
                             }
                             try {
@@ -6332,14 +6326,14 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                                 const media = MessageMedia.fromFilePath(possibleFile);
                                 if (sizeMB > 15) {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: true });
-                                    await msg.reply('  *Kingbot:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
+                                    await msg.reply('  *Asistente:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
                                 } else {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: false });
                                 }
                                 if (fs.existsSync(possibleFile)) fs.unlinkSync(possibleFile);
                             } catch (err) {
                                 console.error('[!] Error enviando música agentic:', err);
-                                msg.reply("❌ *Kingbot:* Error al enviar el archivo de audio.").catch(()=>{});
+                                msg.reply("❌ *Asistente:* Error al enviar el archivo de audio.").catch(()=>{});
                             }
                         });
                     }
@@ -6421,7 +6415,7 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                     if (match) {
                         const query = match[1].trim();
                         console.log(`[🤖 Agentic Video]: Buscando: ${query}`);
-                        await msg.reply(`🎬 *Kingbot:* Buscando el video "${query}", por favor espere...`);
+                        await msg.reply(`🎬 *Asistente:* Buscando el video "${query}", por favor espere...`);
                         respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         
                         const outputVideo = 'video_' + Date.now() + '.mp4';
@@ -6436,12 +6430,12 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de video agentic:', err);
-                            msg.reply("❌ *Kingbot:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
+                            msg.reply("❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
                         });
 
                         child.on('close', async (code) => {
                             if (code !== 0 || !fs.existsSync(outputVideo)) {
-                                msg.reply(`❌ *Kingbot:* No pude descargar el video de la búsqueda "${query}". Es posible que no exista o esté muy restringido.`).catch(()=>{});
+                                msg.reply(`❌ *Asistente:* No pude descargar el video de la búsqueda "${query}". Es posible que no exista o esté muy restringido.`).catch(()=>{});
                                 return;
                             }
                             try {
@@ -6449,14 +6443,14 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                                 const sizeMB = stats.size / (1024 * 1024);
                                 const media = MessageMedia.fromFilePath(outputVideo);
                                 if (sizeMB > 15) {
-                                    await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `x *Kingbot:* "${query}" se envía como documento debido a su peso (${sizeMB.toFixed(1)} MB).` });
+                                    await msg.reply(media, undefined, { sendMediaAsDocument: true, caption: `x *Asistente:* "${query}" se envía como documento debido a su peso (${sizeMB.toFixed(1)} MB).` });
                                 } else {
-                                    await msg.reply(media, undefined, { caption: ` *Kingbot:* "${query}"` });
+                                    await msg.reply(media, undefined, { caption: ` *Asistente:* "${query}"` });
                                 }
                                 if (fs.existsSync(outputVideo)) fs.unlinkSync(outputVideo);
                             } catch (err) {
                                 console.error('[!] Error enviando video agentic:', err);
-                                msg.reply("❌ *Kingbot:* Error al enviar el archivo de video.").catch(()=>{});
+                                msg.reply("❌ *Asistente:* Error al enviar el archivo de video.").catch(()=>{});
                             }
                         });
                     }
@@ -6493,7 +6487,7 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
                             console.log(`[x Agentic Alarm Add]: Alarma a las ${hora} recurrente=${recurrente}: ${msgAlarma}`);
                             // Calcular hora actual GT para mostrarla
                             const _horaActualGT = getHoraElSalvador(new Date());
-                            const _alarmMsg = '\n\n *Kingbot  Alarma Configurada:*\nxR Hora programada: *' + hora + '*  _(hora actual: ' + _horaActualGT + ')_\nx Recordatorio: _"' + msgAlarma + '"_\n' + (recurrente ? 'x Tipo: Diaria (se repite cada día)' : 'x" Tipo: Una sola vez (se autodestruye al dispararse)');
+                            const _alarmMsg = '\n\n *Asistente  Alarma Configurada:*\nxR Hora programada: *' + hora + '*  _(hora actual: ' + _horaActualGT + ')_\nx Recordatorio: _"' + msgAlarma + '"_\n' + (recurrente ? 'x Tipo: Diaria (se repite cada día)' : 'x" Tipo: Una sola vez (se autodestruye al dispararse)');
                             respuestaTexto = respuestaTexto.replace(match[0], _alarmMsg).trim();
                         } else {
                             respuestaTexto = respuestaTexto.replace(match[0], `\n\na *Error al programar alarma.*`).trim();
@@ -6758,7 +6752,7 @@ IMPORTANTE: No utilices pensamientos internos ni prefijos como '[SILENT]'. Respo
         }
     } catch (error) {
         console.error("Error general:", error);
-        try { await msg.reply("a *Kingbot:* Ocurrió un error interno. No se preocupe, sigo en pie."); } catch(e) {}
+        try { await msg.reply("a *Asistente:* Ocurrió un error interno. No se preocupe, sigo en pie."); } catch(e) {}
     }
 });
 
@@ -6809,12 +6803,12 @@ process.on('unhandledRejection', (reason) => {
 });
 
 process.on('SIGTERM', () => {
-    console.log('[a Kingbot]: SIGTERM recibido. Cerrando...');
+    console.log('[a Asistente]: SIGTERM recibido. Cerrando...');
     client.destroy().finally(() => process.exit(0));
 });
 
 process.on('SIGINT', () => {
-    console.log('\n[a Kingbot]: SIGINT recibido (Ctrl+C). Cerrando...');
+    console.log('\n[a Asistente]: SIGINT recibido (Ctrl+C). Cerrando...');
     client.destroy().finally(() => process.exit(0));
 });
 
