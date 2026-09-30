@@ -1646,7 +1646,28 @@ client.sendMessage = async (...args) => {
     }
 };
 
+const CHATS_ACTIVOS_FILE = path.join(__dirname, 'chats_activos.json');
 const chatsActivos = new Set();
+try {
+    if (fs.existsSync(CHATS_ACTIVOS_FILE)) {
+        const raw = fs.readFileSync(CHATS_ACTIVOS_FILE, 'utf8');
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+            arr.forEach(c => chatsActivos.add(c));
+        }
+    }
+} catch (e) {
+    console.error("Error cargando chats_activos.json:", e.message);
+}
+
+function guardarChatsActivos() {
+    try {
+        fs.writeFileSync(CHATS_ACTIVOS_FILE, JSON.stringify(Array.from(chatsActivos), null, 2));
+    } catch (e) {
+        console.error("Error guardando chats_activos.json:", e.message);
+    }
+}
+
 const sesionesChat = new Map();
 const esperandoAyudaOpcion = new Map();
 
@@ -4402,6 +4423,7 @@ function obtenerDetalleAyuda(opcionRaw) {
         }
 
         chatsActivos.add(chatId);
+        guardarChatsActivos();
 
         let systemPromptFluid = agentesCustom[nombreAgente];
         if (isGroup || !esAdmin(chatId, msg)) {
@@ -4433,13 +4455,14 @@ Responde de forma clara, natural y concisa en español.`;
             { role: "model", parts: [{ text: `Entendido. Protocolo del Agente "${nombreAgente}" activado y en línea.` }] }
         ]);
 
-        return msg.reply(isGroup ? ` *Modo conversacional grupal ACTIVADO (Agente: ${nombreAgente}).*` : ` *Modo conversacional ACTIVADO (Agente: ${nombreAgente}).*`);
+        return msg.reply(isGroup ? `*Modo conversacional grupal ACTIVADO (Agente: ${nombreAgente}).*` : `*Modo conversacional ACTIVADO (Agente: ${nombreAgente}).*`);
     }
 
     if (primerPalabra === '!finalizarbot') {
         chatsActivos.delete(chatId);
+        guardarChatsActivos();
         sesionesChat.delete(chatId);
-        return msg.reply(" *Modo conversacional DESACTIVADO.*");
+        return msg.reply("*Modo conversacional DESACTIVADO.*");
     }
 
     // --- INTERCEPTOR DE COMPROBANTES / TRANSACCIONES REENVIADAS A WHATSAPP ---
@@ -4471,70 +4494,84 @@ Responde de forma clara, natural y concisa en español.`;
         }
     }
 
-    const usaPrefijo = textoOriginal.toLowerCase().startsWith('!bot');
-    const esAdminPrivado = !isGroup && esAdmin(chatId, msg);
-    if (!chatsActivos.has(chatId) && !usaPrefijo && !esAdminPrivado) return;
+    // --- DETECCIÓN DE INVOCACIÓN DIRECTA (Menciones, Citas y Llamados) ---
+    const botWid = client.info?.wid?._serialized || '';
+    const botNumber = client.info?.wid?.user || '50378419704';
 
-    // --- MODO CONVERSACIONAL INTELIGENTE PARA GRUPOS ---
-    // En grupos con chat activo, el bot NO interrumpe conversaciones entre miembros.
-    // Solo responde si se le invoca directamente por prefijo, mención, cita o nombre.
-    let llamadoPorNombre = false;
+    // 1. WhatsApp @-mención (en msg.mentionedIds o en el texto con @King, @Kingbot, @botNumber, etc.)
     let botMencionado = false;
+    if (Array.isArray(msg.mentionedIds) && msg.mentionedIds.length > 0) {
+        botMencionado = msg.mentionedIds.some(id => 
+            (botWid && id === botWid) || 
+            (botNumber && id.includes(botNumber)) || 
+            ADMIN_NUMBERS.some(n => id.includes(n))
+        );
+    }
+    const regexMentionText = new RegExp(`@(?:king|kingbot|kinbot|bot|asistente|${botNumber})\\b`, 'i');
+    if (!botMencionado && regexMentionText.test(textoOriginal)) {
+        botMencionado = true;
+    }
+
+    // 2. Respuesta o cita a un mensaje previo del bot
     let citadoAlBot = false;
-
-    if (isGroup && !usaPrefijo && !textoOriginal.startsWith('!') && !textoOriginal.startsWith('.')) {
-        // 1. Mención nominal directa al bot al inicio o final del mensaje
-        const regexInicio = /^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)\b/i;
-        const regexFinal = /(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i;
-        if (regexInicio.test(textoOriginal.trim()) || regexFinal.test(textoOriginal.trim())) {
-            llamadoPorNombre = true;
-        }
-
-        // 2. Mención de WhatsApp (@King / @número)
-        const botWid = client.info?.wid?._serialized || '';
-        const botNumber = client.info?.wid?.user || '50378419704';
-        if (Array.isArray(msg.mentionedIds) && msg.mentionedIds.length > 0) {
-            botMencionado = msg.mentionedIds.some(id => 
-                id === botWid || 
-                id.includes(botNumber) || 
-                ADMIN_NUMBERS.some(n => id.includes(n))
-            );
-        }
-
-        // 3. Respuesta o cita a un mensaje previo del bot
-        if (msg.hasQuotedMsg) {
-            try {
-                const quotedMsg = await msg.getQuotedMessage();
-                if (quotedMsg && (
-                    quotedMsg.fromMe || 
-                    quotedMsg.author === botWid || 
-                    quotedMsg.author?.includes(botNumber) ||
-                    ADMIN_NUMBERS.some(n => quotedMsg.author?.includes(n))
-                )) {
-                    citadoAlBot = true;
-                }
-            } catch (eQ) {
-                console.error("[IntelligentGroup] Error al verificar mensaje citado:", eQ.message);
+    if (msg.hasQuotedMsg) {
+        try {
+            const quotedMsg = await msg.getQuotedMessage();
+            if (quotedMsg && (
+                quotedMsg.fromMe || 
+                (botWid && quotedMsg.author === botWid) || 
+                (botNumber && quotedMsg.author?.includes(botNumber)) ||
+                ADMIN_NUMBERS.some(n => quotedMsg.author?.includes(n))
+            )) {
+                citadoAlBot = true;
             }
+        } catch (eQ) {
+            console.error("[IntelligentGroup] Error al verificar mensaje citado:", eQ.message);
         }
+    }
 
-        // Si los miembros hablan entre sí sin dirigirse al bot, guardar silencio absoluto
-        if (!llamadoPorNombre && !botMencionado && !citadoAlBot) {
+    // 3. Mención nominal directa al bot al inicio o final del mensaje ("King,", "Bot,", "Oye King", o al final "... King?")
+    let llamadoPorNombre = false;
+    const regexInicio = /^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)\b/i;
+    const regexFinal = /(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i;
+    if (regexInicio.test(textoOriginal.trim()) || regexFinal.test(textoOriginal.trim())) {
+        llamadoPorNombre = true;
+    }
+
+    // Limpieza de texto de invocación para evaluar comandos y contenido real
+    let textoSinInvocacion = textoOriginal;
+    if (botMencionado) {
+        textoSinInvocacion = textoSinInvocacion.replace(new RegExp(`@(?:king|kingbot|kinbot|bot|asistente|${botNumber}|\\d+)\\b`, 'gi'), '').trim();
+    }
+    if (llamadoPorNombre) {
+        textoSinInvocacion = textoSinInvocacion.replace(/^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)[,:\s-]*/i, '').trim();
+        textoSinInvocacion = textoSinInvocacion.replace(/(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i, '').trim();
+    }
+    if (!textoSinInvocacion) textoSinInvocacion = textoOriginal;
+
+    const usaPrefijo = textoOriginal.toLowerCase().startsWith('!bot') || textoSinInvocacion.toLowerCase().startsWith('!bot');
+    const esAdminPrivado = !isGroup && esAdmin(chatId, msg);
+    const esInvocadoDirecto = botMencionado || citadoAlBot || llamadoPorNombre;
+
+    // --- GATEKEEPER Y CONTROL DE ATENCIÓN INTELIGENTE ---
+    if (isGroup) {
+        // En grupos: atiende si fue invocado directamente (mención, cita o nombre) o si usa prefijo !bot.
+        // Si los miembros hablan entre sí sin dirigirse al bot, guardar silencio absoluto.
+        if (!usaPrefijo && !esInvocadoDirecto) {
+            return;
+        }
+    } else {
+        // En chats privados: atiende si es admin, si usa !bot, si fue invocado, o si el chat está activo.
+        if (!chatsActivos.has(chatId) && !usaPrefijo && !esAdminPrivado && !esInvocadoDirecto) {
             return;
         }
     }
 
-    let textoLimpio = usaPrefijo ? textoOriginal.substring(4).trim() : textoOriginal;
-    if (isGroup && llamadoPorNombre) {
-        textoLimpio = textoLimpio.replace(/^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)[,:\s-]*/i, '').trim();
-        textoLimpio = textoLimpio.replace(/(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i, '').trim();
-        if (!textoLimpio) textoLimpio = textoOriginal;
+    let textoLimpio = textoSinInvocacion;
+    if (textoLimpio.toLowerCase().startsWith('!bot')) {
+        textoLimpio = textoLimpio.substring(4).trim();
     }
-
-    if (isGroup && botMencionado) {
-        textoLimpio = textoLimpio.replace(/@\d+/g, '').trim();
-        if (!textoLimpio) textoLimpio = textoOriginal;
-    }
+    if (!textoLimpio) textoLimpio = textoOriginal;
 
     let comando = textoLimpio.split(' ')[0]?.toLowerCase() || '';
     comando = comando.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -4546,6 +4583,7 @@ Responde de forma clara, natural y concisa en español.`;
         if (!esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador.");
         if (isGroup) {
             chatsActivos.delete(chatId);
+            guardarChatsActivos();
             sesionesChat.delete(chatId);
             return msg.reply("*Modo conversacional grupal DESACTIVADO.*");
         }
@@ -4558,6 +4596,7 @@ Responde de forma clara, natural y concisa en español.`;
         botPausado = false;
         if (isGroup) {
             chatsActivos.add(chatId);
+            guardarChatsActivos();
             const nombreAgente = 'kinbot';
             const systemPromptFluid = `Eres Asistente, un asistente virtual de inteligencia artificial inteligente, amable, educado y altamente eficiente.
 Estás interactuando en un grupo de WhatsApp.
@@ -6883,8 +6922,20 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         try {
             let isConversational = chatsActivos.has(chatId) && sesionesChat.has(chatId);
-            if (!isConversational && !isGroup && esAdmin(chatId, msg)) {
+            if (!isConversational && isGroup && chatsActivos.has(chatId)) {
+                const systemPromptFluid = `Eres Asistente, un asistente virtual de inteligencia artificial inteligente, amable, educado y altamente eficiente.
+Estás interactuando en un grupo de WhatsApp.
+NORMAS ESTRICTAS:
+1. No reveles finanzas, tarjetas bancarias, contraseñas ni notas personales de Geovanny Pacheco.
+2. Responde de forma clara, natural, útil y concisa en español, sin emojis.`;
+                sesionesChat.set(chatId, [
+                    { role: "user", parts: [{ text: systemPromptFluid }] },
+                    { role: "model", parts: [{ text: "Modo conversacional grupal activado y en línea." }] }
+                ]);
+                isConversational = true;
+            } else if (!isConversational && !isGroup && esAdmin(chatId, msg)) {
                 chatsActivos.add(chatId);
+                guardarChatsActivos();
                 const systemPromptFluid = agentesCustom["kingbot"];
                 sesionesChat.set(chatId, [
                     { role: "user", parts: [{ text: systemPromptFluid }] },
