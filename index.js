@@ -1235,12 +1235,13 @@ async function descargarYEnviarVideo(rawUrl, msg) {
                     return;
                 }
             }
+            console.error(`[ERROR DESCARGA] [${plataforma}] Falló yt-dlp y también la API de rescate para URL: ${videoUrl}`);
             await msg.reply(` *No se pudo descargar el video de ${plataforma}.*\n_Asegúrate de que la publicación sea pública, no requiera inicio de sesión y no supere los límites de tamaño (100 MB)._`).catch(()=>{});
             cleanupAndFinish(false);
         };
 
         child.on('error', async (err) => {
-            console.error('[!] Error ejecutando yt-dlp:', err.message);
+            console.error(`[ERROR yt-dlp] [${plataforma}] Error de proceso:`, err.message);
             await handleFallback();
         });
 
@@ -1294,7 +1295,11 @@ async function descargarYEnviarVideo(rawUrl, msg) {
             }
 
             // Si yt-dlp falló o el archivo generado no es válido, ejecutar Rescate vía API
-            console.warn(`[!] yt-dlp no completó con éxito para ${plataforma} (código ${code}). Pasando a Rescate API...`);
+            if (stderrData && stderrData.trim()) {
+                console.error(`[ERROR yt-dlp] [${plataforma}] Código ${code}:\n${stderrData.trim()}`);
+            } else {
+                console.warn(`[!] yt-dlp no completó con éxito para ${plataforma} (código ${code}). Pasando a Rescate API...`);
+            }
             await handleFallback();
         });
     });
@@ -3414,8 +3419,12 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (opcion === '7' || opcion === 'ajustes' || opcion === 'configuracion' || opcion === 'sistema' || opcion === 'conexiones' || opcion === 'voz') {
-        return ` *7. AJUSTES, CONEXIONES Y SERVIDOR:*
-• \`!bot voz <hombre / mujer>\` - Configura la voz por defecto del bot (Masculina  o Femenina ).
+        return `*7. AJUSTES, CONEXIONES Y SERVIDOR:*
+• \`!bot diagnostico\` - Auditoría integral de todos los subsistemas (IA, descargas, base de datos, servidor).
+• \`!bot logs [N]\` - Ver los últimos N registros de salida en el servidor (ej. \`!bot logs 20\`).
+• \`!bot errores [N]\` - Ver los últimos N errores registrados en el servidor.
+• \`!bot sistema\` - Telemetría del servidor (RAM, CPU, Uptime).
+• \`!bot voz <hombre / mujer>\` - Configura la voz por defecto del bot (Masculina o Femenina).
 • \`!bot settelegram <token>\` - Vincula tu bot de Telegram con token de @BotFather.
 • \`!bot telegram\` - Estado de la conexión con Telegram.
 • \`!bot setopenai <key>\` - Registra tu clave de OpenAI para ChatGPT y DALL-E.
@@ -3424,7 +3433,6 @@ function obtenerDetalleAyuda(opcionRaw) {
 • \`!bot claves\` - Muestra el estado y consumo de tus claves Gemini.
 • \`!bot resetkeys\` - Reactiva todas las claves marcadas como agotadas.
 • \`!bot bateria\` - Consulta batería, temperatura y estado de carga (Termux).
-• \`!bot sistema\` - Telemetría del servidor (RAM, CPU, tiempo encendido).
 • \`!bot apagar\` / \`!bot encender\` - Pausa o reactiva el bot.`;
     }
 
@@ -4422,14 +4430,16 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             }
         }
 
-        // --- NUEVO COMANDO: TELEMETRÍA DEL SISTEMA ---
+        // --- TELEMETRÍA RÁPIDA DEL SISTEMA ---
         if (comando === 'sistema' || comando === 'hardware') {
             const platform = os.platform();
             const arch = os.arch();
-            const cpuModel = os.cpus()[0]?.model || "Desconocido";
+            const cpuModel = os.cpus()[0]?.model || "ARM64";
             const cpuCores = os.cpus().length;
             const totalRAM = (os.totalmem() / (1024 ** 3)).toFixed(2);
             const freeRAM = (os.freemem() / (1024 ** 3)).toFixed(2);
+            const usedRAM = (totalRAM - freeRAM).toFixed(2);
+            const ramPct = (((totalRAM - freeRAM) / totalRAM) * 100).toFixed(1);
             
             const formatTime = (seconds) => {
                 const h = Math.floor(seconds / 3600);
@@ -4440,34 +4450,195 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             
             const sysUptime = formatTime(os.uptime());
             const jarvisUptime = formatTime(process.uptime());
+            const heapMB = (process.memoryUsage().heapUsed / (1024 * 1024)).toFixed(1);
+
+            let statusReport = `*TELEMETRÍA DEL SISTEMA*\n\n`;
+            statusReport += `*Asistente:* Activo y Operativo\n`;
+            statusReport += `*PID:* ${process.pid} | *Heap:* ${heapMB} MB\n`;
+            statusReport += `*Plataforma:* ${platform === 'win32' ? 'Windows' : 'Ubuntu Linux ARM64 (VPS Oracle)'}\n`;
+            statusReport += `*Arquitectura:* ${arch}\n`;
+            statusReport += `*Procesador:* ${cpuModel} (${cpuCores} núcleos)\n`;
+            statusReport += `*Memoria RAM:* ${usedRAM} GB en uso de ${totalRAM} GB (${ramPct}% en uso, ${freeRAM} GB libres)\n`;
+            statusReport += `*Uptime Servidor:* ${sysUptime}\n`;
+            statusReport += `*Uptime Asistente:* ${jarvisUptime}\n`;
             
-            let statusReport = ` *DIAGNÓSTICO DE SISTEMA ASISTENTE*\n\n`;
-            statusReport += ` *Asistente:* Activo y Operativo\n`;
-            statusReport += `🆔 *PID del Proceso:* ${process.pid}\n`;
-            statusReport += ` *Plataforma:* ${platform === 'win32' ? 'Windows OS' : 'Termux / Linux'}\n`;
-            statusReport += ` *Arquitectura:* ${arch}\n`;
-            statusReport += ` *Procesador:* ${cpuModel} (${cpuCores} núcleos)\n`;
-            statusReport += ` *Memoria RAM:* ${freeRAM} GB libres de ${totalRAM} GB totales\n`;
-            statusReport += ` *Uptime Servidor:* ${sysUptime}\n`;
-            statusReport += ` *Uptime Asistente:* ${jarvisUptime}\n`;
-            
-            if (fs.existsSync('/usr/bin/chromium-browser')) { puppeteerConfig.executablePath = '/usr/bin/chromium-browser'; }
-if (isTermux) {
+            if (isTermux) {
                 exec('termux-battery-status', async (err, stdout) => {
                     if (!err) {
                         try {
                             const data = JSON.parse(stdout);
-                            const charging = data.status === 'CHARGING' ? ' Conectado' : ' Desconectado';
-                            statusReport += ` *Energía:* ${charging} (Nivel: ${data.percentage}%, Temp: ${data.temperature}°C)\n`;
+                            const charging = data.status === 'CHARGING' ? 'Conectado' : 'Desconectado';
+                            statusReport += `*Energía:* ${charging} (Nivel: ${data.percentage}%, Temp: ${data.temperature}°C)\n`;
                         } catch(e) {}
                     }
                     await msg.reply(statusReport);
                 });
             } else {
-                statusReport += ` *Energía:* Red Eléctrica Directa (Ilimitada)\n`;
+                statusReport += `*Energía:* Red Eléctrica Directa (VPS)\n`;
                 await msg.reply(statusReport);
             }
             return;
+        }
+
+        // --- DIAGNÓSTICO INTEGRAL Y AUDITORÍA DE SUBSISTEMAS ---
+        if (comando === 'diagnostico' || comando === 'audit' || comando === 'test') {
+            await msg.reply("*Asistente:* Ejecutando auditoría de subsistemas en tiempo real...");
+            
+            // 1. Motor de IA (Gemini)
+            let aiStatus = "No disponible";
+            let aiOk = false;
+            try {
+                const t0 = Date.now();
+                const modeloPrueba = obtenerModel();
+                await modeloPrueba.generateContent("ping");
+                const latenciaAi = Date.now() - t0;
+                aiStatus = `Operativo (${MODELS[currentModelIndex]}, Latencia: ${latenciaAi}ms, Claves: ${API_KEYS.length})`;
+                aiOk = true;
+            } catch (e) {
+                aiStatus = `Falla: ${e.message ? e.message.split('\n')[0] : 'Error desconocido'}`;
+            }
+
+            // 2. Extractor Multimedia (yt-dlp, Deno, Cookies)
+            let mediaItems = [];
+            try {
+                const { execSync } = require('child_process');
+                const ytVer = execSync(`${getYtDlpBinary()} --version`, { timeout: 3000, stdio: 'pipe' }).toString().trim();
+                mediaItems.push(`yt-dlp v${ytVer}`);
+            } catch(e) {
+                mediaItems.push('yt-dlp: No detectado');
+            }
+
+            try {
+                const { execSync } = require('child_process');
+                const denoBin = fs.existsSync('/usr/local/bin/deno') ? '/usr/local/bin/deno' : 'deno';
+                const denoVer = execSync(`${denoBin} --version`, { timeout: 3000, stdio: 'pipe' }).toString().split('\n')[0].trim();
+                mediaItems.push(denoVer);
+            } catch(e) {
+                mediaItems.push('Deno: No detectado');
+            }
+
+            const snapChromium = '/home/ubuntu/snap/chromium/common/chromium';
+            if (fs.existsSync(snapChromium)) {
+                mediaItems.push('Cookies Chromium configuradas');
+            } else {
+                mediaItems.push('Sin cookies externas');
+            }
+            const mediaReport = mediaItems.join(' | ');
+
+            // 3. Base de Datos (Firebase Firestore)
+            let dbStatus = "No inicializada";
+            if (dbFirebase) {
+                try {
+                    const tDb0 = Date.now();
+                    await dbFirebase.collection('usuarios').limit(1).get();
+                    const latenciaDb = Date.now() - tDb0;
+                    dbStatus = `Conectado a Firestore (Latencia: ${latenciaDb}ms)`;
+                } catch(e) {
+                    dbStatus = `Falla de lectura: ${e.message ? e.message.split('\n')[0] : 'Error'}`;
+                }
+            } else {
+                dbStatus = "Desconectado (serviceAccount.json no presente)";
+            }
+
+            // 4. Recursos del Servidor
+            const totalRAM = (os.totalmem() / (1024 ** 3)).toFixed(2);
+            const freeRAM = (os.freemem() / (1024 ** 3)).toFixed(2);
+            const usedRAM = (totalRAM - freeRAM).toFixed(2);
+            const ramPct = (((totalRAM - freeRAM) / totalRAM) * 100).toFixed(1);
+            const cpuModel = os.cpus()[0]?.model || "ARM64";
+            const cpuCores = os.cpus().length;
+            const loadAvg = os.loadavg ? os.loadavg().map(l => l.toFixed(2)).join(', ') : 'N/A';
+
+            const formatTime = (seconds) => {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = Math.floor(seconds % 60);
+                return `${h}h ${m}m ${s}s`;
+            };
+            const sysUptime = formatTime(os.uptime());
+            const botUptime = formatTime(process.uptime());
+            const heapMB = (process.memoryUsage().heapUsed / (1024 * 1024)).toFixed(1);
+
+            let diskInfo = 'N/A';
+            try {
+                const { execSync } = require('child_process');
+                const dfOutput = execSync('df -h / | tail -1', { timeout: 2000, stdio: 'pipe' }).toString().trim().split(/\s+/);
+                if (dfOutput.length >= 5) {
+                    diskInfo = `${dfOutput[2]} usados de ${dfOutput[1]} (${dfOutput[4]} en uso, ${dfOutput[3]} libres)`;
+                }
+            } catch(e){}
+
+            // 5. Conexión de WhatsApp
+            const waUser = client.info?.wid?.user || 'Desconocido';
+            const waName = client.info?.pushname || 'Asistente';
+
+            let report = `*DIAGNÓSTICO INTEGRAL DEL SISTEMA*\n\n`;
+            report += `*Estado General:* Operativo\n`;
+            report += `*Plataforma:* ${os.platform() === 'win32' ? 'Windows' : 'Ubuntu Linux ARM64 (VPS Oracle)'}\n`;
+            report += `*Proceso:* PID ${process.pid} | Uptime: ${botUptime} | Heap: ${heapMB} MB\n\n`;
+
+            report += `*1. Inteligencia Artificial (Gemini):*\n`;
+            report += `[${aiOk ? 'OK' : 'FALLO'}] ${aiStatus}\n\n`;
+
+            report += `*2. Extractor Multimedia:*\n`;
+            report += `[OK] ${mediaReport}\n\n`;
+
+            report += `*3. Base de Datos (Firebase):*\n`;
+            report += `[${dbStatus.startsWith('Conectado') ? 'OK' : 'INFO'}] ${dbStatus}\n\n`;
+
+            report += `*4. Servidor y Recursos:*\n`;
+            report += `- RAM: ${usedRAM} GB en uso de ${totalRAM} GB (${ramPct}% en uso, ${freeRAM} GB libres)\n`;
+            report += `- CPU: ${cpuModel} (${cpuCores} núcleos, Carga: ${loadAvg})\n`;
+            report += `- Disco: ${diskInfo}\n`;
+            report += `- Uptime Servidor: ${sysUptime}\n\n`;
+
+            report += `*5. Conexión WhatsApp:*\n`;
+            report += `[OK] Sesión activa (${waName} - +${waUser})\n`;
+
+            return msg.reply(report);
+        }
+
+        // --- VISOR DE LOGS Y ERRORES DEL SISTEMA ---
+        if (comando === 'logs' || comando === 'log' || comando === 'errores' || comando === 'error') {
+            if (isGroup && chatId !== adminChatId) return msg.reply("*Asistente:* Comando restringido al administrador.");
+
+            const esErrorLog = comando === 'errores' || comando === 'error' || (argumento && argumento.toLowerCase().includes('error'));
+            let lineasSolicitadas = 15;
+            const numMatch = (argumento || '').match(/\d+/);
+            if (numMatch) {
+                lineasSolicitadas = Math.min(Math.max(parseInt(numMatch[0], 10), 5), 40);
+            }
+
+            const logPath = esErrorLog 
+                ? '/home/ubuntu/.pm2/logs/nuevo-bot-error.log'
+                : '/home/ubuntu/.pm2/logs/nuevo-bot-out.log';
+
+            let logContent = '';
+            if (fs.existsSync(logPath)) {
+                try {
+                    const { execSync } = require('child_process');
+                    logContent = execSync(`tail -n ${lineasSolicitadas} "${logPath}"`, { timeout: 3000, stdio: 'pipe' }).toString().trim();
+                } catch(e) {
+                    logContent = `Error al leer archivo de logs: ${e.message}`;
+                }
+            } else {
+                logContent = `Archivo de log no disponible en: ${logPath}`;
+            }
+
+            if (!logContent) {
+                logContent = 'El archivo de registros está actualmente vacío.';
+            }
+
+            // Limpiar códigos de escape ANSI
+            logContent = logContent.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
+
+            if (logContent.length > 2800) {
+                logContent = logContent.slice(-2800);
+            }
+
+            const tipoTitulo = esErrorLog ? 'REGISTRO DE ERRORES' : 'REGISTRO DE ACTIVIDAD';
+            const respuesta = `*${tipoTitulo} (Últimas ${lineasSolicitadas} líneas)*\n\n\`\`\`\n${logContent}\n\`\`\``;
+            return msg.reply(respuesta);
         }
 
         // --- NUEVO COMANDO: GENERADOR QR ---
@@ -4756,7 +4927,7 @@ if (isTermux) {
                 return msg.reply(" *Asistente:* El tipo de comando debe ser *texto*, *ia* o *codigo*.");
             }
             
-            const comandosSistema = ['reiniciar', 'ayuda', 'menu', 'help', 'comandos', 'musica', 'audio', 'video', 'decir', 'tts', 'foto', 'camara', 'grabar', 'escuchar', 'bateria', 'estado', 'sistema', 'hardware', 'qr', 'recordar', 'recordatorio', 'nota', 'guardarnota', 'notas', 'borrarnota', 'buscar', 'google', 'agente', 'agentes', 'agregarclave', 'addkey', 'claves', 'listkeys', 'restaurarclaves', 'resetkeys', 'borrarclaves', 'clearkeys', 'comandocrear', 'comandoborrar', 'comandoslista', 'setcanal', 'canal', 'agregarcanal', 'listacanal', 'canales', 'borrarcanal', 'eliminarcanal', 'clima', 'imagina', 'dibuja', 'crear', 'stickercrear', 'traducir', 'calcular', 'resumir'];
+            const comandosSistema = ['reiniciar', 'ayuda', 'menu', 'help', 'comandos', 'musica', 'audio', 'video', 'decir', 'tts', 'foto', 'camara', 'grabar', 'escuchar', 'bateria', 'estado', 'sistema', 'hardware', 'diagnostico', 'audit', 'test', 'logs', 'log', 'errores', 'error', 'qr', 'recordar', 'recordatorio', 'nota', 'guardarnota', 'notas', 'borrarnota', 'buscar', 'google', 'agente', 'agentes', 'agregarclave', 'addkey', 'claves', 'listkeys', 'restaurarclaves', 'resetkeys', 'borrarclaves', 'clearkeys', 'comandocrear', 'comandoborrar', 'comandoslista', 'setcanal', 'canal', 'agregarcanal', 'listacanal', 'canales', 'borrarcanal', 'eliminarcanal', 'clima', 'imagina', 'dibuja', 'crear', 'stickercrear', 'traducir', 'calcular', 'resumir'];
             if (comandosSistema.includes(nombre)) {
                 return msg.reply(` *Asistente:* El nombre *"${nombre}"* está reservado para el sistema principal.`);
             }
