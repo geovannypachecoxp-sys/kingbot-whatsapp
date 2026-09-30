@@ -980,44 +980,40 @@ User request: "${textoPrompt}"`;
         // Motor 1: Hugging Face Inference (FLUX.1-schnell / SDXL)
         if (hfToken && !imageBuffer) {
             try {
-                console.log("[Imagen] Intentando generar con Hugging Face (FLUX.1)...");
-                const hfRes = await fetch("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${hfToken}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ inputs: promptMejorado })
-                });
-
-                if (hfRes.ok) {
-                    const buf = await hfRes.arrayBuffer();
-                    if (buf.byteLength > 1000) {
-                        imageBuffer = Buffer.from(buf);
-                        mimeType = hfRes.headers.get("content-type") || "image/jpeg";
-                        motorUsado = "FLUX.1 (Hugging Face)";
-                    }
-                } else {
-                    console.log(`[!] Hugging Face FLUX respondió ${hfRes.status}, probando SDXL...`);
-                    const sdxlRes = await fetch("https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0", {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${hfToken}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ inputs: promptMejorado })
+                console.log("[Imagen] Intentando generar con Hugging Face InferenceClient (FLUX.1)...");
+                const { InferenceClient } = require('@huggingface/inference');
+                const hfClient = new InferenceClient(hfToken);
+                
+                try {
+                    const resBlob = await hfClient.textToImage({
+                        model: "black-forest-labs/FLUX.1-schnell",
+                        inputs: promptMejorado
                     });
-                    if (sdxlRes.ok) {
-                        const buf = await sdxlRes.arrayBuffer();
+                    if (resBlob) {
+                        const buf = Buffer.from(await resBlob.arrayBuffer());
                         if (buf.byteLength > 1000) {
-                            imageBuffer = Buffer.from(buf);
-                            mimeType = sdxlRes.headers.get("content-type") || "image/jpeg";
+                            imageBuffer = buf;
+                            mimeType = resBlob.type || "image/jpeg";
+                            motorUsado = "FLUX.1 (Hugging Face)";
+                        }
+                    }
+                } catch (errFlux) {
+                    console.log("[!] FLUX.1 en HF falló, probando SDXL:", errFlux.message);
+                    const resSdxl = await hfClient.textToImage({
+                        model: "stabilityai/stable-diffusion-xl-base-1.0",
+                        inputs: promptMejorado
+                    });
+                    if (resSdxl) {
+                        const buf = Buffer.from(await resSdxl.arrayBuffer());
+                        if (buf.byteLength > 1000) {
+                            imageBuffer = buf;
+                            mimeType = resSdxl.type || "image/jpeg";
                             motorUsado = "SDXL (Hugging Face)";
                         }
                     }
                 }
             } catch (errHf) {
-                console.error("[!] Error en motor Hugging Face:", errHf.message);
+                console.error("[!] Error general en motor Hugging Face:", errHf.message);
             }
         }
 
