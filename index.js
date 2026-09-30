@@ -932,19 +932,39 @@ Humedad: ${humedad}% | Viento: ${viento} km/h`;
     }
 }
 
-async function generarImagenIA(promptUsuario, msgRef) {
+async function descargarMediaSeguro(mensaje, maxIntentos = 3) {
+    if (!mensaje || typeof mensaje.downloadMedia !== 'function') return null;
+    for (let i = 0; i < maxIntentos; i++) {
+        try {
+            const media = await mensaje.downloadMedia();
+            if (media && media.data) return media;
+        } catch (e) {
+            console.warn(`[descargarMediaSeguro] Intento ${i + 1}/${maxIntentos} falló:`, e?.message || e);
+            if (i < maxIntentos - 1) {
+                await new Promise(r => setTimeout(r, 800));
+            }
+        }
+    }
+    return null;
+}
+
+async function generarImagenIA(promptUsuario, msgRef, options = {}) {
     if (!promptUsuario || !String(promptUsuario).trim()) {
         return msgRef.reply("Indica qué imagen deseas crear. Ejemplo: Crea una imagen de un gato samurai con armadura");
     }
 
     const textoPrompt = String(promptUsuario).trim();
-    await msgRef.reply("Generando imagen...");
+    const captionPrompt = options.captionPrompt || textoPrompt;
+    if (!options.silent) {
+        await msgRef.reply("Generando imagen...");
+    }
 
     try {
         // 1. Optimizar y traducir el prompt respetando la intención y estilo exacto del usuario
         let promptMejorado = textoPrompt;
-        try {
-            const promptExpansion = `You are an expert AI prompt engineer for state-of-the-art text-to-image models (FLUX.1 and SDXL).
+        if (!options.isAlreadyOptimized) {
+            try {
+                const promptExpansion = `You are an expert AI prompt engineer for state-of-the-art text-to-image models (FLUX.1 and SDXL).
 Translate and enhance the user's description into a high-detail, visually striking English prompt.
 
 CRITICAL RULES:
@@ -961,16 +981,19 @@ CRITICAL RULES:
 
 User request: "${textoPrompt}"`;
 
-            const resOpt = await ejecutarGeminiConRetries(async (model) => {
-                const result = await model.generateContent([promptExpansion]);
-                return result.response.text();
-            });
-            if (resOpt && resOpt.trim()) {
-                promptMejorado = resOpt.trim().replace(/^["']|["']$/g, '');
-                console.log(`[Prompt Imagen Optimizado]: ${promptMejorado}`);
+                const resOpt = await ejecutarGeminiConRetries(async (model) => {
+                    const result = await model.generateContent([promptExpansion]);
+                    return result.response.text();
+                });
+                if (resOpt && resOpt.trim()) {
+                    promptMejorado = resOpt.trim().replace(/^["']|["']$/g, '');
+                    console.log(`[Prompt Imagen Optimizado]: ${promptMejorado}`);
+                }
+            } catch (eOpt) {
+                console.error("No se pudo expandir el prompt con Gemini, usando original:", eOpt.message);
             }
-        } catch (eOpt) {
-            console.error("No se pudo expandir el prompt con Gemini, usando original:", eOpt.message);
+        } else {
+            console.log(`[Prompt Imagen Directo/Vision]: ${promptMejorado}`);
         }
 
         let imageBuffer = null;
@@ -1087,7 +1110,7 @@ User request: "${textoPrompt}"`;
         // Si se obtuvo imagen:
         if (imageBuffer) {
             const media = new MessageMedia(mimeType, imageBuffer.toString('base64'), 'imagen.jpg');
-            return msgRef.reply(media, undefined, { caption: `*Imagen:* ${textoPrompt}\n*Motor:* ${motorUsado}` });
+            return msgRef.reply(media, undefined, { caption: `*Imagen:* ${captionPrompt}\n*Motor:* ${motorUsado}` });
         }
 
         // Si ningún servidor respondió:
@@ -2111,6 +2134,9 @@ function limpiarRespuestaGemini(texto) {
         .replace(/\[ACTION_FINANCE_CARDS(?::[^\]]+)?\]/g, '')
         .replace(/\[ACTION_FINANCE_ALERTS\]/g, '')
         .replace(/\[ACTION_FINANCE_ADD:[^\]]+\]/g, '')
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n[ \t]+/g, '\n')
         .trim();
         
     return limpio;
@@ -3530,7 +3556,7 @@ client.on('message_create', async (msg) => {
         const isConversational = chatsActivos.has(chatId);
         if (isVoiceNote && (isConversational || !isGroup)) {
             try {
-                const media = await msg.downloadMedia();
+                const media = await descargarMediaSeguro(msg);
                 if (media && media.data) {
                     console.log("[STT Hook] Transcribiendo nota de voz con Gemini...");
                     const modelActivo = obtenerModel();
@@ -3574,7 +3600,7 @@ client.on('message_create', async (msg) => {
         
         if (mediaATranscribir) {
             try {
-                const media = await mediaATranscribir.downloadMedia();
+                const media = await descargarMediaSeguro(mediaATranscribir);
                 if (media && media.data) {
                     console.log("[x STT Hook Manual] Transcribiendo archivo solicitado...");
                     await msg.reply(' *Asistente:* Procesando el audio para su transcripción...');
@@ -3675,7 +3701,7 @@ client.on('message_create', async (msg) => {
                     }
                 }
             } else {
-                media = await mediaMsg.downloadMedia();
+                media = await descargarMediaSeguro(mediaMsg);
             }
 
             if (!media || !media.data) {
@@ -4239,7 +4265,7 @@ Responde de forma clara, natural y concisa en español.`;
         // A) Si el mensaje trae adjunto (foto de ticket, voucher o PDF)
         if (msg.hasMedia) {
             try {
-                const media = await msg.downloadMedia();
+                const media = await descargarMediaSeguro(msg);
                 if (media && (media.mimetype === 'application/pdf' || media.mimetype.startsWith('image/'))) {
                     const esDocFinanciero = await procesarDocumentoFinanciero(media, msg);
                     if (esDocFinanciero) return;
@@ -4362,22 +4388,100 @@ Responde de forma clara, natural y concisa en español.`;
         return msg.reply(reporte);
     }
 
+    if (!msg.hasMedia) {
+        if (msg.hasQuotedMsg) {
+            try {
+                const quotedMsg = await msg.getQuotedMessage();
+                if (quotedMsg && quotedMsg.hasMedia) mensajeAProcesar = quotedMsg;
+            } catch (eQ) {}
+        } else {
+            try {
+                const chat = await msg.getChat();
+                const historial = await chat.fetchMessages({ limit: 2 });
+                if (historial && historial[0] && historial[0].hasMedia) mensajeAProcesar = historial[0];
+            } catch (eH) {}
+        }
+    }
+
+    // --- RECREACIÓN / MODIFICACIÓN DE IMÁGENES CON VISIÓN GEMINI + FLUX.1 ---
+    const esPeticionRecrear = /^(?:recrea(?:r)?|re-crea(?:r)?|rehaz|rehacer|modifica(?:r)?|haz(?:me)?\s+(?:otra|una)?\s+(?:parecida|igual|similar|version|versi[oó]n)|haz\s+algo\s+parecido|haz(?:me)?\s+(?:una\s+)?imagen\s+(?:como|basada\s+en|parecida\s+a)|crea(?:r)?\s+(?:una\s+)?imagen\s+(?:como|basada\s+en|parecida\s+a)|genera(?:r)?\s+(?:una\s+)?imagen\s+(?:como|basada\s+en|parecida\s+a)|cambia(?:r)?\s+(?:el\s+texto|esto|la\s+imagen))\b/i.test(textoNormalizado) ||
+        /(?:recrea(?:r)?|rehaz|rehacer)\s+(?:esta|la)\s+(?:imagen|foto|ilustraci[oó]n|diseño|portada)/i.test(textoNormalizado) ||
+        (/(?:recrea(?:r)?|parecid[ao]|similar|mismo\s+estilo)\b/i.test(textoNormalizado) && (msg.hasMedia || (mensajeAProcesar && mensajeAProcesar.hasMedia)));
+
+    if (esPeticionRecrear) {
+        if (!mensajeAProcesar || !mensajeAProcesar.hasMedia) {
+            return msg.reply("Para recrear o modificar una imagen, por favor envía la foto o responde a una imagen con tu indicación.");
+        }
+
+        await msg.reply("Recreando imagen...");
+        try {
+            const mediaRef = await descargarMediaSeguro(mensajeAProcesar);
+            if (!mediaRef || !mediaRef.data) {
+                return msg.reply("No fue posible descargar la imagen de referencia. Por favor reenvíala o intenta de nuevo.");
+            }
+            if (!mediaRef.mimetype || !mediaRef.mimetype.startsWith('image/')) {
+                return msg.reply("El archivo adjunto no es una imagen válida para recrear.");
+            }
+
+            let promptRecreacion = "";
+            try {
+                const promptAnalisisVisual = `You are an elite visual prompt engineer for state-of-the-art text-to-image models (FLUX.1 and SDXL).
+The user provided a reference image and the following user instruction:
+"${textoNormalizado}"
+
+TASK:
+1. Examine this reference image with extreme visual precision:
+   - Primary subjects, composition, camera perspective, framing, background elements.
+   - Distinctive art style (e.g. 3D isometric volumetric typography, glowing neon cybernetic art, futuristic render, dark moody galaxy, realistic photography, anime, etc.).
+   - Exact color palette, lighting dynamics, volumetric smoke, glowing embers, particle effects, reflections, textures, materials (e.g. metallic chrome, translucent crystal, glossy enamel).
+2. Integrate the user's modifications precisely:
+   - If the user asks to change or replace text (for example, to display "The King"), replace the original text with the user's requested text while strictly maintaining or enhancing the typography's 3D volumetric design, font style, glow, lighting, bevels, and atmospheric particle effects.
+   - If the user asks for alterations in colors, environment, or mood, blend them seamlessly into the original aesthetic.
+3. Formulate a complete, highly descriptive English prompt optimized for FLUX.1 text-to-image synthesis that captures all the visual qualities of the reference image along with the user's updates.
+
+CRITICAL: Output ONLY the final raw English prompt. Do NOT include markdown quotes, explanations, prefixes, or commentary.`;
+
+                const resVision = await ejecutarGeminiConRetries(async (model) => {
+                    const result = await model.generateContent([
+                        {
+                            inlineData: {
+                                data: mediaRef.data,
+                                mimeType: mediaRef.mimetype || 'image/jpeg'
+                            }
+                        },
+                        promptAnalisisVisual
+                    ]);
+                    return result.response.text();
+                });
+
+                if (resVision && resVision.trim()) {
+                    promptRecreacion = resVision.trim().replace(/^["']|["']$/g, '');
+                    console.log(`[Prompt Recreación Gemini Vision]: ${promptRecreacion}`);
+                }
+            } catch (eVis) {
+                console.error("Error analizando imagen con Gemini Vision:", eVis.message);
+            }
+
+            if (!promptRecreacion) {
+                promptRecreacion = textoNormalizado;
+            }
+
+            return generarImagenIA(promptRecreacion, msg, {
+                isAlreadyOptimized: true,
+                captionPrompt: textoNormalizado,
+                silent: true
+            });
+        } catch (eRec) {
+            console.error("Error en proceso de recreación de imagen:", eRec);
+            return msg.reply("Ocurrió un error al recrear la imagen.");
+        }
+    }
+
     // --- GENERACIÓN DIRECTA DE IMÁGENES (LENGUAJE NATURAL) ---
     const regexImagenNatural = /^(?:crea(?:r)?(?:\s+(?:una|la))?\s+imagen(?:\s+de)?|genera(?:r)?(?:\s+(?:una|la))?\s+imagen(?:\s+de)?|haz(?:me)?(?:\s+(?:una|la))?\s+imagen(?:\s+de)?|dibuja(?:r)?(?:me)?(?:\s+(?:un|una|el|la))?|imagina(?:r)?(?:\s+(?:un|una|el|la))?)\s+(.+)$/i;
     const matchImagenNat = textoNormalizado.match(regexImagenNatural);
     if (matchImagenNat) {
         return generarImagenIA(matchImagenNat[1], msg);
-    }
-
-    if (!msg.hasMedia) {
-        if (msg.hasQuotedMsg) {
-            const quotedMsg = await msg.getQuotedMessage();
-            if (quotedMsg.hasMedia) mensajeAProcesar = quotedMsg;
-        } else {
-            const chat = await msg.getChat();
-            const historial = await chat.fetchMessages({ limit: 2 });
-            if (historial[0] && historial[0].hasMedia) mensajeAProcesar = historial[0];
-        }
     }
 
     try {
@@ -5054,7 +5158,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             if (mensajeConDoc.hasMedia && mensajeConDoc.mimetype === 'application/pdf') {
                 await msg.reply("x *Asistente:* Leyendo y resumiendo documento PDF, un momento...");
                 try {
-                    const media = await mensajeConDoc.downloadMedia();
+                    const media = await descargarMediaSeguro(mensajeConDoc);
                     if (media && media.data) {
                         const prompt = "Realiza un resumen estructurado, claro y elegante en español de este documento PDF. Enfócate en los puntos principales.";
                         const respuesta = await ejecutarGeminiConRetries(async (model) => {
@@ -6110,7 +6214,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             }
             await msg.reply("*Asistente:* Transcribiendo el archivo de audio...");
             try {
-                const media = await mensajeConAudio.downloadMedia();
+                const media = await descargarMediaSeguro(mensajeConAudio);
                 if (media && media.data) {
                     const modelActivo = obtenerModel();
                     const promptTrans = "Transcribe el siguiente audio exactamente en español. Responde únicamente con el texto transcrito, sin notas de introducción ni metadatos.";
@@ -6361,7 +6465,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             if (!mensajeAProcesar.hasMedia) return msg.reply(" *Asistente:* Por favor, responda a una imagen con este comando.");
             await msg.reply("x *Asistente:* Extrayendo y analizando texto de la imagen con IA...");
             try {
-                const mediaOCR = await mensajeAProcesar.downloadMedia();
+                const mediaOCR = await descargarMediaSeguro(mensajeAProcesar);
                 if (mediaOCR && mediaOCR.data) {
                     const promptOCR = "Analiza esta imagen y extrae todo el texto legible. Devuelve únicamente el texto extraído sin comentarios ni metadatos.";
                     const rOCR = await ejecutarGeminiConRetries(async (model) => { const r = await model.generateContent([promptOCR, { inlineData: { data: mediaOCR.data, mimeType: mediaOCR.mimetype } }]); return r.response.text(); });
@@ -6430,25 +6534,29 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         // --- INTERCEPTOR DE ARCHIVOS Y DOCUMENTOS FINANCIEROS ---
         let esDocumentoFinanciero = false;
         if (!isGroup && chatId === adminChatId && mensajeAProcesar.hasMedia) {
-            const media = await mensajeAProcesar.downloadMedia();
-            if (media) {
-                // Si el usuario envía serviceAccount.json por WhatsApp
-                if ((media.filename && media.filename.toLowerCase().includes('serviceaccount')) || (media.mimetype && media.mimetype.includes('json'))) {
-                    try {
-                        const jsonText = Buffer.from(media.data, 'base64').toString('utf8');
-                        const parsed = JSON.parse(jsonText);
-                        if (parsed.project_id && parsed.private_key) {
-                            fs.writeFileSync('serviceAccount.json', jsonText, 'utf8');
-                            dbFirebase = null;
-                            adminFirebase = null;
-                            inicializarFirebase();
-                            return msg.reply(" *Asistente:* Archivo `serviceAccount.json` recibido y guardado con éxito. Conexión con Firebase Firestore (Finanzas King) activada.");
-                        }
-                    } catch (errJson) {}
+            try {
+                const media = await descargarMediaSeguro(mensajeAProcesar);
+                if (media) {
+                    // Si el usuario envía serviceAccount.json por WhatsApp
+                    if ((media.filename && media.filename.toLowerCase().includes('serviceaccount')) || (media.mimetype && media.mimetype.includes('json'))) {
+                        try {
+                            const jsonText = Buffer.from(media.data, 'base64').toString('utf8');
+                            const parsed = JSON.parse(jsonText);
+                            if (parsed.project_id && parsed.private_key) {
+                                fs.writeFileSync('serviceAccount.json', jsonText, 'utf8');
+                                dbFirebase = null;
+                                adminFirebase = null;
+                                inicializarFirebase();
+                                return msg.reply(" *Asistente:* Archivo `serviceAccount.json` recibido y guardado con éxito. Conexión con Firebase Firestore (Finanzas King) activada.");
+                            }
+                        } catch (errJson) {}
+                    }
+                    if (media.mimetype === 'application/pdf' || (media.mimetype && media.mimetype.startsWith('image/'))) {
+                        esDocumentoFinanciero = await procesarDocumentoFinanciero(media, msg);
+                    }
                 }
-                if (media.mimetype === 'application/pdf' || media.mimetype.startsWith('image/')) {
-                    esDocumentoFinanciero = await procesarDocumentoFinanciero(media, msg);
-                }
+            } catch (errFin) {
+                console.error("[Interceptor Financiero] Error al procesar media:", errFin);
             }
         }
         if (esDocumentoFinanciero) return;
@@ -6477,13 +6585,17 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // Mensaje de espera Asistente para consultas largas (omitido para admin)
         if (!isGroup && textoParaGemini && textoParaGemini.length > 30 && !chatsActivos.has(chatId) && !esAdmin(chatId, msg)) {
-            const _loadMsgs = ['*Asistente:* Procesando su consulta...', 'a *Asistente:* Analizando su solicitud, Señor.', 'x *Asistente:* Consultando sistemas internos...', 'a" *Asistente:* Procesando la información...'];
+            const _loadMsgs = ['*Asistente:* Procesando su consulta...', '*Asistente:* Analizando su solicitud...', '*Asistente:* Consultando sistemas internos...', '*Asistente:* Procesando la información...'];
             try { await msg.reply(_loadMsgs[Math.floor(Math.random() * _loadMsgs.length)]); } catch(e) {}
         }
 
         let downloadedMedia = null;
         if (mensajeAProcesar.hasMedia) {
-            downloadedMedia = await mensajeAProcesar.downloadMedia();
+            try {
+                downloadedMedia = await descargarMediaSeguro(mensajeAProcesar);
+            } catch (errDl) {
+                console.error("[descargarMedia] Error al descargar media para Gemini:", errDl);
+            }
             if (comando === 'sticker') {
                 if (downloadedMedia) {
                     await msg.reply(downloadedMedia, msg.from, { sendMediaAsSticker: true, stickerName: 'Bot VIP Multiplataforma', stickerAuthor: 'Geovanny' });
@@ -7538,7 +7650,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
         }
     } catch (error) {
         console.error("Error general:", error);
-        try { await msg.reply("a *Asistente:* Ocurrió un error interno. No se preocupe, sigo en pie."); } catch(e) {}
+        try { await msg.reply("*Asistente:* Ocurrió un error interno. No se preocupe, sigo en pie."); } catch(e) {}
     }
 });
 
