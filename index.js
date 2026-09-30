@@ -830,6 +830,98 @@ function cancelarTareaProgramada(param) {
     return `Tarea eliminada: ${eliminada.accion || eliminada.descripcion} (${eliminada.hora || eliminada.cron})`;
 }
 
+async function obtenerReporteClima(ciudadInput = 'Chalchuapa') {
+    const ciudad = (ciudadInput || 'Chalchuapa').trim();
+    try {
+        const url = 'https://wttr.in/' + encodeURIComponent(ciudad) + '?format=j1&lang=es';
+        const res = await fetch(url, { headers: { 'User-Agent': 'curl/7.68.0' } });
+        if (!res.ok) throw new Error('Servicio de clima no disponible.');
+        const data = await res.json();
+
+        const weather = data.weather?.[0];
+        const current = data.current_condition?.[0];
+        if (!weather || !current) throw new Error('Datos de clima incompletos.');
+
+        const location = data.nearest_area?.[0];
+        const areaName = location?.areaName?.[0]?.value || ciudad;
+
+        const descActual = current.lang_es?.[0]?.value || current.weatherDesc?.[0]?.value || 'Despejado';
+        const tempActual = current.temp_C;
+        const sensTermica = current.FeelsLikeC;
+        const humedad = current.humidity;
+        const viento = current.windspeedKmph;
+        const maxTemp = weather.maxtempC;
+        const minTemp = weather.mintempC;
+
+        const hourly = weather.hourly || [];
+        const getDesc = h => h?.lang_es?.[0]?.value || h?.weatherDesc?.[0]?.value || 'Despejado';
+
+        const sliceManana = hourly.find(h => parseInt(h.time) === 600) || hourly[2];
+        const sliceTarde = hourly.find(h => parseInt(h.time) === 1500) || hourly[5];
+        const sliceNoche = hourly.find(h => parseInt(h.time) === 2100) || hourly[7];
+
+        // Hora El Salvador (UTC-6)
+        const ahora = new Date();
+        const utc = ahora.getTime() + (ahora.getTimezoneOffset() * 60000);
+        const gtmH = new Date(utc + (3600000 * -6)).getHours();
+
+        let pronosticoLineas = [];
+        let riesgoLluvia = false;
+
+        if (gtmH < 12) {
+            if (sliceManana) {
+                pronosticoLineas.push(`- Mañana: ${getDesc(sliceManana)}, ${sliceManana.tempC}°C, lluvia ${sliceManana.chanceofrain}%`);
+                if (parseInt(sliceManana.chanceofrain) > 40) riesgoLluvia = true;
+            }
+            if (sliceTarde) {
+                pronosticoLineas.push(`- Tarde: ${getDesc(sliceTarde)}, ${sliceTarde.tempC}°C, lluvia ${sliceTarde.chanceofrain}%`);
+                if (parseInt(sliceTarde.chanceofrain) > 40) riesgoLluvia = true;
+            }
+            if (sliceNoche) {
+                pronosticoLineas.push(`- Noche: ${getDesc(sliceNoche)}, ${sliceNoche.tempC}°C, lluvia ${sliceNoche.chanceofrain}%`);
+                if (parseInt(sliceNoche.chanceofrain) > 40) riesgoLluvia = true;
+            }
+        } else if (gtmH < 18) {
+            if (sliceTarde) {
+                pronosticoLineas.push(`- Tarde: ${getDesc(sliceTarde)}, ${sliceTarde.tempC}°C, lluvia ${sliceTarde.chanceofrain}%`);
+                if (parseInt(sliceTarde.chanceofrain) > 40) riesgoLluvia = true;
+            }
+            if (sliceNoche) {
+                pronosticoLineas.push(`- Noche: ${getDesc(sliceNoche)}, ${sliceNoche.tempC}°C, lluvia ${sliceNoche.chanceofrain}%`);
+                if (parseInt(sliceNoche.chanceofrain) > 40) riesgoLluvia = true;
+            }
+        } else {
+            if (sliceNoche) {
+                pronosticoLineas.push(`- Noche: ${getDesc(sliceNoche)}, ${sliceNoche.tempC}°C, lluvia ${sliceNoche.chanceofrain}%`);
+                if (parseInt(sliceNoche.chanceofrain) > 40) riesgoLluvia = true;
+            }
+        }
+
+        const descLower = descActual.toLowerCase();
+        if (descLower.includes('lluvia') || descLower.includes('aguacero') || descLower.includes('tormenta') || descLower.includes('chubasco')) {
+            riesgoLluvia = true;
+        }
+
+        const transporte = riesgoLluvia ? 'Carro (probabilidad de lluvia)' : 'Moto o carro (condiciones favorables)';
+
+        let texto = `*Clima en ${areaName}:*
+Estado: ${descActual}
+Temperatura: ${tempActual}°C (Sensación: ${sensTermica}°C)
+Rango hoy: Mín ${minTemp}°C / Máx ${maxTemp}°C
+Humedad: ${humedad}% | Viento: ${viento} km/h`;
+
+        if (pronosticoLineas.length > 0) {
+            texto += `\n\n*Pronóstico:*\n${pronosticoLineas.join('\n')}`;
+        }
+
+        texto += `\n\n*Transporte sugerido:* ${transporte}`;
+        return texto;
+    } catch (e) {
+        console.error('Error al obtener clima:', e.message);
+        return `No fue posible consultar el clima para "${ciudad}". Intenta de nuevo más tarde.`;
+    }
+}
+
 function guardarAlarmas() {
     fs.writeFileSync('alarmas.json', JSON.stringify(alarmasGuardadas, null, 2));
 }
@@ -3857,6 +3949,15 @@ Responde de forma clara, natural y concisa en español.`;
         }
     }
 
+    // --- CONSULTA DIRECTA DE CLIMA (LENGUAJE NATURAL Y COMANDO) ---
+    const regexClima = /^(?:c[oó]mo\s+est[aá]\s+(?:el\s+)?clima(?:\s+hoy)?(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?|clima(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+)|\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?|el\s+clima(?:\s+de\s+hoy)?(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?|pron[oó]stico(?:\s+del\s+tiempo)?(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?)\s*$/i;
+    const matchClima = textoLimpio.trim().match(regexClima);
+    if (matchClima) {
+        const ciudadPedida = (matchClima[1] || matchClima[2] || matchClima[3] || matchClima[4] || matchClima[5] || 'Chalchuapa').trim();
+        const reporte = await obtenerReporteClima(ciudadPedida);
+        return msg.reply(reporte);
+    }
+
         if (!msg.hasMedia) {
         if (msg.hasQuotedMsg) {
             const quotedMsg = await msg.getQuotedMessage();
@@ -4252,9 +4353,9 @@ if (isTermux) {
         }
 
         if (comando === 'clima') {
-            const ciudad = argumento || 'Chalchuapa';
-            if (ciudad.toLowerCase().includes('radar') || ciudad.toLowerCase().includes('snet') || ciudad.toLowerCase().includes('el salvador')) {
-                await msg.reply(' *Asistente:* Conectando con los radares del SNET... Un momento, Señor.');
+            const ciudad = (argumento || 'Chalchuapa').trim();
+            if (ciudad.toLowerCase().includes('radar') || ciudad.toLowerCase().includes('snet')) {
+                await msg.reply('Conectando con los radares del SNET...');
                 try {
                     const pupBrowser = client.pupBrowser;
                     if (!pupBrowser) throw new Error("Puppeteer no está disponible en este entorno.");
@@ -4266,68 +4367,17 @@ if (isTermux) {
                     await page.screenshot({ path: screenshotPath });
                     await page.close();
                     const media = MessageMedia.fromFilePath(screenshotPath);
-                    await msg.reply(media, undefined, { caption: ' *Radar Meteorológico (SNET) en vivo*' });
-                    if(fs.existsSync(screenshotPath)) fs.unlinkSync(screenshotPath);
+                    await msg.reply(media, undefined, { caption: 'Radar Meteorológico SNET en vivo' });
+                    if (fs.existsSync(screenshotPath)) fs.unlinkSync(screenshotPath);
                     return;
                 } catch (e) {
                     console.error('Error capturando radar:', e);
-                    return await msg.reply(' *Asistente:* Error al obtener el radar visual del SNET: ' + e.message);
+                    return await msg.reply('Error al obtener el radar visual del SNET: ' + e.message);
                 }
             }
 
-            await msg.reply('\uD83C\uDF24\uFE0F *Asistente:* Consultando el pron\u00f3stico meteorol\u00f3gico completo para *' + ciudad + '*... un momento.');
-            try {
-                const climaRes = await fetch('https://wttr.in/' + encodeURIComponent(ciudad) + '?format=j1', {
-                    headers: { 'User-Agent': 'curl/7.68.0' }
-                });
-                if (!climaRes.ok) throw new Error('Servicio de clima no disponible.');
-                const climaJSON = await climaRes.json();
-                const weather = climaJSON.weather[0];
-                const current = climaJSON.current_condition[0];
-                const location = climaJSON.nearest_area[0];
-                const areaName = (location && location.areaName && location.areaName[0] && location.areaName[0].value) ? location.areaName[0].value : ciudad;
-                const hourly = weather.hourly;
-                const franjaMañana = hourly.find(h => parseInt(h.time) === 600) || hourly[2];
-                const franjaTarde = hourly.find(h => parseInt(h.time) === 1400) || hourly[4];
-                const franjaNoche = hourly.find(h => parseInt(h.time) === 2000) || hourly[6];
-                const getDesc = (h) => h ? (h.weatherDesc[0] ? h.weatherDesc[0].value : 'N/A') : 'N/A';
-                const getTemp = (h) => h ? (h.tempC + '°C') : '?';
-                const getRain = (h) => h ? (h.chanceofrain + '%') : '0%';
-                const getWind = (h) => h ? (h.windspeedKmph + ' km/h') : '?';
-
-                // Hora actual Guatemala (UTC-6)
-                const _ahora = new Date();
-                const _utc = _ahora.getTime() + (_ahora.getTimezoneOffset() * 60000);
-                const _gtmH = new Date(_utc + (3600000 * -6)).getHours();
-
-                // Only build future time slots
-                let franjasData = '';
-                let franjaInstruccion = '';
-                if (_gtmH < 12) {
-                    franjasData = '- \uD83C\uDF05 Mañana (6AM): ' + getDesc(franjaMañana) + ', ' + getTemp(franjaMañana) + ', lluvia: ' + getRain(franjaMañana) + ', viento: ' + getWind(franjaMañana)
-                        + '\n- \u2600\uFE0F Tarde (2PM): ' + getDesc(franjaTarde) + ', ' + getTemp(franjaTarde) + ', lluvia: ' + getRain(franjaTarde) + ', viento: ' + getWind(franjaTarde)
-                        + '\n- \uD83C\uDF19 Noche (8PM): ' + getDesc(franjaNoche) + ', ' + getTemp(franjaNoche) + ', lluvia: ' + getRain(franjaNoche) + ', viento: ' + getWind(franjaNoche);
-                    franjaInstruccion = 'divide el reporte en 3 franjas horarias: xR& Mañana (6AM),  Tarde (2PM), xR" Noche (8PM).';
-                } else if (_gtmH < 18) {
-                    franjasData = '- \u2600\uFE0F Tarde (ahora): ' + getDesc(franjaTarde) + ', ' + getTemp(franjaTarde) + ', lluvia: ' + getRain(franjaTarde) + ', viento: ' + getWind(franjaTarde)
-                        + '\n- \uD83C\uDF19 Noche (8PM): ' + getDesc(franjaNoche) + ', ' + getTemp(franjaNoche) + ', lluvia: ' + getRain(franjaNoche) + ', viento: ' + getWind(franjaNoche);
-                    franjaInstruccion = 'la mañana ya terminó. Solo reporta 2 franjas relevantes:  Tarde (ahora) y xR" Noche. No menciones la mañana.';
-                } else {
-                    franjasData = '- \uD83C\uDF19 Noche (ahora): ' + getDesc(franjaNoche) + ', ' + getTemp(franjaNoche) + ', lluvia: ' + getRain(franjaNoche) + ', viento: ' + getWind(franjaNoche);
-                    franjaInstruccion = 'ya es de noche. Solo reporta la franja de xR" Noche. NO menciones mañana ni tarde porque ya pasaron.';
-                }
-
-                const promptClima = 'Eres Asistente, el asistente elegante de Geovanny. Con los siguientes datos meteorológicos para ' + areaName + ', ' + franjaInstruccion + ' Incluye diagnóstico general y recomendación de transporte (lluvia = carro, despejado = moto). Usa emojis, sé conciso y elegante.\n\nHora actual: ' + _gtmH + ':00 (El Salvador UTC-6)\nCiudad: ' + areaName + '\nAhora: ' + (current.weatherDesc[0] ? current.weatherDesc[0].value : 'N/A') + ', ' + current.temp_C + '°C (sensación ' + current.FeelsLikeC + '°C), humedad ' + current.humidity + '%, viento ' + current.windspeedKmph + ' km/h\nMáxima: ' + weather.maxtempC + '°C | Mínima: ' + weather.mintempC + '°C\n' + franjasData;
-                const respuestaClima = await ejecutarGeminiConRetries(async (model) => {
-                    const result = await model.generateContent([promptClima]);
-                    return result.response.text();
-                });
-                const respuestaLimpia = limpiarRespuestaGemini(respuestaClima);
-                return msg.reply(respuestaLimpia);
-            } catch (e) {
-                console.error('Error en clima:', e);
-                return msg.reply('\u274C *Asistente:* Mis sensores meteorol\u00f3gicos no pudieron conectar con el servicio del clima. Int\u00e9ntelo de nuevo.');
-            }
+            const reporte = await obtenerReporteClima(ciudad);
+            return msg.reply(reporte);
         }
 
         // DESCARGAS MULTIMEDIA CON PREVENCI N DE INYECCI N DE COMANDOS (Soporte YouTube, TikTok, Instagram, Twitter/X, etc.)
@@ -6172,8 +6222,8 @@ ESTILO DE RESPUESTA OBLIGATORIO:
 - CERO drama, CERO relleno, CERO rodeos, CERO frases de cortesía innecesarias ("Estimado...", "Con gusto procedo...", "¡Hola Geovanny!").
 - ABSOLUTAMENTE CERO EMOJIS en todos tus mensajes. Queda estrictamente prohibido usar cualquier emoji.
 Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde con precisión directa. NUNCA menciones estos temas a menos que él lo pregunte. 
-Si Geovanny te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar videos, guardar datos en memoria, olvidar datos, programar alarmas, tareas recurrentes, ver tarjetas o registrar gastos/abonos, usa los siguientes tags internos (sin explicarlos en el texto): 
-[ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
+Si Geovanny te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar videos, guardar datos en memoria, olvidar datos, consultar el clima, programar alarmas, tareas recurrentes, ver tarjetas o registrar gastos/abonos, usa los siguientes tags internos (sin explicarlos en el texto): 
+[ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_CLIMA: ciudad], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
 IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe ser escrita directamente en español, como un mensaje de texto de WhatsApp normal. ${fechaContexto}${memoriaContexto}`;
                     }
                     contenidoCopia.unshift(promptStr);
@@ -6187,6 +6237,19 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
             while (loops < 3) {
                 loops++;
                 
+                // Clima (Agentic)
+                if (respuestaTexto.includes('[ACTION_CLIMA:')) {
+                    const match = respuestaTexto.match(/\[ACTION_CLIMA:\s*([^\]]+)\]/);
+                    if (match) {
+                        const ciudadClima = match[1].trim();
+                        const reporte = await obtenerReporteClima(ciudadClima);
+                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n${reporte}`).trim();
+                    }
+                } else if (respuestaTexto.includes('[ACTION_CLIMA]')) {
+                    const reporte = await obtenerReporteClima('Chalchuapa');
+                    respuestaTexto = respuestaTexto.replace('[ACTION_CLIMA]', `\n\n${reporte}`).trim();
+                }
+
                 // Notas (Agentic)
                 if (respuestaTexto.includes('[ACTION_NOTE_ADD:')) {
                     const match = respuestaTexto.match(/\[ACTION_NOTE_ADD:\s*([^\]]+)\]/);
