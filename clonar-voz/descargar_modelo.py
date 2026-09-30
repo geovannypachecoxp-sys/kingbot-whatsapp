@@ -231,7 +231,7 @@ def barra_terminal(nombre: str, hecho: int, total: int, velocidad: float) -> Non
     lleno = int(porcentaje / 100 * 32)
     restante = (total - hecho) / velocidad if velocidad > 0 else 0
     sys.stdout.write(
-        f"\r  {nombre[:38]:<38} [{'█' * lleno}{'·' * (32 - lleno)}] "
+        f"\r  {nombre[:38]:<38} [{'#' * lleno}{'-' * (32 - lleno)}] "
         f"{porcentaje:5.1f}%  {legible(velocidad)}/s  faltan {int(restante // 60)}m{int(restante % 60):02d}s   "
     )
     sys.stdout.flush()
