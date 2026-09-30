@@ -2225,14 +2225,21 @@ try {
     console.warn("[TTS] msedge-tts no disponible directamente, se usarán fallbacks web.");
 }
 
-async function convertirAudioAMp3(bufferAudio) {
+async function convertirAudioAOpusWhatsApp(bufferAudio) {
     if (!bufferAudio || bufferAudio.length < 100) return bufferAudio;
-    if (bufferAudio.subarray(0, 3).toString() === 'ID3' || (bufferAudio[0] === 0xFF && (bufferAudio[1] & 0xE0) === 0xE0)) {
-        return bufferAudio;
-    }
     return new Promise((resolve) => {
         try {
-            const ff = spawn('ffmpeg', ['-y', '-i', 'pipe:0', '-codec:a', 'libmp3lame', '-qscale:a', '2', '-f', 'mp3', 'pipe:1']);
+            const ff = spawn('ffmpeg', [
+                '-y',
+                '-i', 'pipe:0',
+                '-c:a', 'libopus',
+                '-b:a', '32k',
+                '-vbr', 'on',
+                '-compression_level', '10',
+                '-application', 'voip',
+                '-f', 'ogg',
+                'pipe:1'
+            ]);
             const chunks = [];
             ff.stdout.on('data', c => chunks.push(c));
             ff.on('close', code => {
@@ -2243,7 +2250,7 @@ async function convertirAudioAMp3(bufferAudio) {
                 }
             });
             ff.on('error', (err) => {
-                console.warn('[convertirAudioAMp3] Error llamando a ffmpeg:', err.message);
+                console.warn('[convertirAudioAOpusWhatsApp] Error llamando a ffmpeg:', err.message);
                 resolve(bufferAudio);
             });
             ff.stdin.write(bufferAudio);
@@ -2264,8 +2271,8 @@ async function obtenerAudioBufferTTS(texto, genero = 'hombre') {
                 console.log(`[ClonarVoz] Sintetizando con voz clonada: "${genero}"`);
                 const audioClonado = await clonarVozClient.sintetizarTexto(texto, genero);
                 if (audioClonado && audioClonado.length > 500) {
-                    const audioMp3 = await convertirAudioAMp3(audioClonado);
-                    return audioMp3;
+                    const audioOpus = await convertirAudioAOpusWhatsApp(audioClonado);
+                    return audioOpus;
                 }
             }
         } catch (eClon) {
@@ -2341,9 +2348,14 @@ async function generarAudioTTS(texto, msg, generoDeseado = null) {
         const genero = generoDeseado || vozDefault || 'hombre';
         const buffer = await obtenerAudioBufferTTS(texto, genero);
         if (buffer && buffer.length > 0) {
-            const base64 = buffer.toString('base64');
-            const media = new MessageMedia('audio/mpeg', base64, 'tts.mp3');
-            await msg.reply(media, undefined, { sendAudioAsVoice: true });
+            const opusBuffer = await convertirAudioAOpusWhatsApp(buffer);
+            const base64 = opusBuffer.toString('base64');
+            const media = new MessageMedia('audio/ogg; codecs=opus', base64, 'voice.ogg');
+            try {
+                await msg.reply(media, undefined, { sendAudioAsVoice: true });
+            } catch (eVoice) {
+                await msg.reply(media);
+            }
             return true;
         }
     } catch (e) {
@@ -5508,8 +5520,8 @@ if (isTermux) {
             try {
                 const wavBuffer = await clonarVozClient.sintetizarTexto(textoDictar, targetVoz);
                 if (wavBuffer && wavBuffer.length > 500) {
-                    const mp3Buffer = await convertirAudioAMp3(wavBuffer);
-                    const media = new MessageMedia('audio/mpeg', mp3Buffer.toString('base64'), 'voz_clonada.mp3');
+                    const opusBuffer = await convertirAudioAOpusWhatsApp(wavBuffer);
+                    const media = new MessageMedia('audio/ogg; codecs=opus', opusBuffer.toString('base64'), 'voice.ogg');
                     try {
                         return await msg.reply(media, undefined, { sendAudioAsVoice: true });
                     } catch (eSendVoice) {
