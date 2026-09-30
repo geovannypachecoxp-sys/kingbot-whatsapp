@@ -3928,23 +3928,25 @@ Responde de forma clara, natural y concisa en español.`;
     }
 
     // --- GESTIÓN DIRECTA DE TAREAS PROGRAMADAS (LENGUAJE NATURAL Y COMANDOS) ---
-    const regexConsultarTareas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?tareas(?:\s+programadas)?|qu[eé]\s+tareas\s+(?:tengo|hay)(?:\s+programadas)?|ver\s+tareas\s+programadas|mis\s+tareas\s+programadas|lista\s+de\s+tareas\s+programadas|tareas\s+programadas|programados)\s*$/i;
-    if (regexConsultarTareas.test(textoLimpio.trim())) {
+    const textoNormalizado = textoLimpio.trim().replace(/^[¿¡?!.,\s]+|[¿¡?!.,\s]+$/g, '');
+
+    const regexConsultarTareas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|qu[eé]\s+tareas\s+(?:tengo|hay)(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|ver\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|mis\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|lista\s+de\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|tareas\s+(?:programadas?|programables?|automatizadas?|agendadas?)|programados)\s*$/i;
+    if (regexConsultarTareas.test(textoNormalizado)) {
         return msg.reply(formatearTareasProgramadas());
     }
 
-    const regexCancelarTarea = /^(?:cancela(?:r)?|elimina(?:r)?|borra(?:r)?|desprograma(?:r)?)\s+(?:(?:la\s+)?tarea\s+(?:programada\s+)?)?(\d+|todas?(?:\s+las\s+tareas(?:\s+programadas)?)?)\s*$/i;
-    const matchCancelar = textoLimpio.trim().match(regexCancelarTarea);
+    const regexCancelarTarea = /^(?:cancela(?:r)?|elimina(?:r)?|borra(?:r)?|desprograma(?:r)?)\s+(?:(?:la\s+)?tarea(?:\s+(?:programada|programable|automatizada))?\s+)?(\d+|todas?(?:\s+las\s+tareas(?:\s+(?:programadas|programables))?)?)\s*$/i;
+    const matchCancelar = textoNormalizado.match(regexCancelarTarea);
     if (matchCancelar) {
         return msg.reply(cancelarTareaProgramada(matchCancelar[1]));
     }
 
-    const esIntencionProgramar = /^(?:programa(?:r)?|agenda(?:r)?|recu[eé]rdame\s+(?:a|para)\s+las?|av[ií]same\s+(?:a|para)\s+las?|(?:a|para)\s+las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}\b)/i.test(textoLimpio.trim());
+    const esIntencionProgramar = /^(?:programa(?:r)?|agenda(?:r)?|recu[eé]rdame\s+(?:a|para)\s+las?|av[ií]same\s+(?:a|para)\s+las?|(?:a|para)\s+las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}\b)/i.test(textoNormalizado);
     if (esIntencionProgramar) {
-        const parsed = parsearInstruccionProgramacion(textoLimpio);
+        const parsed = parsearInstruccionProgramacion(textoNormalizado);
         if (parsed) {
             return msg.reply(procesarNuevaTareaProgramada(parsed, chatId));
-        } else if (/^(?:programa(?:r)?|agenda(?:r)?)\b/i.test(textoLimpio.trim())) {
+        } else if (/^(?:programa(?:r)?|agenda(?:r)?)\b/i.test(textoNormalizado)) {
             return msg.reply("Indica la hora y la instrucción. Ejemplo: Programar a las 07:00 AM resumen de noticias");
         }
     }
@@ -6137,8 +6139,8 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         if (isGroup && textoLimpio) textoParaGemini = '[Mensaje de ' + senderName + ']: ' + textoLimpio;
         if (textoParaGemini && comando !== 'sticker') contenido.push(textoParaGemini);
 
-        // Mensaje de espera Asistente para consultas largas
-        if (!isGroup && textoParaGemini && textoParaGemini.length > 30 && !chatsActivos.has(chatId)) {
+        // Mensaje de espera Asistente para consultas largas (omitido para admin)
+        if (!isGroup && textoParaGemini && textoParaGemini.length > 30 && !chatsActivos.has(chatId) && !esAdmin(chatId, msg)) {
             const _loadMsgs = ['*Asistente:* Procesando su consulta...', 'a *Asistente:* Analizando su solicitud, Señor.', 'x *Asistente:* Consultando sistemas internos...', 'a" *Asistente:* Procesando la información...'];
             try { await msg.reply(_loadMsgs[Math.floor(Math.random() * _loadMsgs.length)]); } catch(e) {}
         }
@@ -6223,7 +6225,7 @@ ESTILO DE RESPUESTA OBLIGATORIO:
 - ABSOLUTAMENTE CERO EMOJIS en todos tus mensajes. Queda estrictamente prohibido usar cualquier emoji.
 Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde con precisión directa. NUNCA menciones estos temas a menos que él lo pregunte. 
 Si Geovanny te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar videos, guardar datos en memoria, olvidar datos, consultar el clima, programar alarmas, tareas recurrentes, ver tarjetas o registrar gastos/abonos, usa los siguientes tags internos (sin explicarlos en el texto): 
-[ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_CLIMA: ciudad], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
+[ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_CLIMA: ciudad], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_SCHEDULE_LIST], [ACTION_SCHEDULE_DELETE: indice_o_todas], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
 IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe ser escrita directamente en español, como un mensaje de texto de WhatsApp normal. ${fechaContexto}${memoriaContexto}`;
                     }
                     contenidoCopia.unshift(promptStr);
@@ -6237,6 +6239,24 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
             while (loops < 3) {
                 loops++;
                 
+                // Tareas programadas (Agentic)
+                if (respuestaTexto.includes('[ACTION_SCHEDULE_LIST]')) {
+                    const listaFormateada = formatearTareasProgramadas();
+                    if (respuestaTexto.includes('!bot programar') || respuestaTexto.includes('procedo con la consulta') || respuestaTexto.includes('pueden gestionarse')) {
+                        respuestaTexto = listaFormateada;
+                    } else {
+                        respuestaTexto = respuestaTexto.replace(/\[ACTION_SCHEDULE_LIST\]/g, `\n\n${listaFormateada}`).trim();
+                    }
+                }
+
+                if (respuestaTexto.includes('[ACTION_SCHEDULE_DELETE:') || respuestaTexto.includes('[ACTION_SCHEDULE_CANCEL:')) {
+                    const matchDel = respuestaTexto.match(/\[ACTION_SCHEDULE_(?:DELETE|CANCEL):\s*([^\]]+)\]/);
+                    if (matchDel) {
+                        const resDel = cancelarTareaProgramada(matchDel[1].trim());
+                        respuestaTexto = respuestaTexto.replace(matchDel[0], `\n\n${resDel}`).trim();
+                    }
+                }
+
                 // Clima (Agentic)
                 if (respuestaTexto.includes('[ACTION_CLIMA:')) {
                     const match = respuestaTexto.match(/\[ACTION_CLIMA:\s*([^\]]+)\]/);
