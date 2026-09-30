@@ -3739,8 +3739,7 @@ client.on('message_create', async (msg) => {
     // --- HOOK DE TRANSCRIPCIN AUTOMÁTICA DE VOZ (Speech-To-Text) ---
     if (msg.hasMedia && msg.type === 'ptt') {
         const isVoiceNote = msg.type === 'ptt';
-        const isConversational = chatsActivos.has(chatId);
-        if (isVoiceNote && (isConversational || !isGroup)) {
+        if (isVoiceNote && !isGroup) {
             try {
                 const media = await descargarMediaSeguro(msg);
                 if (media && media.data) {
@@ -3754,7 +3753,7 @@ client.on('message_create', async (msg) => {
                     const voiceTranscript = result.response.text().trim();
                     console.log(`[STT Hook Result]: ${voiceTranscript}`);
                     if (voiceTranscript) {
-                        await msg.reply(`x *Kinbot (Transcripción):*\n_"${voiceTranscript}"_`);
+                        await msg.reply(`*Transcripción:*\n_"${voiceTranscript}"_`);
                         textoOriginal = voiceTranscript;
                     }
                 }
@@ -4476,7 +4475,67 @@ Responde de forma clara, natural y concisa en español.`;
     const esAdminPrivado = !isGroup && esAdmin(chatId, msg);
     if (!chatsActivos.has(chatId) && !usaPrefijo && !esAdminPrivado) return;
 
+    // --- MODO CONVERSACIONAL INTELIGENTE PARA GRUPOS ---
+    // En grupos con chat activo, el bot NO interrumpe conversaciones entre miembros.
+    // Solo responde si se le invoca directamente por prefijo, mención, cita o nombre.
+    let llamadoPorNombre = false;
+    let botMencionado = false;
+    let citadoAlBot = false;
+
+    if (isGroup && !usaPrefijo && !textoOriginal.startsWith('!') && !textoOriginal.startsWith('.')) {
+        // 1. Mención nominal directa al bot al inicio o final del mensaje
+        const regexInicio = /^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)\b/i;
+        const regexFinal = /(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i;
+        if (regexInicio.test(textoOriginal.trim()) || regexFinal.test(textoOriginal.trim())) {
+            llamadoPorNombre = true;
+        }
+
+        // 2. Mención de WhatsApp (@King / @número)
+        const botWid = client.info?.wid?._serialized || '';
+        const botNumber = client.info?.wid?.user || '50378419704';
+        if (Array.isArray(msg.mentionedIds) && msg.mentionedIds.length > 0) {
+            botMencionado = msg.mentionedIds.some(id => 
+                id === botWid || 
+                id.includes(botNumber) || 
+                ADMIN_NUMBERS.some(n => id.includes(n))
+            );
+        }
+
+        // 3. Respuesta o cita a un mensaje previo del bot
+        if (msg.hasQuotedMsg) {
+            try {
+                const quotedMsg = await msg.getQuotedMessage();
+                if (quotedMsg && (
+                    quotedMsg.fromMe || 
+                    quotedMsg.author === botWid || 
+                    quotedMsg.author?.includes(botNumber) ||
+                    ADMIN_NUMBERS.some(n => quotedMsg.author?.includes(n))
+                )) {
+                    citadoAlBot = true;
+                }
+            } catch (eQ) {
+                console.error("[IntelligentGroup] Error al verificar mensaje citado:", eQ.message);
+            }
+        }
+
+        // Si los miembros hablan entre sí sin dirigirse al bot, guardar silencio absoluto
+        if (!llamadoPorNombre && !botMencionado && !citadoAlBot) {
+            return;
+        }
+    }
+
     let textoLimpio = usaPrefijo ? textoOriginal.substring(4).trim() : textoOriginal;
+    if (isGroup && llamadoPorNombre) {
+        textoLimpio = textoLimpio.replace(/^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)[,:\s-]*/i, '').trim();
+        textoLimpio = textoLimpio.replace(/(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i, '').trim();
+        if (!textoLimpio) textoLimpio = textoOriginal;
+    }
+
+    if (isGroup && botMencionado) {
+        textoLimpio = textoLimpio.replace(/@\d+/g, '').trim();
+        if (!textoLimpio) textoLimpio = textoOriginal;
+    }
+
     let comando = textoLimpio.split(' ')[0]?.toLowerCase() || '';
     comando = comando.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
