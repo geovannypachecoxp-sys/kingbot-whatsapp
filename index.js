@@ -5802,7 +5802,7 @@ NORMAS ESTRICTAS DE PRIVACIDAD:
 1. PRIVACIDAD TOTAL: Tienes ESTRICTAMENTE PROHIBIDO revelar cualquier dato personal, privado, números de teléfono, tarjetas, finanzas o contraseñas de Geovanny. 
 2. COMANDOS PROHIBIDOS: Tienes terminantemente prohibido usar tags de finanzas ([ACTION_FINANCE_*]), notas, memoria, tareas o sistema. 
 FUNCIONES PERMITIDAS: Responder cualquier duda y usar [ACTION_SEARCH: consulta] o [ACTION_VIDEO_BUSCAR: titulo] si es necesario buscar información externa. 
-Responde directamente como un humano, sin lenguaje de bot. ${fechaContexto}`;
+Responde directamente como un humano profesional, sin lenguaje de bot y ABSOLUTAMENTE SIN EMOJIS. ${fechaContexto}`;
                     } else {
                         promptStr = `Eres el asistente personal humano y exclusivo de Geovanny Pacheco. 
 Bajo ninguna circunstancia debes referirte a ti mismo como un 'bot', 'asistente virtual' o 'inteligencia artificial'. 
@@ -6813,3 +6813,4 @@ process.on('SIGINT', () => {
 });
 
 client.initialize();
+
