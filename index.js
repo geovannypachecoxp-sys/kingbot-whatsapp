@@ -4651,29 +4651,34 @@ NORMAS ESTRICTAS DE ESTILO Y CONDUCTA:
     // --- GESTIÓN DIRECTA DE ALARMAS Y TEMPORIZADORES ---
     const regexConsultarAlarmas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?alarmas|qu[eé]\s+alarmas\s+(?:tengo|hay)|ver\s+alarmas|mis\s+alarmas|lista\s+de\s+alarmas|alarmas)\s*$/i;
     if (regexConsultarAlarmas.test(textoNormalizado)) {
+        if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al Administrador en chat privado.");
         return msg.reply(formatearAlarmas());
     }
 
     const regexCancelarAlarma = /^(?:cancela(?:r)?|elimina(?:r)?|borra(?:r)?)\s+(?:(?:la\s+)?alarma\s+)?(\d+|todas?)\s*$/i;
     const matchCancAlarma = textoNormalizado.match(regexCancelarAlarma);
     if (matchCancAlarma) {
+        if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al Administrador en chat privado.");
         return msg.reply(cancelarAlarma(matchCancAlarma[1]));
     }
 
     const parsedAlarma = parsearAlarma(textoNormalizado);
     if (parsedAlarma) {
+        if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al Administrador en chat privado.");
         return msg.reply(procesarNuevaAlarma(parsedAlarma, chatId));
     }
 
     // --- GESTIÓN DIRECTA DE TAREAS PROGRAMADAS (LENGUAJE NATURAL Y COMANDOS) ---
     const regexConsultarTareas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|qu[eé]\s+tareas\s+(?:tengo|hay)(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|ver\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|mis\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|lista\s+de\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|tareas\s+(?:programadas?|programables?|automatizadas?|agendadas?)|programados)\s*$/i;
     if (regexConsultarTareas.test(textoNormalizado)) {
+        if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al Administrador en chat privado.");
         return msg.reply(formatearTareasProgramadas());
     }
 
     const regexCancelarTarea = /^(?:cancela(?:r)?|elimina(?:r)?|borra(?:r)?|desprograma(?:r)?)\s+(?:(?:la\s+)?tarea(?:\s+(?:programada|programable|automatizada))?\s+)?(\d+|todas?(?:\s+las\s+tareas(?:\s+(?:programadas|programables))?)?)\s*$/i;
     const matchCancelar = textoNormalizado.match(regexCancelarTarea);
     if (matchCancelar) {
+        if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al Administrador en chat privado.");
         return msg.reply(cancelarTareaProgramada(matchCancelar[1]));
     }
 
@@ -6072,10 +6077,12 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'alarmas') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador en privado.");
             return msg.reply(formatearAlarmas());
         }
 
         if (comando === 'alarmaborrar') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador en privado.");
             if (!argumento) {
                 return msg.reply("Uso: !bot alarmaborrar <número> o !bot alarmaborrar todas");
             }
@@ -6396,10 +6403,12 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'programados') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador en privado.");
             return msg.reply(formatearTareasProgramadas());
         }
 
         if (comando === 'desprogramar') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador en privado.");
             if (!argumento) {
                 return msg.reply("Uso: !bot desprogramar <número> o !bot desprogramar todas");
             }
@@ -6407,6 +6416,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'tareas') {
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador en privado.");
             if (tareasGuardadas.length === 0) {
                 return msg.reply(" *Asistente:* No hay tareas pendientes.");
             }
@@ -7770,8 +7780,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_FINANCE_CARDS')) {
                     const match = respuestaTexto.match(/\[ACTION_FINANCE_CARDS(?::\s*([^\]]+))?\]/);
                     if (match) {
-                        if (!esAdmin(chatId, msg)) {
-                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n Las funciones de finanzas están restringidas al Administrador.').trim();
+                        if (isGroup || !esAdmin(chatId, msg)) {
+                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n Las funciones de finanzas están restringidas al Administrador en chat privado.').trim();
                         } else {
                             if (!dbFirebase) inicializarFirebase();
                             if (!dbFirebase || !firebaseUid) {
@@ -7857,8 +7867,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
 
                 // Finance Alerts (Agentic: alertas de vencimiento de tarjetas)
                 if (respuestaTexto.includes('[ACTION_FINANCE_ALERTS]')) {
-                    if (!esAdmin(chatId, msg)) {
-                        respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n Funciones de finanzas restringidas al Administrador.').trim();
+                    if (isGroup || !esAdmin(chatId, msg)) {
+                        respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n Funciones de finanzas restringidas al Administrador en chat privado.').trim();
                     } else {
                         if (!dbFirebase) inicializarFirebase();
                         if (!dbFirebase || !firebaseUid) {
