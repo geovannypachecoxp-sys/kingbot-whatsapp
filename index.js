@@ -4125,6 +4125,8 @@ Responde de forma clara, natural y concisa en español.`;
         return;
     }
 
+    const textoNormalizado = (textoLimpio || '').trim().replace(/^[¿¡?!.,\s]+|[¿¡?!.,\s]+$/g, '');
+
     // --- GESTIÓN DIRECTA DE ALARMAS Y TEMPORIZADORES ---
     const regexConsultarAlarmas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?alarmas|qu[eé]\s+alarmas\s+(?:tengo|hay)|ver\s+alarmas|mis\s+alarmas|lista\s+de\s+alarmas|alarmas)\s*$/i;
     if (regexConsultarAlarmas.test(textoNormalizado)) {
