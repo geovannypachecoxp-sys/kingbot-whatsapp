@@ -683,6 +683,153 @@ function horaToCron(horaStr) {
     return `${m} ${h} * * *`;
 }
 
+function parsearInstruccionProgramacion(texto) {
+    if (!texto || typeof texto !== 'string') return null;
+    let t = texto.trim();
+
+    // Remover prefijos comunes si los trae
+    t = t.replace(/^(!bot\s+programar\s*|programar?\s+|agendar?\s+|recu[eé]rdame\s+|av[ií]same\s+)/i, '').trim();
+
+    // Caso 1: Formato con pipes (|)
+    if (t.includes('|')) {
+        const parts = t.split('|').map(p => p.trim());
+        const horaStr = parts[0];
+        const accionStr = parts[1];
+        const tipoStr = (parts[2] || 'diaria').toLowerCase();
+        const recurrente = !['unavez', 'una vez', 'false', 'unica', 'única'].includes(tipoStr);
+        const cronExpr = horaToCron(horaStr);
+        if (cronExpr && accionStr) {
+            return {
+                hora: horaStr,
+                cron: cronExpr,
+                accion: accionStr,
+                recurrente
+            };
+        }
+    }
+
+    // Caso 2: Lenguaje natural
+    let recurrente = true;
+    if (/\b(una\s+sola\s+vez|una\s+vez|solo\s+hoy|s[oó]lo\s+hoy|hoy)\b/i.test(t)) {
+        recurrente = false;
+        t = t.replace(/\b(una\s+sola\s+vez|una\s+vez|solo\s+hoy|s[oó]lo\s+hoy|hoy)\b/gi, '').trim();
+    } else if (/\b(todos\s+los\s+d[ií]as|diari[ao]|cada\s+d[ií]a)\b/i.test(t)) {
+        recurrente = true;
+        t = t.replace(/\b(todos\s+los\s+d[ií]as|diari[ao]|cada\s+d[ií]a)\b/gi, '').trim();
+    }
+
+    const horaRegex = /(?:(?:a|para)\s+las?\s+)?(\b\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?|\b\d{1,2}:\d{2}\b)/i;
+    const match = t.match(horaRegex);
+    if (!match) return null;
+
+    const horaCandidata = match[1].trim();
+    const cronExpr = horaToCron(horaCandidata);
+    if (!cronExpr) return null;
+
+    let accion = t.replace(match[0], ' ');
+    accion = accion.replace(/^[\s,;:\-–—]+/, '');
+    accion = accion.replace(/^(que|para|de|a)\s+/i, '');
+    accion = accion.replace(/\s{2,}/g, ' ').trim();
+
+    if (!accion) return null;
+
+    return {
+        hora: horaCandidata,
+        cron: cronExpr,
+        accion: accion,
+        recurrente
+    };
+}
+
+function formatearTareasProgramadas() {
+    if (!tareasProgramadas || tareasProgramadas.length === 0) {
+        return "No hay tareas programadas.";
+    }
+    let res = "*Tareas programadas activas:*\n";
+    tareasProgramadas.forEach((t, i) => {
+        const frecuencia = t.recurrente !== false ? 'Diaria' : 'Una vez';
+        const destEsAdmin = !t.chatId || sonMismoChatDestino(t.chatId, adminChatId);
+        const dest = destEsAdmin ? 'Privado' : (t.chatId?.endsWith('@g.us') ? 'Grupo' : 'Chat');
+        const hora = t.hora || t.cron;
+        res += `${i + 1}. [${hora}] ${frecuencia} | ${dest} - ${t.accion || t.descripcion}\n`;
+    });
+    return res.trim();
+}
+
+function procesarNuevaTareaProgramada(parsed, destChat) {
+    const destNormalizado = normalizarDestinoChat(destChat);
+    const indexExistente = tareasProgramadas.findIndex(t => {
+        const mismoChat = sonMismoChatDestino(t.chatId, destNormalizado);
+        const mismaHora = (t.hora === parsed.hora || t.cron === parsed.cron);
+        return mismoChat && mismaHora;
+    });
+
+    const recLabel = parsed.recurrente ? 'Diaria' : 'Una vez';
+    const destLabel = destNormalizado.endsWith('@g.us') ? 'Grupo' : 'Privado';
+
+    if (indexExistente !== -1) {
+        const antigua = tareasProgramadas[indexExistente];
+        antigua.accion = parsed.accion;
+        antigua.prompt = parsed.accion;
+        antigua.descripcion = parsed.accion.length > 60 ? parsed.accion.substring(0, 57) + '...' : parsed.accion;
+        antigua.recurrente = parsed.recurrente;
+        antigua.hora = parsed.hora;
+        antigua.cron = parsed.cron;
+        antigua.chatId = destNormalizado;
+        antigua.actualizada = new Date().toISOString();
+        guardarTareasProgramadas();
+        if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
+
+        return `Tarea actualizada: ${parsed.hora} (${recLabel})\nInstrucción: ${parsed.accion}\nDestino: ${destLabel}`;
+    }
+
+    const nuevaTarea = {
+        hora: parsed.hora,
+        cron: parsed.cron,
+        recurrente: parsed.recurrente,
+        accion: parsed.accion,
+        prompt: parsed.accion,
+        descripcion: parsed.accion.length > 60 ? parsed.accion.substring(0, 57) + '...' : parsed.accion,
+        chatId: destNormalizado,
+        creada: new Date().toISOString()
+    };
+
+    tareasProgramadas.push(nuevaTarea);
+    guardarTareasProgramadas();
+    if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
+
+    return `Tarea programada: ${parsed.hora} (${recLabel})\nInstrucción: ${parsed.accion}\nDestino: ${destLabel}`;
+}
+
+function cancelarTareaProgramada(param) {
+    if (!tareasProgramadas || tareasProgramadas.length === 0) {
+        return "No hay tareas programadas para cancelar.";
+    }
+    const p = String(param || '').trim().toLowerCase();
+    if (p === 'todas' || p === 'todo' || p.includes('todas')) {
+        const total = tareasProgramadas.length;
+        tareasProgramadas = [];
+        guardarTareasProgramadas();
+        if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
+        return `Se cancelaron todas las tareas programadas (${total}).`;
+    }
+
+    const rawIdx = parseInt(p, 10);
+    let index = rawIdx - 1;
+    if (isNaN(index) || index < 0 || index >= tareasProgramadas.length) {
+        if (!isNaN(rawIdx) && rawIdx >= 0 && rawIdx < tareasProgramadas.length) {
+            index = rawIdx;
+        } else {
+            return `Número de tarea no válido. Tareas disponibles: 1 a ${tareasProgramadas.length}.`;
+        }
+    }
+
+    const eliminada = tareasProgramadas.splice(index, 1)[0];
+    guardarTareasProgramadas();
+    if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
+    return `Tarea eliminada: ${eliminada.accion || eliminada.descripcion} (${eliminada.hora || eliminada.cron})`;
+}
+
 function guardarAlarmas() {
     fs.writeFileSync('alarmas.json', JSON.stringify(alarmasGuardadas, null, 2));
 }
@@ -2501,23 +2648,25 @@ client.on('ready', () => {
         // Si es una petición para la IA (frases motivacionales, noticias, resúmenes, etc.)
         try {
             const respuestaAI = await ejecutarGeminiConRetries(async (model) => {
-                const prompt = `Eres Asistente, el asistente personal inteligente en WhatsApp.
-Esta es una tarea automática programada por el usuario para entregarse diariamente a esta hora${horaLabel}.
-Instrucción del usuario: "${accion}".
-Genera el contenido solicitado de forma completa, motivadora, atractiva y 100% en español.
-Usa buen formato de WhatsApp (negritas, listas y emojis cuando sea oportuno).
-Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario. No incluyas metadatos ni comentarios como 'Aquí tienes'.`;
+                const prompt = `Eres el asistente personal de Geovanny Pacheco.
+Tarea automática programada: "${accion}".
+Genera la información solicitada de forma directa, precisa y concisa.
+REGLAS ESTRICTAS:
+- ABSOLUTAMENTE CERO EMOJIS. Queda estrictamente prohibido incluir cualquier tipo de emoji en tu respuesta.
+- CERO drama, CERO relleno, CERO rodeos o introducciones ("Aquí tienes...", "Buenos días...").
+- Da única y exclusivamente la información necesaria y requerida.
+- Responde DIRECTAMENTE con el contenido final en español.`;
                 const result = await model.generateContent(prompt);
                 return result.response.text();
             });
 
             if (respuestaAI && respuestaAI.trim()) {
-                await client.sendMessage(destChat, ` *Asistente - Tarea Programada${horaLabel}:*\n\n${limpiarRespuestaGemini(respuestaAI)}`);
+                await client.sendMessage(destChat, `*Tarea Programada${horaLabel}:*\n\n${limpiarRespuestaGemini(respuestaAI)}`);
             }
         } catch (e) {
             console.error("[CRON AI Error]:", e.message);
             try {
-                await client.sendMessage(destChat, ` *Asistente (Aviso Programado${horaLabel}):*\nEs hora de: _"${accion}"_\n_(No se pudo consultar a la IA en este instante)._`);
+                await client.sendMessage(destChat, `*Tarea Programada${horaLabel}:*\nRecordatorio: ${accion}`);
             } catch (e2) {}
         }
     }
@@ -3684,6 +3833,28 @@ Responde de forma clara, natural y concisa en español.`;
             console.error("Error al enviar mensaje de seradmin:", e.message);
         }
         return;
+    }
+
+    // --- GESTIÓN DIRECTA DE TAREAS PROGRAMADAS (LENGUAJE NATURAL Y COMANDOS) ---
+    const regexConsultarTareas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?tareas(?:\s+programadas)?|qu[eé]\s+tareas\s+(?:tengo|hay)(?:\s+programadas)?|ver\s+tareas\s+programadas|mis\s+tareas\s+programadas|lista\s+de\s+tareas\s+programadas|tareas\s+programadas|programados)\s*$/i;
+    if (regexConsultarTareas.test(textoLimpio.trim())) {
+        return msg.reply(formatearTareasProgramadas());
+    }
+
+    const regexCancelarTarea = /^(?:cancela(?:r)?|elimina(?:r)?|borra(?:r)?|desprograma(?:r)?)\s+(?:(?:la\s+)?tarea\s+(?:programada\s+)?)?(\d+|todas?(?:\s+las\s+tareas(?:\s+programadas)?)?)\s*$/i;
+    const matchCancelar = textoLimpio.trim().match(regexCancelarTarea);
+    if (matchCancelar) {
+        return msg.reply(cancelarTareaProgramada(matchCancelar[1]));
+    }
+
+    const esIntencionProgramar = /^(?:programa(?:r)?|agenda(?:r)?|recu[eé]rdame\s+(?:a|para)\s+las?|av[ií]same\s+(?:a|para)\s+las?|(?:a|para)\s+las?\s+\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}\b)/i.test(textoLimpio.trim());
+    if (esIntencionProgramar) {
+        const parsed = parsearInstruccionProgramacion(textoLimpio);
+        if (parsed) {
+            return msg.reply(procesarNuevaTareaProgramada(parsed, chatId));
+        } else if (/^(?:programa(?:r)?|agenda(?:r)?)\b/i.test(textoLimpio.trim())) {
+            return msg.reply("Indica la hora y la instrucción. Ejemplo: Programar a las 07:00 AM resumen de noticias");
+        }
     }
 
         if (!msg.hasMedia) {
@@ -5403,115 +5574,24 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         
         if (comando === 'programar') {
             if (!argumento) {
-                return msg.reply(" *Uso del comando:* `!bot programar <HH:MM> | <instrucción o comando> | [diaria/unavez]`\n\n*Ejemplos prácticos:*\n• `!bot programar 05:00 | Dame una frase motivacional poderosa para iniciar el día`\n• `!bot programar 08:00 | Busca las noticias de futbol más importantes de hoy`\n• `!bot programar 08:30 | !bot noticias | diaria`\n• `!bot programar 21:00 | Recordar planificar el día de mañana | diaria`");
+                return msg.reply("Uso: !bot programar <hora> <instrucción>\nEjemplo: !bot programar 07:00 AM resumen de noticias");
             }
-            const parts = argumento.split('|').map(p => p.trim());
-            const horaStr = parts[0];
-            const accionStr = parts[1];
-            const tipoStr = (parts[2] || 'diaria').toLowerCase();
-            const recurrente = (tipoStr !== 'unavez' && tipoStr !== 'una vez' && tipoStr !== 'false');
-
-            if (!horaStr || !accionStr) {
-                return msg.reply(" *Formato incompleto.*\nDebes indicar la hora y la instrucción separadas por `|`:\n`!bot programar 05:00 | Dame una frase motivacional`");
+            const parsed = parsearInstruccionProgramacion(argumento);
+            if (!parsed) {
+                return msg.reply("Indica la hora y la instrucción. Ejemplo: !bot programar 07:00 AM resumen de noticias");
             }
-
-            const cronExpr = horaToCron(horaStr);
-            if (!cronExpr) {
-                return msg.reply(` *Hora no válida ("${horaStr}").*\nUsa formato de 24 horas (ej. 05:00, 08:00, 14:30) o 12 horas (ej. 5:00 AM, 8:00 PM).`);
-            }
-
-            // Evitar duplicados idénticos o conflicto de horario en el mismo chat
-            const destNormalizado = normalizarDestinoChat(chatId);
-            const indexExistente = tareasProgramadas.findIndex(t => {
-                const mismoChat = sonMismoChatDestino(t.chatId, destNormalizado);
-                const mismaHora = (t.hora === horaStr || t.cron === cronExpr);
-                return mismoChat && mismaHora;
-            });
-
-            if (indexExistente !== -1) {
-                // Si ya existía una tarea para este chat a esta misma hora, actualizarla en lugar de duplicarla
-                const antigua = tareasProgramadas[indexExistente];
-                antigua.accion = accionStr;
-                antigua.prompt = accionStr;
-                antigua.descripcion = accionStr.length > 60 ? accionStr.substring(0, 57) + '...' : accionStr;
-                antigua.recurrente = recurrente;
-                antigua.hora = horaStr;
-                antigua.cron = cronExpr;
-                antigua.chatId = destNormalizado;
-                antigua.actualizada = new Date().toISOString();
-                guardarTareasProgramadas();
-                if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-
-                const recLabel = recurrente ? 'Todos los días' : 'Una sola vez';
-                return msg.reply(` *¡Tarea Programada Actualizada con Éxito!*
- *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
- *Nueva Instrucción:* "${accionStr}"
- *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
-_Se actualizó la tarea existente a las ${horaStr} para evitar duplicados._`);
-            }
-
-            const nuevaTarea = {
-                hora: horaStr,
-                cron: cronExpr,
-                recurrente,
-                accion: accionStr,
-                prompt: accionStr,
-                descripcion: accionStr.length > 60 ? accionStr.substring(0, 57) + '...' : accionStr,
-                chatId: destNormalizado,
-                creada: new Date().toISOString()
-            };
-
-            tareasProgramadas.push(nuevaTarea);
-            guardarTareasProgramadas();
-            if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-
-            const recLabel = recurrente ? 'Todos los días' : 'Una sola vez';
-            return msg.reply(` *¡Tarea Programada con Éxito!*
- *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
- *Instrucción:* "${accionStr}"
- *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
-_Para ver todas tus tareas programadas escribe: *!bot programados*_`);
+            return msg.reply(procesarNuevaTareaProgramada(parsed, chatId));
         }
 
         if (comando === 'programados') {
-            if (tareasProgramadas.length === 0) {
-                return msg.reply(" *Asistente:* No tienes tareas programadas activas.\n\n_Puedes programar una escribiendo:_\n`!bot programar 05:00 | Frase motivacional`");
-            }
-            let list = ` *TAREAS PROGRAMADAS ACTIVAS:*\n\n`;
-            tareasProgramadas.forEach((t, i) => {
-                const rec = t.recurrente !== false ? ' Diaria' : '1⃣ Una sola vez';
-                const destEsAdmin = !t.chatId || sonMismoChatDestino(t.chatId, adminChatId);
-                const destLabel = destEsAdmin ? ' Privado (Tú)' : (t.chatId?.endsWith('@g.us') ? ' Grupo' : ' Chat');
-                list += `*${i + 1}*. [  ${t.hora || t.cron} ] _(${rec} | ${destLabel})_\n    ${t.descripcion || t.accion}\n\n`;
-            });
-            list += `_Para borrar una tarea usa: *!bot desprogramar <número>* o *!bot desprogramar todas*_`;
-            return msg.reply(list);
+            return msg.reply(formatearTareasProgramadas());
         }
 
         if (comando === 'desprogramar') {
             if (!argumento) {
-                return msg.reply(" *Uso:* `!bot desprogramar <número>` o `!bot desprogramar todas`.\n\n_Para ver la lista escribe: *!bot programados*_");
+                return msg.reply("Uso: !bot desprogramar <número> o !bot desprogramar todas");
             }
-            if (argumento.toLowerCase() === 'todas' || argumento.toLowerCase() === 'todo') {
-                const cant = tareasProgramadas.length;
-                tareasProgramadas = [];
-                guardarTareasProgramadas();
-                if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-                return msg.reply(` *Asistente:* Se han cancelado y eliminado todas las tareas programadas (${cant} tareas eliminadas).`);
-            }
-            const rawIdx = parseInt(argumento, 10);
-            let index = rawIdx - 1; // 1-indexed
-            if (isNaN(index) || index < 0 || index >= tareasProgramadas.length) {
-                if (!isNaN(rawIdx) && rawIdx >= 0 && rawIdx < tareasProgramadas.length) {
-                    index = rawIdx; // 0-indexed fallback
-                } else {
-                    return msg.reply(" *Asistente:* Número de tarea no válido. Escribe `!bot programados` para ver la lista.");
-                }
-            }
-            const eliminada = tareasProgramadas.splice(index, 1)[0];
-            guardarTareasProgramadas();
-            if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-            return msg.reply(` *Asistente:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
+            return msg.reply(cancelarTareaProgramada(argumento));
         }
 
         if (comando === 'tareas') {
@@ -6086,9 +6166,12 @@ Responde directamente como un humano profesional, sin lenguaje de bot y ABSOLUTA
                     } else {
                         promptStr = `Eres el asistente personal humano y exclusivo de Geovanny Pacheco. 
 Bajo ninguna circunstancia debes referirte a ti mismo como un 'bot', 'asistente virtual' o 'inteligencia artificial'. 
-Eres su secretario y asistente de confianza, discreto, elegante y sumamente natural y conversacional en tu forma de hablar. 
-Compórtate y exprésate como un verdadero ser humano empleado de alta categoría (como el clásico mayordomo Jarvis, pero sin decir que eres IA). 
-Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde de manera natural y fluida. NUNCA menciones o hagas alusión a estos temas a menos que él lo pregunte. 
+Eres su asistente de confianza. 
+ESTILO DE RESPUESTA OBLIGATORIO:
+- Respuestas precisas, concisas y directas al grano. Proporciona única y exclusivamente lo necesario y requerido por Geovanny.
+- CERO drama, CERO relleno, CERO rodeos, CERO frases de cortesía innecesarias ("Estimado...", "Con gusto procedo...", "¡Hola Geovanny!").
+- ABSOLUTAMENTE CERO EMOJIS en todos tus mensajes. Queda estrictamente prohibido usar cualquier emoji.
+Conoces sus áreas de interés (Métricas, Helados, Linux, ESIT, Gym) pero responde con precisión directa. NUNCA menciones estos temas a menos que él lo pregunte. 
 Si Geovanny te pide guardar una nota, ver notas, borrar notas, recordar algo, responder en audio, buscar en la web, revisar videos, guardar datos en memoria, olvidar datos, programar alarmas, tareas recurrentes, ver tarjetas o registrar gastos/abonos, usa los siguientes tags internos (sin explicarlos en el texto): 
 [ACTION_NOTE_ADD: texto], [ACTION_NOTE_LIST], [ACTION_NOTE_DELETE: indice], [ACTION_REMIND: minutos | mensaje], [ACTION_SEARCH: consulta], [ACTION_AUDIO: texto], [ACTION_YOUTUBE_CHECK], [ACTION_YOUTUBE_CHECK: canal], [ACTION_MEMORY_SAVE: tema | valor], [ACTION_MEMORY_DELETE: tema_o_numero], [ACTION_MEMORY_LIST], [ACTION_SCHEDULE: HH:MM | diaria | instruccion_completa | breve_descripcion], [ACTION_ALARM_ADD: HH:MM | mensaje | diaria], [ACTION_ALARM_DELETE: indice_o_hora], [ACTION_FINANCE_CARDS], [ACTION_FINANCE_ADD: type | amount | concept | card_name | category]. 
 IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. Tu respuesta debe ser escrita directamente en español, como un mensaje de texto de WhatsApp normal. ${fechaContexto}${memoriaContexto}`;
@@ -6549,11 +6632,12 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 console.log(`[ Agentic] Tarea programada guardada: "${descripcion}" a las ${horaStr} (${cronExpr}) para ${destNormalizado}`);
                             }
 
-                            const tipoTexto = recurrente ? "todos los días" : "una sola vez";
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Tarea programada confirmada:*\n "${descripcion}"\n Hora: ${horaStr} (${tipoTexto} - Zona El Salvador)\n_Escribe *!bot programados* para ver todas tus tareas activas._`).trim();
+                            const tipoTexto = recurrente ? "Diaria" : "Una vez";
+                            const destLabel = destNormalizado.endsWith('@g.us') ? 'Grupo' : 'Privado';
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\nTarea programada: ${horaStr} (${tipoTexto})\nInstrucción: ${descripcion}\nDestino: ${destLabel}`).trim();
                         } else {
                             console.error(`[ Agentic] Formato de hora/cron inválido: ${horaStr}`);
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n No pude reconocer el formato de hora "${horaStr}". Por favor especifica la hora como HH:MM (ej. 05:00 o 5:00 AM).`).trim();
+                            respuestaTexto = respuestaTexto.replace(match[0], `\nHora no válida "${horaStr}". Usa formato como 05:00 o 5:00 PM.`).trim();
                         }
                     }
                 }
