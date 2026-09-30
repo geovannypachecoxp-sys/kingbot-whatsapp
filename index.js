@@ -23,6 +23,7 @@ const path = require('path');
 const os = require('os');
 const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 const clonarVozClient = require('./clonarVozClient');
+const crypto = require('crypto');
 
 // ---------------------------------------------------------
 // DETECTOR AUTOMÁTICO DE ENTORNO (WINDOWS / TERMUX)
@@ -938,14 +939,16 @@ Humedad: ${humedad}% | Viento: ${viento} km/h`;
 async function descifrarMediaWhatsApp(bufferEncrypted, mediaKeyBase64, mediaType = 'image') {
     try {
         const mediaKey = Buffer.isBuffer(mediaKeyBase64) ? mediaKeyBase64 : Buffer.from(mediaKeyBase64, 'base64');
+        const typeNorm = (mediaType || '').toLowerCase();
         const infoMap = {
             image: 'WhatsApp Image Keys',
             video: 'WhatsApp Video Keys',
             audio: 'WhatsApp Audio Keys',
+            ptt: 'WhatsApp Audio Keys',
             document: 'WhatsApp Document Keys',
             sticker: 'WhatsApp Image Keys'
         };
-        const infoStr = infoMap[mediaType] || 'WhatsApp Image Keys';
+        const infoStr = infoMap[typeNorm] || (typeNorm.includes('audio') || typeNorm.includes('ptt') ? 'WhatsApp Audio Keys' : 'WhatsApp Image Keys');
         
         let derived;
         if (typeof crypto.hkdfSync === 'function') {
@@ -5430,9 +5433,19 @@ if (isTermux) {
 
             await msg.reply(`Extrayendo muestra acústica y registrando voz "${argumento}"...`);
             try {
-                const mediaDescargada = await descargarMediaSeguro(audioMsg);
+                let mediaDescargada = null;
+                if (typeof audioMsg.downloadMedia === 'function') {
+                    try {
+                        mediaDescargada = await audioMsg.downloadMedia();
+                    } catch (eDl) {
+                        console.warn("[ClonarVoz] Falló downloadMedia nativo:", eDl.message);
+                    }
+                }
                 if (!mediaDescargada || !mediaDescargada.data) {
-                    return msg.reply("No fue posible descargar el audio de referencia.");
+                    mediaDescargada = await descargarMediaSeguro(audioMsg);
+                }
+                if (!mediaDescargada || !mediaDescargada.data) {
+                    return msg.reply("No fue posible descargar el audio de referencia. Intenta reenviarlo o grabarlo nuevamente.");
                 }
                 const bufferAudio = Buffer.from(mediaDescargada.data, 'base64');
                 const nuevaVoz = await clonarVozClient.guardarVoz(argumento.trim(), bufferAudio, mediaDescargada.mimetype || 'audio/ogg');
