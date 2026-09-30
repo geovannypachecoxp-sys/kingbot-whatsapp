@@ -347,17 +347,37 @@ async function ejecutarGeminiConRetries(callback) {
 // CONFIGURACIÓN DE YOUTUBE Y ESTADOS
 const rssParser = new Parser();
 
+const ADMIN_NUMBERS = ['50378419704'];
+
 function esAdmin(chatId, msg) {
-    let target = chatId;
-    if (!target && msg) {
-        target = (typeof getRealChatId === 'function' ? getRealChatId(msg) : '') || msg.from;
+    const candidates = [];
+    if (chatId) candidates.push(chatId);
+    if (msg) {
+        if (msg.from) candidates.push(msg.from);
+        if (msg.to) candidates.push(msg.to);
+        if (msg.author) candidates.push(msg.author);
+        if (msg.id) {
+            if (msg.id.remote) candidates.push(msg.id.remote);
+            if (msg.id.participant) candidates.push(msg.id.participant);
+        }
+        if (msg._data) {
+            if (msg._data.from) candidates.push(msg._data.from);
+            if (msg._data.to) candidates.push(msg._data.to);
+            if (msg._data.author) candidates.push(msg._data.author);
+        }
     }
-    if (!target) return false;
-    const clean = target.replace(/@.*$/, '');
-    if (clean.includes('50378419704') || target.includes('50378419704')) return true;
-    if (adminChatId) {
-        const cleanAdmin = adminChatId.replace(/@.*$/, '');
-        if (target === adminChatId || clean === cleanAdmin) return true;
+
+    for (const c of candidates) {
+        if (!c) continue;
+        const str = String(c);
+        const clean = str.replace(/@.*$/, '');
+        for (const num of ADMIN_NUMBERS) {
+            if (clean === num || str.includes(num)) return true;
+        }
+        if (adminChatId) {
+            const cleanAdmin = String(adminChatId).replace(/@.*$/, '');
+            if (str === adminChatId || clean === cleanAdmin) return true;
+        }
     }
     return false;
 }
@@ -2694,6 +2714,13 @@ client.on('message_create', async (msg) => {
     if (msg.timestamp < botStartTime - 60) return;
     const chatId = getRealChatId(msg) || (msg.fromMe ? msg.to : msg.from) || '';
     const isGroup = chatId.endsWith('@g.us');
+    if (!isGroup && esAdmin(chatId, msg)) {
+        if (adminChatId !== chatId) {
+            console.log(`[Admin] Sincronizando adminChatId activo: ${adminChatId} -> ${chatId}`);
+            adminChatId = chatId;
+            guardarAdminJson();
+        }
+    }
     let textoOriginal = (msg.body || "").trim();
     const lowerBody = textoOriginal.toLowerCase();
 
@@ -3345,7 +3372,7 @@ client.on('message_create', async (msg) => {
                 }
             }
             if (cmdConfig.tipo === 'codigo') {
-                if (chatId !== adminChatId) {
+                if (!esAdmin(chatId, msg)) {
                     return msg.reply(" Este comando personalizado de código está restringido al Administrador.");
                 }
                 try {
@@ -3487,7 +3514,7 @@ function obtenerDetalleAyuda(opcionRaw) {
         chatsActivos.add(chatId);
 
         let systemPromptFluid = agentesCustom[nombreAgente];
-        if (isGroup || chatId !== adminChatId) {
+        if (isGroup || !esAdmin(chatId, msg)) {
             systemPromptFluid = `Eres Asistente, un asistente virtual de inteligencia artificial inteligente, amable, educado y altamente eficiente.
 Estás interactuando con un usuario general (el propietario del bot es Geovanny Pacheco).
 
@@ -3566,13 +3593,13 @@ Responde de forma clara, natural y concisa en español.`;
 
     // --- CONTROL DE ENERGÍA Y REPOSO (APAGAR / ENCENDER) ---
     if (comando === 'apagar' || comando === 'dormir' || comando === 'suspender') {
-        if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+        if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
         botPausado = true;
         return msg.reply(" *Asistente:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
     }
 
     if (comando === 'encender' || comando === 'activar' || comando === 'despertar') {
-        if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+        if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
         botPausado = false;
         return msg.reply(" *Asistente:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
     }
@@ -3637,7 +3664,7 @@ Responde de forma clara, natural y concisa en español.`;
                 }
             }
             if (cmdConfig.tipo === 'codigo') {
-                if (chatId !== adminChatId) {
+                if (!esAdmin(chatId, msg)) {
                     return msg.reply(" Este comando personalizado de código está restringido al Administrador.");
                 }
                 try {
@@ -3778,7 +3805,7 @@ if (isTermux) {
 
         // --- SISTEMA DE CÁMARA HÍBRIDO ---
         if (comando === 'foto' || comando === 'camara') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Bloqueado en grupos.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Bloqueado en grupos.");
             if (!isTermux) {
                 return msg.reply("  *Ejecutándose en Windows:* Este comando (tomar foto con cámara interna) solo está disponible cuando el bot corre en Termux.");
             }
@@ -3797,7 +3824,7 @@ if (isTermux) {
 
         // --- SISTEMA DE AUDIO HÍBRIDO (Convertidor FFmpeg de Termux) ---
         if (comando === 'grabar' || comando === 'escuchar') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Bloqueado en grupos por privacidad.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Bloqueado en grupos por privacidad.");
             if (!isTermux) {
                 return msg.reply("  *Ejecutándose en Windows:* Este comando (grabar micrófono ambiental) solo está disponible cuando el bot corre en Termux.");
             }
@@ -3952,19 +3979,29 @@ if (isTermux) {
             return msg.reply(lista);
         }
 
-        if (comando === 'reiniciar') {
-            await msg.reply(" *Asistente:* Iniciando secuencia de reinicio maestro. Despejando memoria y reajustando sistemas... Estaré en línea en unos segundos.");
-            console.log('[x  ] Reinicio automático solicitado por el usuario. Lanzando nueva instancia...');
+        if (comando === 'reiniciar' || comando === 'restart' || comando === 'reboot') {
+            if (!esAdmin(chatId, msg)) {
+                return msg.reply("*Asistente:* Comando restringido al administrador.");
+            }
+            await msg.reply("*Asistente:* Reiniciando sistemas... El servicio se restablecerá automáticamente en unos segundos.");
+            console.log('[REINICIO] Solicitado por el administrador. Finalizando proceso para reinicio limpio...');
             
-            // Lanza un nuevo proceso independiente de Node con este mismo script
-            const child = spawn(process.argv[0], process.argv.slice(1), {
-                detached: true,
-                stdio: 'inherit' // Mantiene los logs en la misma terminal de Termux
-            });
-            child.unref(); // Desvincula el proceso padre
-            
-            // Cierra el proceso actual
-            process.exit(0);
+            setTimeout(async () => {
+                const isUnderPM2 = process.env.pm_id !== undefined || process.env.PM2_HOME || fs.existsSync('/home/ubuntu/.pm2');
+                if (isUnderPM2) {
+                    try { await client.destroy(); } catch(e){}
+                    process.exit(0);
+                } else {
+                    const child = spawn(process.argv[0], process.argv.slice(1), {
+                        detached: true,
+                        stdio: 'inherit'
+                    });
+                    child.unref();
+                    try { await client.destroy(); } catch(e){}
+                    process.exit(0);
+                }
+            }, 1000);
+            return;
         }
 
         if (comando === 'borrarcanal' || comando === 'eliminarcanal') {
@@ -4600,7 +4637,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // --- VISOR DE LOGS Y ERRORES DEL SISTEMA ---
         if (comando === 'logs' || comando === 'log' || comando === 'errores' || comando === 'error') {
-            if (isGroup && chatId !== adminChatId) return msg.reply("*Asistente:* Comando restringido al administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("*Asistente:* Comando restringido al administrador.");
 
             const esErrorLog = comando === 'errores' || comando === 'error' || (argumento && argumento.toLowerCase().includes('error'));
             let lineasSolicitadas = 15;
@@ -4661,7 +4698,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // --- NUEVO COMANDO: RECORDATORIOS ---
         if (comando === 'recordar' || comando === 'recordatorio') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido al administrador");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido al administrador");
             const parts = argumento.split(' ');
             const tiempoStr = parts[0];
             const mensajeRecordatorio = parts.slice(1).join(' ');
@@ -4689,7 +4726,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // --- BASE DE CONOCIMIENTO Y MEMORIA PERSISTENTE ---
         if (comando === 'memoria' || comando === 'datos' || comando === 'recuerdos') {
-            if (isGroup || (adminChatId && chatId !== adminChatId)) {
+            if (isGroup || !esAdmin(chatId, msg)) {
                 return msg.reply(" Comando restringido al administrador en chat privado.");
             }
 
@@ -4753,7 +4790,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'guardar' || comando === 'guardardato') {
-            if (isGroup || (adminChatId && chatId !== adminChatId)) {
+            if (isGroup || !esAdmin(chatId, msg)) {
                 return msg.reply(" Comando restringido al administrador en chat privado.");
             }
             if (!argumento) {
@@ -4776,7 +4813,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'olvidar' || comando === 'olvidardato') {
-            if (isGroup || (adminChatId && chatId !== adminChatId)) {
+            if (isGroup || !esAdmin(chatId, msg)) {
                 return msg.reply(" Comando restringido al administrador en chat privado.");
             }
             if (!argumento) return msg.reply(" Especifique el número o tema del dato que desea olvidar:\n`!bot olvidar <número o tema>`\n_Usa *!bot memoria* para ver la lista._");
@@ -4787,7 +4824,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // --- BLOC DE NOTAS ---
         if (comando === 'nota' || comando === 'guardarnota') {
-            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply(" Comando restringido al administrador");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido al administrador");
             if (!argumento) return msg.reply(" *Asistente:* Ingrese el texto de la nota que desea guardar.");
             notasGuardadas.push({ texto: argumento, fecha: new Date().toLocaleDateString('es-ES') });
             guardarNotas();
@@ -4795,7 +4832,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'notas') {
-            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply(" Comando restringido al administrador");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido al administrador");
             if (notasGuardadas.length === 0) {
                 return msg.reply(" *Asistente:* No tiene notas archivadas.");
             }
@@ -4914,7 +4951,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // --- GESTIN DE COMANDOS PERSONALIZADOS ---
         if (comando === 'comandocrear' || comando === 'crearcomando') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             const partsCmd = argumento.split(' ');
             const nombre = partsCmd[0]?.toLowerCase();
             const tipo = partsCmd[1]?.toLowerCase();
@@ -4938,7 +4975,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'comandoborrar' || comando === 'borrarcomando') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             const nombre = argumento.toLowerCase().trim();
             if (!nombre) {
                 return msg.reply(" *Asistente:* Formato correcto: *!bot comandoborrar <nombre>*");
@@ -4952,7 +4989,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'comandoslista' || comando === 'listacomandos') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             const keys = Object.keys(comandosCustom);
             if (keys.length === 0) {
                 return msg.reply(" *Asistente:* No hay comandos personalizados registrados.");
@@ -5010,7 +5047,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // --- SECCIÓN: FINANZAS Y TARJETAS (PWA INTEGRATION) ---
         if (comando === 'vencimientos' || comando === 'alertas') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
                 return msg.reply(" *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
@@ -5025,7 +5062,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'setuid') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             const uidInput = argumento.trim();
             if (!uidInput) {
                 return msg.reply(" *Asistente:* Proporcione su UID de Firebase. Ejemplo: *!bot setuid aBc123XyZ*");
@@ -5036,7 +5073,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'settelegramtoken' || comando === 'settelegram' || comando === 'telegramtoken') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             const tokenInput = argumento.trim();
             if (!tokenInput) {
                 return msg.reply(" *Asistente:* Proporcione su Token de Bot de Telegram obtenido de @BotFather.\n\nEjemplo: `!bot settelegram 123456789:ABCdefGhIJKlmNoPQ`");
@@ -5049,7 +5086,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'telegram' || comando === 'estadotelegram') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!telegramBotToken) {
                 return msg.reply("ℹ *Asistente:* El Bot de Telegram no está configurado actualmente.\nPara activarlo escribe: `!bot settelegram <TOKEN_DE_BOTFATHER>`");
             }
@@ -5059,7 +5096,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'setopenai' || comando === 'setopenaikey' || comando === 'openaikey') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             const keyInput = argumento.trim();
             if (!keyInput) {
                 return msg.reply(" *Asistente:* Proporcione su clave de OpenAI (comienza con `sk-...`).");
@@ -5070,7 +5107,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'openai' || comando === 'estadoopenai') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!openaiApiKey) {
                 return msg.reply("ℹ *Asistente:* OpenAI no está configurado actualmente.\nPara activarlo escribe: `!bot setopenai <TU_API_KEY>`");
             }
@@ -5079,7 +5116,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'tarjetas' || comando === 'finanzas') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
                 return msg.reply(" *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
@@ -5173,7 +5210,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
         }
 
         if (comando === 'gasto' || comando === 'abono') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
                 return msg.reply(" *Asistente:* No se ha detectado el archivo `serviceAccount.json`.");
@@ -5687,7 +5724,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         // 11. Leer SMS del teléfono (Termuonly)
         if (comando === 'sms') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!isTermux) {
                 return msg.reply("x *Ejecutándose en Windows:* La lectura de SMS requiere que el bot esté activo en TermuAndroid.");
             }
@@ -5713,7 +5750,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         // 12. Terminal Remota (Exec command)
         if (comando === 'cmd' || comando === 'run') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!argumento) return msg.reply(" *Asistente:* Indíqueme el comando de consola a ejecutar, Señor.");
             await msg.reply("x *Asistente:* Ejecutando comando en consola remota...");
             exec(argumento, { timeout: 10000 }, async (err, stdout, stderr) => {
@@ -5793,7 +5830,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         // --- GESTI N DE CLAVES API DINÁMICAS ---
         if (comando === 'agregarclave' || comando === 'addkey') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             if (!argumento || (!argumento.startsWith('AIzaSy') && !argumento.startsWith('AQ.'))) return msg.reply(" *Asistente:* Proporcione una clave API de Gemini válida.");
             sincronizarLlavesDesdeArchivo();
             const existingIdx = API_KEYS.indexOf(argumento);
@@ -5813,7 +5850,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             return msg.reply(" *Asistente:* Clave API agregada y guardada automáticamente en tu bloc de notas. Total: " + API_KEYS.length);
         }
         if (comando === 'claves' || comando === 'listkeys') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             sincronizarLlavesDesdeArchivo();
             let listK = ` *ESTADO DE CLAVES API GEMINI:*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
             API_KEYS.forEach((key, idx) => {
@@ -5827,14 +5864,14 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             return msg.reply(listK);
         }
         if (comando === 'restaurarclaves' || comando === 'resetkeys') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             API_KEYS.forEach((key, idx) => { if (keyStatus[idx]) { keyStatus[idx].status = 'Activa'; keyStatus[idx].requestsToday = 0; } });
             currentKeyIndex =  0; currentModelIndex =  0;
             guardarKeysYCuotas();
             return msg.reply(" *Asistente:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
         }
         if (comando === 'borrarclaves' || comando === 'clearkeys') {
-            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido solo al Administrador.");
             API_KEYS.splice(0, API_KEYS.length);
             if (Array.isArray(keyStatus)) {
                 keyStatus.splice(0, keyStatus.length);
@@ -6313,7 +6350,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_MEMORY_SAVE:')) {
                     const match = respuestaTexto.match(/\[ACTION_MEMORY_SAVE:\s*([^|]+)\|([^\]]+)\]/);
                     if (match) {
-                        if (chatId !== adminChatId) {
+                        if (!esAdmin(chatId, msg)) {
                             respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         } else {
                             const clave = match[1].trim();
@@ -6332,7 +6369,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_MEMORY_DELETE:')) {
                     const match = respuestaTexto.match(/\[ACTION_MEMORY_DELETE:\s*([^\]]+)\]/);
                     if (match) {
-                        if (chatId !== adminChatId) {
+                        if (!esAdmin(chatId, msg)) {
                             respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         } else {
                             const target = match[1].trim();
@@ -6348,7 +6385,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
 
                 // ACTION_MEMORY_LIST (Ver datos guardados)
                 if (respuestaTexto.includes('[ACTION_MEMORY_LIST]')) {
-                    if (chatId !== adminChatId) {
+                    if (!esAdmin(chatId, msg)) {
                         respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', '').trim();
                     } else {
                         if (memoriaGlobal.length === 0) {
@@ -6528,7 +6565,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_NOTE_ADD:')) {
                     const match = respuestaTexto.match(/\[ACTION_NOTE_ADD:\s*([^\]]+)\]/);
                     if (match) {
-                        if (chatId !== adminChatId) {
+                        if (!esAdmin(chatId, msg)) {
                             respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         } else {
                             const noteText = match[1].trim();
@@ -6541,7 +6578,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 }
                 
                 if (respuestaTexto.includes('[ACTION_NOTE_LIST]')) {
-                    if (chatId !== adminChatId) {
+                    if (!esAdmin(chatId, msg)) {
                         respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', '').trim();
                     } else {
                         if (notasGuardadas.length === 0) {
@@ -6556,7 +6593,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_NOTE_DELETE:')) {
                     const match = respuestaTexto.match(/\[ACTION_NOTE_DELETE:\s*([^\]]+)\]/);
                     if (match) {
-                        if (chatId !== adminChatId) {
+                        if (!esAdmin(chatId, msg)) {
                             respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         } else {
                             const argBorrar = match[1].trim();
@@ -6690,7 +6727,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_FINANCE_CARDS')) {
                     const match = respuestaTexto.match(/\[ACTION_FINANCE_CARDS(?::\s*([^\]]+))?\]/);
                     if (match) {
-                        if (chatId !== adminChatId) {
+                        if (!esAdmin(chatId, msg)) {
                             respuestaTexto = respuestaTexto.replace(match[0], '\n\n Las funciones de finanzas están restringidas al Administrador.').trim();
                         } else {
                             if (!dbFirebase) inicializarFirebase();
@@ -6777,7 +6814,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
 
                 // Finance Alerts (Agentic: alertas de vencimiento de tarjetas)
                 if (respuestaTexto.includes('[ACTION_FINANCE_ALERTS]')) {
-                    if (chatId !== adminChatId) {
+                    if (!esAdmin(chatId, msg)) {
                         respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n Funciones de finanzas restringidas al Administrador.').trim();
                     } else {
                         if (!dbFirebase) inicializarFirebase();
@@ -6798,7 +6835,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_FINANCE_ADD:')) {
                     const match = respuestaTexto.match(/\[ACTION_FINANCE_ADD:\s*([^\]]+)\]/);
                     if (match) {
-                        if (chatId !== adminChatId) {
+                        if (!esAdmin(chatId, msg)) {
                             respuestaTexto = respuestaTexto.replace(match[0], '\n\n Función de finanzas restringida al Administrador.').trim();
                         } else {
                             if (!dbFirebase) inicializarFirebase();
