@@ -1203,6 +1203,14 @@ async function descargarYEnviarVideo(rawUrl, msg) {
         _ytArgs.push('--ffmpeg-location', ffmpegDir);
     }
 
+    const localCookies = path.join(__dirname, 'cookies.txt');
+    const homeCookies = '/home/ubuntu/cookies.txt';
+    if (fs.existsSync(localCookies)) {
+        _ytArgs.push('--cookies', localCookies);
+    } else if (fs.existsSync(homeCookies)) {
+        _ytArgs.push('--cookies', homeCookies);
+    }
+
     if (_isYouTube) {
         _ytArgs.push(
             '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best',
