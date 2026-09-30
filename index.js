@@ -6833,3 +6833,4 @@ startBot();
 
 process.on('unhandledRejection', (reason, promise) => { console.error('Unhandled Rejection:', reason); if (reason && reason.message && reason.message.includes('Execution context was destroyed')) { process.exit(1); } });
 
+
