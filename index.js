@@ -341,7 +341,7 @@ async function ejecutarGeminiConRetries(callback) {
             }
         }
     }
-    throw new Error("Todos los intentos con todas las llaves y modelos de Gemini fallaron.");
+    return " *Asistente:* Mis sistemas de Inteligencia Artificial están experimentando una alta demanda y no están disponibles temporalmente. Por favor, intente de nuevo en unos minutos.";
 }
 
 // CONFIGURACIÃ“N DE YOUTUBE Y ESTADOS
@@ -6832,3 +6832,4 @@ startBot();
 
 
 process.on('unhandledRejection', (reason, promise) => { console.error('Unhandled Rejection:', reason); if (reason && reason.message && reason.message.includes('Execution context was destroyed')) { process.exit(1); } });
+
