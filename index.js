@@ -932,19 +932,138 @@ Humedad: ${humedad}% | Viento: ${viento} km/h`;
     }
 }
 
-async function descargarMediaSeguro(mensaje, maxIntentos = 3) {
-    if (!mensaje || typeof mensaje.downloadMedia !== 'function') return null;
-    for (let i = 0; i < maxIntentos; i++) {
-        try {
-            const media = await mensaje.downloadMedia();
-            if (media && media.data) return media;
-        } catch (e) {
-            console.warn(`[descargarMediaSeguro] Intento ${i + 1}/${maxIntentos} falló:`, e?.message || e);
-            if (i < maxIntentos - 1) {
-                await new Promise(r => setTimeout(r, 800));
+async function descargarMediaSeguro(mensaje, maxIntentos = 2) {
+    if (!mensaje) return null;
+
+    // 1. Intento nativo estándar con mensaje.downloadMedia()
+    if (typeof mensaje.downloadMedia === 'function') {
+        for (let i = 0; i < maxIntentos; i++) {
+            try {
+                const media = await mensaje.downloadMedia();
+                if (media && media.data) return media;
+            } catch (e) {
+                console.warn(`[descargarMediaSeguro] Intento nativo ${i + 1}/${maxIntentos} falló:`, e?.message || e);
+                if (i < maxIntentos - 1) {
+                    await new Promise(r => setTimeout(r, 600));
+                }
             }
         }
     }
+
+    // 2. Extracción directa y profunda desde la sesión web de Puppeteer
+    try {
+        const pupPage = mensaje.client?.pupPage || client?.pupPage;
+        const msgId = mensaje.id?._serialized;
+        if (pupPage && msgId) {
+            console.log(`[descargarMediaSeguro] Ejecutando extracción profunda en página para msgId: ${msgId}...`);
+            const res = await pupPage.evaluate(async (mId) => {
+                try {
+                    const msg = await window.WWebJS.getMsgById(mId);
+                    const mimetype = msg?.mimetype || 'image/jpeg';
+                    const filename = msg?.filename || 'imagen.jpg';
+
+                    // Estrategia A: renderableUrl (blob: en memoria)
+                    if (msg?.mediaData?.renderableUrl) {
+                        try {
+                            const resp = await fetch(msg.mediaData.renderableUrl);
+                            if (resp.ok) {
+                                const buffer = await resp.arrayBuffer();
+                                const b64 = await window.WWebJS.arrayBufferToBase64Async(buffer);
+                                if (b64 && b64.length > 50) {
+                                    return { ok: true, data: b64, mimetype, filename, source: 'renderableUrl' };
+                                }
+                            }
+                        } catch (eA) {}
+                    }
+
+                    // Estrategia B: Buscar el nodo <img> en el DOM que corresponde a este mensaje
+                    const imgEl = document.querySelector(`[data-id="${mId}"] img`) ||
+                                  document.querySelector(`div[data-id*="${mId.replace(/[@:]/g, '')}"] img`) ||
+                                  document.querySelector(`div[data-id*="${(mId.split('_')[1] || '').replace(/[@:]/g, '')}"] img`);
+                    if (imgEl && imgEl.src && imgEl.src.startsWith('blob:')) {
+                        try {
+                            const resp = await fetch(imgEl.src);
+                            if (resp.ok) {
+                                const buffer = await resp.arrayBuffer();
+                                const b64 = await window.WWebJS.arrayBufferToBase64Async(buffer);
+                                if (b64 && b64.length > 50) {
+                                    return { ok: true, data: b64, mimetype, filename, source: 'dom_img' };
+                                }
+                            }
+                        } catch (eB) {}
+                    }
+
+                    // Estrategia C: WAWebDownloadManager sin mockQpl
+                    if (msg) {
+                        try {
+                            const dlMgr = window.require('WAWebDownloadManager')?.downloadManager || window.Store?.DownloadManager;
+                            if (dlMgr && typeof dlMgr.downloadAndMaybeDecrypt === 'function') {
+                                const decrypted = await dlMgr.downloadAndMaybeDecrypt({
+                                    directPath: msg.directPath,
+                                    encFilehash: msg.encFilehash,
+                                    filehash: msg.filehash,
+                                    mediaKey: msg.mediaKey,
+                                    mediaKeyTimestamp: msg.mediaKeyTimestamp,
+                                    type: msg.type,
+                                    signal: (new AbortController()).signal
+                                });
+                                if (decrypted) {
+                                    const b64 = await window.WWebJS.arrayBufferToBase64Async(decrypted);
+                                    if (b64 && b64.length > 50) {
+                                        return { ok: true, data: b64, mimetype, filename, source: 'dlMgr' };
+                                    }
+                                }
+                            }
+                        } catch (eC) {}
+                    }
+
+                    // Estrategia D: Preview / Thumbnail base64
+                    if (msg?.mediaData?.preview) {
+                        let prev = msg.mediaData.preview;
+                        if (typeof prev === 'string') {
+                            prev = prev.replace(/^data:image\/[^;]+;base64,/, '');
+                            if (prev.length > 50) {
+                                return { ok: true, data: prev, mimetype: 'image/jpeg', filename: 'preview.jpg', source: 'preview_str' };
+                            }
+                        } else if (prev instanceof Uint8Array || prev instanceof ArrayBuffer) {
+                            const b64 = await window.WWebJS.arrayBufferToBase64Async(prev);
+                            if (b64 && b64.length > 50) {
+                                return { ok: true, data: b64, mimetype: 'image/jpeg', filename: 'preview.jpg', source: 'preview_buf' };
+                            }
+                        }
+                    }
+
+                    // Estrategia E: El blob de la última imagen visible en el DOM
+                    const allBlobs = Array.from(document.querySelectorAll('img[src^="blob:"]'));
+                    if (allBlobs.length > 0) {
+                        const lastImg = allBlobs[allBlobs.length - 1];
+                        try {
+                            const resp = await fetch(lastImg.src);
+                            if (resp.ok) {
+                                const buffer = await resp.arrayBuffer();
+                                const b64 = await window.WWebJS.arrayBufferToBase64Async(buffer);
+                                if (b64 && b64.length > 50) {
+                                    return { ok: true, data: b64, mimetype, filename, source: 'dom_last_blob' };
+                                }
+                            }
+                        } catch (eE) {}
+                    }
+
+                    return { ok: false, err: 'exhausted', mediaStage: msg?.mediaData?.mediaStage };
+                } catch (eEval) {
+                    return { ok: false, err: String(eEval?.message || eEval) };
+                }
+            }, msgId);
+
+            console.log(`[descargarMediaSeguro] Resultado extracción profunda:`, JSON.stringify({ ok: res?.ok, source: res?.source, err: res?.err }));
+            if (res && res.ok && res.data) {
+                return new MessageMedia(res.mimetype || 'image/jpeg', res.data, res.filename || 'imagen.jpg');
+            }
+        }
+    } catch (eProfundo) {
+        console.error(`[descargarMediaSeguro] Error en extracción profunda:`, eProfundo.message);
+    }
+
     return null;
 }
 
@@ -4397,8 +4516,15 @@ Responde de forma clara, natural y concisa en español.`;
         } else {
             try {
                 const chat = await msg.getChat();
-                const historial = await chat.fetchMessages({ limit: 2 });
-                if (historial && historial[0] && historial[0].hasMedia) mensajeAProcesar = historial[0];
+                const historial = await chat.fetchMessages({ limit: 6 });
+                if (Array.isArray(historial)) {
+                    for (let i = historial.length - 1; i >= 0; i--) {
+                        if (historial[i] && historial[i].id?._serialized !== msg.id?._serialized && historial[i].hasMedia) {
+                            mensajeAProcesar = historial[i];
+                            break;
+                        }
+                    }
+                }
             } catch (eH) {}
         }
     }
