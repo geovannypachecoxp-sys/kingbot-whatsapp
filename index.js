@@ -2318,6 +2318,34 @@ client.on('ready', () => {
     iniciarTelegramPolling();
     iniciarEscuchadorNotificacionesFirestore();
 
+    // Notificar al administrador si el reinicio fue solicitado mediante comando
+    if (fs.existsSync('reinicio_pendiente.json')) {
+        try {
+            const rawData = fs.readFileSync('reinicio_pendiente.json', 'utf8');
+            const data = JSON.parse(rawData);
+            try { fs.unlinkSync('reinicio_pendiente.json'); } catch(e){}
+
+            const targetChat = data.chatId || adminChatId || '50378419704@c.us';
+            const seg = data.timestamp ? Math.round((Date.now() - data.timestamp) / 1000) : null;
+            const tiempoTxt = seg ? ` en ${seg}s` : '';
+            const confirmMsg = `*Asistente:* Secuencia de reinicio completada exitosamente${tiempoTxt}. Todos los subsistemas están activos y en línea.`;
+
+            setTimeout(async () => {
+                try {
+                    await client.sendMessage(targetChat, confirmMsg);
+                    console.log(`[REINICIO] Confirmación de reinicio enviada exitosamente a ${targetChat}`);
+                } catch (errEnv) {
+                    console.error('[REINICIO] Error enviando confirmación por WhatsApp:', errEnv.message);
+                    if (targetChat !== '50378419704@c.us') {
+                        try { await client.sendMessage('50378419704@c.us', confirmMsg); } catch(e){}
+                    }
+                }
+            }, 2500);
+        } catch (e) {
+            console.error('[REINICIO] Error procesando reinicio_pendiente.json:', e);
+        }
+    }
+
     // --- VERIFICACI N DE DEPENDENCIAS PARA STICKERS ---
     const checkCmd = (cmd, label) => {
         return new Promise(resolve => {
@@ -3984,8 +4012,17 @@ if (isTermux) {
                 return msg.reply("*Asistente:* Comando restringido al administrador.");
             }
             await msg.reply("*Asistente:* Reiniciando sistemas... El servicio se restablecerá automáticamente en unos segundos.");
-            console.log('[REINICIO] Solicitado por el administrador. Finalizando proceso para reinicio limpio...');
+            console.log('[REINICIO] Solicitado por el administrador. Guardando estado y finalizando proceso para reinicio limpio...');
             
+            try {
+                fs.writeFileSync('reinicio_pendiente.json', JSON.stringify({
+                    chatId: chatId || adminChatId || '50378419704@c.us',
+                    timestamp: Date.now()
+                }, null, 2));
+            } catch(e) {
+                console.error('[REINICIO] No se pudo guardar reinicio_pendiente.json:', e.message);
+            }
+
             setTimeout(async () => {
                 const isUnderPM2 = process.env.pm_id !== undefined || process.env.PM2_HOME || fs.existsSync('/home/ubuntu/.pm2');
                 if (isUnderPM2) {
