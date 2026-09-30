@@ -937,7 +937,7 @@ Humedad: ${humedad}% | Viento: ${viento} km/h`;
     }
 }
 
-function descifrarMediaWhatsApp(bufferEncrypted, mediaKeyBase64, mediaType = 'image') {
+async function descifrarMediaWhatsApp(bufferEncrypted, mediaKeyBase64, mediaType = 'image') {
     try {
         const mediaKey = Buffer.isBuffer(mediaKeyBase64) ? mediaKeyBase64 : Buffer.from(mediaKeyBase64, 'base64');
         const infoMap = {
@@ -949,7 +949,15 @@ function descifrarMediaWhatsApp(bufferEncrypted, mediaKeyBase64, mediaType = 'im
         };
         const infoStr = infoMap[mediaType] || 'WhatsApp Image Keys';
         
-        const derived = crypto.hkdfSync('sha256', mediaKey, Buffer.alloc(32), Buffer.from(infoStr, 'utf-8'), 112);
+        let derived;
+        if (typeof crypto.hkdfSync === 'function') {
+            derived = crypto.hkdfSync('sha256', mediaKey, Buffer.alloc(32), Buffer.from(infoStr, 'utf-8'), 112);
+        } else {
+            const { promisify } = require('util');
+            const hkdfAsync = promisify(crypto.hkdf);
+            const arrBuf = await hkdfAsync('sha256', mediaKey, Buffer.alloc(32), Buffer.from(infoStr, 'utf-8'), 112);
+            derived = Buffer.from(arrBuf);
+        }
         const iv = derived.subarray(0, 16);
         const cipherKey = derived.subarray(16, 48);
         
@@ -976,7 +984,7 @@ async function descargarDirectoCDN(directPath, mediaKey, mediaType = 'image') {
         });
         if (resp.ok) {
             const encBuffer = Buffer.from(await resp.arrayBuffer());
-            const decrypted = descifrarMediaWhatsApp(encBuffer, mediaKey, mediaType);
+            const decrypted = await descifrarMediaWhatsApp(encBuffer, mediaKey, mediaType);
             if (decrypted && decrypted.length > 50) {
                 console.log(`[descargarDirectoCDN] ¡Descifrado exitoso! Tamaño: ${decrypted.length} bytes`);
                 return decrypted;
