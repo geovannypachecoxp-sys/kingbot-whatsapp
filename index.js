@@ -387,13 +387,13 @@ function inicializarFirebase() {
                 });
             }
             dbFirebase = adminFirebase.firestore();
-            console.log('[🔥 Firebase] Conectado exitosamente con la base de datos finanzaqa.');
+            console.log('[ Firebase] Conectado exitosamente con la base de datos finanzaqa.');
             return true;
         } catch (e) {
-            console.error('[❌ Firebase] Error al inicializar firebase-admin:', e.message);
+            console.error('[ Firebase] Error al inicializar firebase-admin:', e.message);
         }
     } else {
-        console.log('[ℹ️ Firebase] Archivo serviceAccount.json no encontrado en el directorio actual.');
+        console.log('[ℹ Firebase] Archivo serviceAccount.json no encontrado en el directorio actual.');
     }
     return false;
 }
@@ -731,7 +731,7 @@ if (isTermux) {
         '--js-flags=--max-old-space-size=512'
     );
     console.log('[Enrutador] Entorno detectado: Android/Termux. Cargando Chromium movil...');
-    console.log('[ℹ️ WhatsApp Web]: Conectando sesión... (Los mensajes de "PUPPETEER PAGE LOG / storage denied" son advertencias internas normales de WhatsApp Web en móvil. Espera ~20 segundos a que diga LISTO)...');
+    console.log('[ℹ WhatsApp Web]: Conectando sesión... (Los mensajes de "PUPPETEER PAGE LOG / storage denied" son advertencias internas normales de WhatsApp Web en móvil. Espera ~20 segundos a que diga LISTO)...');
 } else {
     console.log('[Enrutador] Entorno detectado: Computadora (Windows). Cargando Puppeteer estandar...');
 }
@@ -1014,14 +1014,14 @@ async function descargarViaApiRescue(videoUrl, plataforma) {
 // ---------------------------------------------------------
 async function descargarYEnviarVideo(rawUrl, msg) {
     if (!rawUrl || !rawUrl.includes('http')) {
-        return msg.reply("❌ *Por favor proporciona un enlace de video válido.*");
+        return msg.reply(" *Por favor proporciona un enlace de video válido.*");
     }
 
     let videoUrl = rawUrl.trim();
     try {
         new URL(videoUrl);
     } catch (e) {
-        return msg.reply("❌ *El enlace proporcionado no es válido.*");
+        return msg.reply(" *El enlace proporcionado no es válido.*");
     }
 
     const _isTikTok = videoUrl.includes('tiktok.com') || videoUrl.includes('vm.tiktok') || videoUrl.includes('vt.tiktok');
@@ -1045,10 +1045,10 @@ async function descargarYEnviarVideo(rawUrl, msg) {
     else if (_isYouTube) plataforma = 'YouTube';
     else if (_isTwitter) plataforma = 'X (Twitter)';
 
-    await msg.reply(`🎬 *Descargando video de ${plataforma}...*\n_Por favor espere un momento._`);
+    await msg.reply(` *Descargando video de ${plataforma}...*\n_Por favor espere un momento._`);
 
     const destChat = getRealChatId(msg) || (msg.fromMe ? msg.to : msg.from);
-    const caption = `🎬 *Video de ${plataforma}*`;
+    const caption = ` *Video de ${plataforma}*`;
 
     // Helper de seguridad: garantiza que NINGÚN envío en Puppeteer se quede colgado
     const withTimeout = (promise, ms, desc) => {
@@ -1250,7 +1250,7 @@ async function descargarYEnviarVideo(rawUrl, msg) {
                     return;
                 }
             }
-            await msg.reply(`❌ *No se pudo descargar el video de ${plataforma}.*\n_Asegúrate de que la publicación sea pública, no requiera inicio de sesión y no supere los límites de tamaño (100 MB)._`).catch(()=>{});
+            await msg.reply(` *No se pudo descargar el video de ${plataforma}.*\n_Asegúrate de que la publicación sea pública, no requiera inicio de sesión y no supere los límites de tamaño (100 MB)._`).catch(()=>{});
             cleanupAndFinish(false);
         };
 
@@ -1282,7 +1282,7 @@ async function descargarYEnviarVideo(rawUrl, msg) {
                 const sizeMB = stats.size / (1024 * 1024);
                 if (sizeMB > 95) {
                     try { fs.unlinkSync(actualFile); } catch(e){}
-                    await msg.reply(`⚠️ *El video excede el límite permitido para WhatsApp (${sizeMB.toFixed(1)} MB).*`).catch(()=>{});
+                    await msg.reply(` *El video excede el límite permitido para WhatsApp (${sizeMB.toFixed(1)} MB).*`).catch(()=>{});
                     cleanupAndFinish(false);
                     return;
                 }
@@ -1546,7 +1546,7 @@ Responde ÚNICAMENTE con el objeto JSON limpio. Sin markdown ni texto adicional.
         return await aplicarOperacionFinanciera(data, msg);
     } catch (e) {
         console.error("Error al procesar documento financiero:", e);
-        await msg.reply(`❌ *Asistente:* Ocurrió un error al procesar el documento: ${e.message}`);
+        await msg.reply(` *Asistente:* Ocurrió un error al procesar el documento: ${e.message}`);
         return true;
     }
 }
@@ -1682,14 +1682,14 @@ async function aplicarOperacionFinanciera(data, msg) {
         const matchingCard = buscarTarjeta(data.last4, data.card_name);
 
         if (!matchingCard) {
-            await msg.reply(`📄 *Estado de Cuenta Detectado:*
-💳 *Tarjeta/Banco:* ${data.card_name || 'Desconocido'}
-🔢 *Terminación:* ${data.last4 || 'N/A'}
-🎯 *Pago p/no generar intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}
-💰 *Saldo al corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}
-📅 *Fecha límite:* ${data.pay_date || 'N/A'}
+            await msg.reply(` *Estado de Cuenta Detectado:*
+ *Tarjeta/Banco:* ${data.card_name || 'Desconocido'}
+ *Terminación:* ${data.last4 || 'N/A'}
+ *Pago p/no generar intereses:* $${parseFloat(data.pay_goal || 0).toFixed(2)}
+ *Saldo al corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}
+ *Fecha límite:* ${data.pay_date || 'N/A'}
 
-⚠️ *Aviso:* No se encontró ninguna tarjeta en Firestore que coincida con "${data.last4 || ''}" o "${data.card_name || ''}". Regístrala en la PWA primero.`);
+ *Aviso:* No se encontró ninguna tarjeta en Firestore que coincida con "${data.last4 || ''}" o "${data.card_name || ''}". Regístrala en la PWA primero.`);
             return true;
         }
 
@@ -1715,12 +1715,12 @@ async function aplicarOperacionFinanciera(data, msg) {
 
         await cardsRef.doc(matchingCard.id).update(updatePayload);
 
-        let confirmMsg = `💳 *Estado de Cuenta Procesado*\n\n`;
+        let confirmMsg = ` *Estado de Cuenta Procesado*\n\n`;
         confirmMsg += `• *Tarjeta:* ${matchingCard.name}\n`;
         confirmMsg += `• *Pago de contado:* $${parseFloat(data.pay_goal || 0).toFixed(2)}\n`;
         confirmMsg += `• *Fecha límite:* ${data.pay_date || 'No especificada'} (Día ${payDay})\n`;
         confirmMsg += `• *Saldo al corte:* $${parseFloat(data.cutoff_balance || 0).toFixed(2)}\n\n`;
-        confirmMsg += `✅ _Guardado exitosamente_`;
+        confirmMsg += ` _Guardado exitosamente_`;
 
         await msg.reply(confirmMsg);
         return true;
@@ -1730,7 +1730,7 @@ async function aplicarOperacionFinanciera(data, msg) {
     if (data.doc_type === 'payment') {
         const amt = parseFloat(data.amount || 0);
         if (isNaN(amt) || amt <= 0) {
-            await msg.reply(`⚠️ *Comprobante de Abono Detectado:* Monto inválido ($${data.amount}).`);
+            await msg.reply(` *Comprobante de Abono Detectado:* Monto inválido ($${data.amount}).`);
             return true;
         }
 
@@ -1764,7 +1764,7 @@ async function aplicarOperacionFinanciera(data, msg) {
             cardId: cardIdVal,
             cardName: cardNameVal,
             concept: data.concept || `Abono a ${cardNameVal}`,
-            category: '💵 Abono Capital',
+            category: ' Abono Capital',
             date: adminFirebase.firestore.Timestamp.fromDate(tDate)
         };
         if (data.reference) payload.reference = String(data.reference);
@@ -1777,12 +1777,12 @@ async function aplicarOperacionFinanciera(data, msg) {
         const fAnio = tDate.getFullYear();
         const fechaFormateada = `${fDia}/${fMes}/${fAnio}`;
 
-        let confirmMsg = `💵 *Abono Procesado*\n\n`;
+        let confirmMsg = ` *Abono Procesado*\n\n`;
         confirmMsg += `• *Monto:* $${amt.toFixed(2)}\n`;
         confirmMsg += `• *Tarjeta:* ${cardNameVal}\n`;
         confirmMsg += `• *Fecha:* ${fechaFormateada}\n`;
         if (data.reference) confirmMsg += `• *Referencia:* ${data.reference}\n`;
-        confirmMsg += `\n✅ _Guardado exitosamente_`;
+        confirmMsg += `\n _Guardado exitosamente_`;
 
         await msg.reply(confirmMsg);
         return true;
@@ -1792,10 +1792,10 @@ async function aplicarOperacionFinanciera(data, msg) {
     if (data.doc_type === 'expense' || !data.doc_type) {
         const amt = parseFloat(data.amount || 0);
         const concept = data.concept || 'Gasto registrado';
-        const category = data.category || '📦 Compras';
+        const category = data.category || ' Compras';
 
         if (isNaN(amt) || amt <= 0) {
-            await msg.reply(`⚠️ *Ticket Detectado:* Importe no válido ($${data.amount}).`);
+            await msg.reply(` *Ticket Detectado:* Importe no válido ($${data.amount}).`);
             return true;
         }
 
@@ -1840,13 +1840,13 @@ async function aplicarOperacionFinanciera(data, msg) {
         const fAnio = tDate.getFullYear();
         const fechaFormateada = `${fDia}/${fMes}/${fAnio}`;
 
-        let confirmMsg = `💳 *Compra Procesada*\n\n`;
+        let confirmMsg = ` *Compra Procesada*\n\n`;
         confirmMsg += `• *Monto:* $${amt.toFixed(2)}\n`;
         confirmMsg += `• *Concepto:* ${concept}\n`;
         confirmMsg += `• *Categoría:* ${category}\n`;
         confirmMsg += `• *Método:* ${cardNameVal}\n`;
         confirmMsg += `• *Fecha:* ${fechaFormateada}\n\n`;
-        confirmMsg += `✅ _Guardado exitosamente_`;
+        confirmMsg += ` _Guardado exitosamente_`;
 
         await msg.reply(confirmMsg);
         return true;
@@ -1860,18 +1860,18 @@ let ultimoTimestampVencimientos = 0;
 async function chequearVencimientosYNotificar(force = false) {
     if (!dbFirebase) inicializarFirebase();
     if (!dbFirebase || !firebaseUid || !adminChatId) {
-        console.log("[ℹ️ Finanzas] Alerta omitida: Firebase o Administrador no configurado.");
+        console.log("[ℹ Finanzas] Alerta omitida: Firebase o Administrador no configurado.");
         return null;
     }
 
     if (verificandoVencimientosActualmente) {
-        console.log("[ℹ️ Finanzas] Verificación de vencimientos ya en curso. Omitiendo llamada duplicada.");
+        console.log("[ℹ Finanzas] Verificación de vencimientos ya en curso. Omitiendo llamada duplicada.");
         return null;
     }
 
     const ahoraMs = Date.now();
     if (!force && (ahoraMs - ultimoTimestampVencimientos < 120000)) {
-        console.log("[ℹ️ Finanzas] Alerta de vencimientos ya ejecutada hace menos de 2 minutos. Omitiendo duplicado.");
+        console.log("[ℹ Finanzas] Alerta de vencimientos ya ejecutada hace menos de 2 minutos. Omitiendo duplicado.");
         return null;
     }
 
@@ -1880,7 +1880,7 @@ async function chequearVencimientosYNotificar(force = false) {
     const todayStr = today.toDateString();
 
     if (!force && ultimoChequeoVencimientos === todayStr) {
-        console.log("[ℹ️ Finanzas] Vencimientos ya verificados hoy. Saltando.");
+        console.log("[ℹ Finanzas] Vencimientos ya verificados hoy. Saltando.");
         return null;
     }
 
@@ -1895,7 +1895,7 @@ async function chequearVencimientosYNotificar(force = false) {
         const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
         const cardsSnap = await cardsRef.get();
         if (cardsSnap.empty) {
-            if (force) await client.sendMessage(adminChatId, "ℹ️ *Asistente:* No hay tarjetas de crédito registradas en Firestore.");
+            if (force) await client.sendMessage(adminChatId, "ℹ *Asistente:* No hay tarjetas de crédito registradas en Firestore.");
             return null;
         }
 
@@ -1982,11 +1982,11 @@ async function chequearVencimientosYNotificar(force = false) {
         });
 
         if (alertMessages.length > 0) {
-            const finalMsg = `💳 *Recordatorio de Pagos*\n\n` + alertMessages.join('\n\n');
+            const finalMsg = ` *Recordatorio de Pagos*\n\n` + alertMessages.join('\n\n');
             await client.sendMessage(adminChatId, finalMsg);
             return finalMsg;
         } else if (force) {
-            const okMsg = "✅ *Sin pagos pendientes próximos a vencer.*";
+            const okMsg = " *Sin pagos pendientes próximos a vencer.*";
             await client.sendMessage(adminChatId, okMsg);
             return okMsg;
         }
@@ -1994,7 +1994,7 @@ async function chequearVencimientosYNotificar(force = false) {
         return null;
     } catch (e) {
         console.error("Error al chequear vencimientos de tarjetas:", e);
-        if (force) await client.sendMessage(adminChatId, `❌ *Asistente:* Error en la verificación de vencimientos: ${e.message}`);
+        if (force) await client.sendMessage(adminChatId, ` *Asistente:* Error en la verificación de vencimientos: ${e.message}`);
         return null;
     } finally {
         verificandoVencimientosActualmente = false;
@@ -2012,7 +2012,7 @@ function iniciarEscuchadorNotificacionesFirestore() {
     if (!dbFirebase || !firebaseUid) return;
 
     escuchadorNotificacionesIniciado = true;
-    console.log('[🔔 Notificaciones] Iniciando escucha en tiempo real de alertas de Finanzas King en Firestore...');
+    console.log('[ Notificaciones] Iniciando escucha en tiempo real de alertas de Finanzas King en Firestore...');
 
     const notifRef = dbFirebase.collection('users').doc(firebaseUid).collection('bot_notifications');
 
@@ -2025,21 +2025,21 @@ function iniciarEscuchadorNotificacionesFirestore() {
 
                 if (data.message && adminChatId && client) {
                     try {
-                        console.log(`[📲 WhatsApp] Reenviando notificación de Firestore a WhatsApp: ${data.title || 'Alerta'}`);
+                        console.log(`[ WhatsApp] Reenviando notificación de Firestore a WhatsApp: ${data.title || 'Alerta'}`);
                         await client.sendMessage(adminChatId, data.message);
                         await notifRef.doc(docId).update({
                             processed: true,
                             processedAt: new Date().toISOString()
                         });
-                        console.log(`[✅ WhatsApp] Alerta enviada exitosamente a ${adminChatId} (${docId}).`);
+                        console.log(`[ WhatsApp] Alerta enviada exitosamente a ${adminChatId} (${docId}).`);
                     } catch (errSend) {
-                        console.error(`[❌ WhatsApp Error enviando notificación]:`, errSend.message);
+                        console.error(`[ WhatsApp Error enviando notificación]:`, errSend.message);
                     }
                 }
             }
         });
     }, err => {
-        console.error('[⚠️ Error listener notificaciones Firestore]:', err.message);
+        console.error('[ Error listener notificaciones Firestore]:', err.message);
         escuchadorNotificacionesIniciado = false;
     });
 }
@@ -2063,13 +2063,13 @@ async function enviarMensajeTelegram(chatId, texto) {
             })
         });
     } catch (e) {
-        console.error("[❌ Telegram Send Error]:", e.message);
+        console.error("[ Telegram Send Error]:", e.message);
     }
 }
 
 async function iniciarTelegramPolling() {
     if (!telegramBotToken) {
-        console.log("[ℹ️ Telegram] Polling no iniciado: Falta telegramBotToken en admin.json. Usa !bot settelegram <token> para activarlo.");
+        console.log("[ℹ Telegram] Polling no iniciado: Falta telegramBotToken en admin.json. Usa !bot settelegram <token> para activarlo.");
         return;
     }
     if (telegramPollingActive) return;
@@ -2080,11 +2080,11 @@ async function iniciarTelegramPolling() {
         if (meRes.ok) {
             const meData = await meRes.json();
             if (meData.ok) {
-                console.log(`[📲 Telegram] Conectado exitosamente como @${meData.result.username} (${meData.result.first_name}). Escuchando documentos...`);
+                console.log(`[ Telegram] Conectado exitosamente como @${meData.result.username} (${meData.result.first_name}). Escuchando documentos...`);
             }
         }
     } catch (errMe) {
-        console.error("[⚠️ Telegram] Error verificando token de bot:", errMe.message);
+        console.error("[ Telegram] Error verificando token de bot:", errMe.message);
     }
 
     const poll = async () => {
@@ -2106,11 +2106,11 @@ async function iniciarTelegramPolling() {
                     }
                 }
             } else {
-                console.error("[⚠️ Telegram] Error HTTP en getUpdates:", response.status);
+                console.error("[ Telegram] Error HTTP en getUpdates:", response.status);
                 await new Promise(resolve => setTimeout(resolve, 10000));
             }
         } catch (e) {
-            console.error("[⚠️ Telegram] Error en polling loop:", e.message);
+            console.error("[ Telegram] Error en polling loop:", e.message);
             await new Promise(resolve => setTimeout(resolve, 10000));
         }
         setTimeout(poll, 1000);
@@ -2131,13 +2131,13 @@ async function procesarMensajeTelegram(msgTeg) {
         const txt = msgTeg.text.trim().toLowerCase();
 
         if (txt === '/start' || txt === '/ayuda' || txt === '/help') {
-            const bienvenida = `👑 *Bienvenido a Asistente Finanzas*\n\n` +
+            const bienvenida = ` *Bienvenido a Asistente Finanzas*\n\n` +
                 `Envíame directamente por aquí:\n` +
-                `📄 *Estados de Cuenta* (PDF o foto)\n` +
-                `💵 *Comprobantes de Abono o Transferencia* (PDF o foto)\n` +
-                `🧾 *Tickets o Facturas de Compra* (PDF o foto)\n\n` +
+                ` *Estados de Cuenta* (PDF o foto)\n` +
+                ` *Comprobantes de Abono o Transferencia* (PDF o foto)\n` +
+                ` *Tickets o Facturas de Compra* (PDF o foto)\n\n` +
                 `Y se actualizarán automáticamente en tu aplicación:\n` +
-                `🔗 https://finanzaskingapp.netlify.app/\n\n` +
+                ` https://finanzaskingapp.netlify.app/\n\n` +
                 `*Comandos disponibles:*\n` +
                 `• /tarjetas - Consulta deudas y límites de tus tarjetas\n` +
                 `• /vencimientos - Alertas de pagos próximos\n` +
@@ -2154,36 +2154,36 @@ async function procesarMensajeTelegram(msgTeg) {
         if (txt === '/tarjetas' || txt === '/finanzas') {
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase || !firebaseUid) {
-                await enviarMensajeTelegram(tChatId, "⚠️ Firebase no está configurado aún en el bot.");
+                await enviarMensajeTelegram(tChatId, " Firebase no está configurado aún en el bot.");
                 return;
             }
             try {
                 const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
                 const snapshot = await cardsRef.get();
                 if (snapshot.empty) {
-                    await enviarMensajeTelegram(tChatId, "💳 No tienes tarjetas registradas en Finanzas King.");
+                    await enviarMensajeTelegram(tChatId, " No tienes tarjetas registradas en Finanzas King.");
                     return;
                 }
                 let tDebt = 0, tLimit = 0;
-                let report = `💳 *ESTADO DE TARJETAS*\n\n`;
+                let report = ` *ESTADO DE TARJETAS*\n\n`;
                 snapshot.forEach(doc => {
                     const c = doc.data();
                     const debt = parseFloat(c.balance || 0);
                     const limit = parseFloat(c.limit || 0);
                     tDebt += debt; tLimit += limit;
                     const avail = limit > 0 ? (limit - debt) : 0;
-                    report += `🔹 *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
-                    report += `   💰 Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
-                    if (limit > 0) report += `   💵 Disp: $${avail.toFixed(2)}\n`;
-                    if (c.cutDay || c.payDay) report += `   📅 Corte: ${c.cutDay || '?'} | Pago: ${c.payDay || '?'}\n`;
+                    report += ` *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
+                    report += `    Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
+                    if (limit > 0) report += `    Disp: $${avail.toFixed(2)}\n`;
+                    if (c.cutDay || c.payDay) report += `    Corte: ${c.cutDay || '?'} | Pago: ${c.payDay || '?'}\n`;
                     report += `\n`;
                 });
                 const ratio = tLimit > 0 ? (tDebt / tLimit) * 100 : 0;
-                report += `📊 *Resumen Global:*\n🔴 Deuda Total: *$${tDebt.toFixed(2)}*\n🟢 Disponible Total: *$${(tLimit - tDebt).toFixed(2)}*\n📈 Endeudamiento: *${ratio.toFixed(1)}%*`;
+                report += ` *Resumen Global:*\n Deuda Total: *$${tDebt.toFixed(2)}*\n Disponible Total: *$${(tLimit - tDebt).toFixed(2)}*\n Endeudamiento: *${ratio.toFixed(1)}%*`;
                 await enviarMensajeTelegram(tChatId, report);
                 return;
             } catch (e) {
-                await enviarMensajeTelegram(tChatId, `❌ Error consultando tarjetas: ${e.message}`);
+                await enviarMensajeTelegram(tChatId, ` Error consultando tarjetas: ${e.message}`);
                 return;
             }
         }
@@ -2191,10 +2191,10 @@ async function procesarMensajeTelegram(msgTeg) {
         if (txt === '/vencimientos' || txt === '/alertas') {
             try {
                 const alertaStr = await chequearVencimientosYNotificar(true);
-                await enviarMensajeTelegram(tChatId, alertaStr || "✅ Excelente noticia. No hay pagos pendientes próximos a vencer.");
+                await enviarMensajeTelegram(tChatId, alertaStr || " Excelente noticia. No hay pagos pendientes próximos a vencer.");
                 return;
             } catch (e) {
-                await enviarMensajeTelegram(tChatId, `❌ Error verificando vencimientos: ${e.message}`);
+                await enviarMensajeTelegram(tChatId, ` Error verificando vencimientos: ${e.message}`);
                 return;
             }
         }
@@ -2208,7 +2208,7 @@ async function procesarMensajeTelegram(msgTeg) {
                     }
                     if (adminChatId) {
                         try {
-                            await client.sendMessage(adminChatId, `📲 *Telegram:*\n\n${text}`);
+                            await client.sendMessage(adminChatId, ` *Telegram:*\n\n${text}`);
                         } catch (errWp) {}
                     }
                 }
@@ -2236,15 +2236,15 @@ async function procesarMensajeTelegram(msgTeg) {
 
     if (!fileId) return;
 
-    console.log(`[📲 Telegram] Documento recibido en Telegram: ${fileName}. Descargando y procesando...`);
+    console.log(`[ Telegram] Documento recibido en Telegram: ${fileName}. Descargando y procesando...`);
     
     if (tChatId) {
-        await enviarMensajeTelegram(tChatId, `📥 Recibí tu archivo: \`${fileName}\`.\n🔍 Analizándolo con IA para actualizar Finanzas King...`);
+        await enviarMensajeTelegram(tChatId, ` Recibí tu archivo: \`${fileName}\`.\n Analizándolo con IA para actualizar Finanzas King...`);
     }
 
     if (adminChatId) {
         try {
-            await client.sendMessage(adminChatId, `📲 *Telegram Bot:* Se recibió un archivo en Telegram: \`${fileName}\`. Analizándolo para Finanzas King...`);
+            await client.sendMessage(adminChatId, ` *Telegram Bot:* Se recibió un archivo en Telegram: \`${fileName}\`. Analizándolo para Finanzas King...`);
         } catch (errWp) {}
     }
 
@@ -2273,7 +2273,7 @@ async function procesarMensajeTelegram(msgTeg) {
                 // 2. Notificar a WhatsApp
                 if (adminChatId) {
                     try {
-                        await client.sendMessage(adminChatId, `📲 *Telegram:*\n\n${text}`);
+                        await client.sendMessage(adminChatId, ` *Telegram:*\n\n${text}`);
                     } catch (errWp) {}
                 }
             }
@@ -2281,18 +2281,18 @@ async function procesarMensajeTelegram(msgTeg) {
 
         const procesado = await procesarDocumentoFinanciero(media, replicaMsg);
         if (!procesado) {
-            const noFinMsg = `⚠️ El archivo \`${fileName}\` no contiene información financiera reconocible (estado de cuenta, comprobante de abono o ticket).`;
+            const noFinMsg = ` El archivo \`${fileName}\` no contiene información financiera reconocible (estado de cuenta, comprobante de abono o ticket).`;
             if (tChatId) await enviarMensajeTelegram(tChatId, noFinMsg);
             if (adminChatId) {
-                try { await client.sendMessage(adminChatId, `📲 *Telegram Bot:* ${noFinMsg}`); } catch (errWp) {}
+                try { await client.sendMessage(adminChatId, ` *Telegram Bot:* ${noFinMsg}`); } catch (errWp) {}
             }
         }
     } catch (e) {
-        console.error("[❌ Telegram] Error al procesar documento recibido:", e);
-        const errMsg = `❌ Error al procesar archivo en Telegram: ${e.message}`;
+        console.error("[ Telegram] Error al procesar documento recibido:", e);
+        const errMsg = ` Error al procesar archivo en Telegram: ${e.message}`;
         if (tChatId) await enviarMensajeTelegram(tChatId, errMsg);
         if (adminChatId) {
-            try { await client.sendMessage(adminChatId, `❌ *Telegram Bot:* ${errMsg}`); } catch (errWp) {}
+            try { await client.sendMessage(adminChatId, ` *Telegram Bot:* ${errMsg}`); } catch (errWp) {}
         }
     }
 }
@@ -2304,7 +2304,7 @@ client.on('qr', (qr) => {
 
 client.on('ready', () => {
     isStartupSync = false;
-    console.log('\n✅ [OK] ¡ASISTENTE ACTIVO 24/7 Y LISTO PARA OPERAR!');
+    console.log('\n [OK] ¡ASISTENTE ACTIVO 24/7 Y LISTO PARA OPERAR!');
     iniciarTelegramPolling();
     iniciarEscuchadorNotificacionesFirestore();
 
@@ -2357,7 +2357,7 @@ client.on('ready', () => {
                         const dest = canal.chatId || defaultDest;
 
                         if (canal.ultimoVideo && canal.ultimoVideo !== videoNuevo.link && dest) {
-                            const alerta = `🔴 *¡Nuevo Video en ${info.canalNombre}!*\n\n*${videoNuevo.titulo}*\n${videoNuevo.link}\n\n_Escribe *!bot video ${videoNuevo.link}* si deseas descargarlo._`;
+                            const alerta = ` *¡Nuevo Video en ${info.canalNombre}!*\n\n*${videoNuevo.titulo}*\n${videoNuevo.link}\n\n_Escribe *!bot video ${videoNuevo.link}* si deseas descargarlo._`;
                             await client.sendMessage(dest, alerta);
                         }
                         if (canal.ultimoVideo !== videoNuevo.link) {
@@ -2379,7 +2379,7 @@ client.on('ready', () => {
     async function ejecutarAccionProgramada(tarea) {
         const destChat = normalizarDestinoChat(tarea.chatId) || adminChatId;
         if (!destChat) {
-            console.error("[⏰ CRON] Error: No hay chatId registrado para enviar la tarea programada:", tarea.descripcion || tarea.accion);
+            console.error("[ CRON] Error: No hay chatId registrado para enviar la tarea programada:", tarea.descripcion || tarea.accion);
             return;
         }
 
@@ -2391,7 +2391,7 @@ client.on('ready', () => {
         const claveDestHora = `dest_${destChat}_hora_${cronExpr}`;
         const ultEjecDestHora = ejecucionesRecientesTareas.get(claveDestHora);
         if (ultEjecDestHora && (ahoraMs - ultEjecDestHora < 90000)) {
-            console.log(`[⏰ CRON] Descartando ejecución repetida para destino ${destChat} en horario ${cronExpr} (${Math.round((ahoraMs - ultEjecDestHora) / 1000)}s desde la anterior)`);
+            console.log(`[ CRON] Descartando ejecución repetida para destino ${destChat} en horario ${cronExpr} (${Math.round((ahoraMs - ultEjecDestHora) / 1000)}s desde la anterior)`);
             return;
         }
 
@@ -2400,7 +2400,7 @@ client.on('ready', () => {
         const claveAccion = `dest_${destChat}_act_${accionClave}`;
         const ultEjecAccion = ejecucionesRecientesTareas.get(claveAccion);
         if (ultEjecAccion && (ahoraMs - ultEjecAccion < 90000)) {
-            console.log(`[⏰ CRON] Descartando ejecución repetida para destino ${destChat} con acción "${accion}" (${Math.round((ahoraMs - ultEjecAccion) / 1000)}s)`);
+            console.log(`[ CRON] Descartando ejecución repetida para destino ${destChat} con acción "${accion}" (${Math.round((ahoraMs - ultEjecAccion) / 1000)}s)`);
             return;
         }
 
@@ -2408,7 +2408,7 @@ client.on('ready', () => {
         ejecucionesRecientesTareas.set(claveAccion, ahoraMs);
 
         const horaLabel = tarea.hora ? ` (${tarea.hora})` : '';
-        console.log(`[⏰ CRON] Disparando tarea programada única: "${accion}" para ${destChat}`);
+        console.log(`[ CRON] Disparando tarea programada única: "${accion}" para ${destChat}`);
 
         // Si es un comando de Asistente (!bot ...)
         if (accion.toLowerCase().startsWith('!bot ') || accion.toLowerCase().startsWith('.')) {
@@ -2446,12 +2446,12 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
             });
 
             if (respuestaAI && respuestaAI.trim()) {
-                await client.sendMessage(destChat, `⏰ *Asistente - Tarea Programada${horaLabel}:*\n\n${limpiarRespuestaGemini(respuestaAI)}`);
+                await client.sendMessage(destChat, ` *Asistente - Tarea Programada${horaLabel}:*\n\n${limpiarRespuestaGemini(respuestaAI)}`);
             }
         } catch (e) {
             console.error("[CRON AI Error]:", e.message);
             try {
-                await client.sendMessage(destChat, `⏰ *Asistente (Aviso Programado${horaLabel}):*\nEs hora de: _"${accion}"_\n_(No se pudo consultar a la IA en este instante)._`);
+                await client.sendMessage(destChat, ` *Asistente (Aviso Programado${horaLabel}):*\nEs hora de: _"${accion}"_\n_(No se pudo consultar a la IA en este instante)._`);
             } catch (e2) {}
         }
     }
@@ -2485,12 +2485,12 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
                 tareasUnicas.push(t);
             } else {
                 const tareaExistente = vistasHorariosChat.get(keyHorario);
-                console.log(`[⏰ CRON] Depurada tarea duplicada para ${destNorm} en horario ${horaNorm}: "${t.descripcion || t.accion}" vs "${tareaExistente.descripcion || tareaExistente.accion}"`);
+                console.log(`[ CRON] Depurada tarea duplicada para ${destNorm} en horario ${horaNorm}: "${t.descripcion || t.accion}" vs "${tareaExistente.descripcion || tareaExistente.accion}"`);
             }
         });
 
         if (tareasUnicas.length !== tareasProgramadas.length) {
-            console.log(`[⏰ CRON] Se eliminaron ${tareasProgramadas.length - tareasUnicas.length} tareas programadas duplicadas/redundantes.`);
+            console.log(`[ CRON] Se eliminaron ${tareasProgramadas.length - tareasUnicas.length} tareas programadas duplicadas/redundantes.`);
             tareasProgramadas = tareasUnicas;
             guardarTareasProgramadas();
         }
@@ -2518,7 +2518,7 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
                 }, { scheduled: true, timezone: "America/El_Salvador" });
 
                 global.activeCronJobs.set(index, job);
-                console.log(`[⏰ CRON] Tarea [${index + 1}] activa: "${tarea.descripcion || tarea.accion}" -> Cron [${cronExpr}] (Zona: El Salvador)`);
+                console.log(`[ CRON] Tarea [${index + 1}] activa: "${tarea.descripcion || tarea.accion}" -> Cron [${cronExpr}] (Zona: El Salvador)`);
             } catch (e) {
                 console.error("Error al programar cron para tarea " + index, e);
             }
@@ -2599,7 +2599,7 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
                     const dest = alarma.chatId || adminChatId;
                     if (dest) {
                         try {
-                            await client.sendMessage(dest, `🔔 *ALARMA ASISTENTE (Hora: ${alarma.hora}):*\n\n"${alarma.mensaje}"\n\n_Para ver o borrar alarmas: *!bot alarmas*_`);
+                            await client.sendMessage(dest, ` *ALARMA ASISTENTE (Hora: ${alarma.hora}):*\n\n"${alarma.mensaje}"\n\n_Para ver o borrar alarmas: *!bot alarmas*_`);
                         } catch (e) {
                             console.error("Error enviando alarma:", e.message);
                         }
@@ -2621,13 +2621,13 @@ Responde DIRECTAMENTE con el mensaje final listo para ser leído por el usuario.
 
         // 5. Verificación diaria de vencimientos de tarjetas a las 9:00 AM
         cron.schedule('0 9 * * *', async () => {
-            console.log("[💳] Ejecutando verificación diaria de vencimientos de tarjetas (09:00 AM)...");
+            console.log("[] Ejecutando verificación diaria de vencimientos de tarjetas (09:00 AM)...");
             await chequearVencimientosYNotificar(false);
         }, { scheduled: true, timezone: "America/El_Salvador" });
 
         // Verificación única al arranque tras delay de 12 segundos
         setTimeout(async () => {
-            console.log("[💳] Verificación de vencimientos al arranque...");
+            console.log("[] Verificación de vencimientos al arranque...");
             await chequearVencimientosYNotificar(false);
         }, 12000);
     }
@@ -2656,15 +2656,15 @@ client.on('message_create', async (msg) => {
         // Si es un mensaje automático generado por el propio Asistente (tareas programadas, avisos, alarmas),
         // ignorar totalmente para evitar ciclos de re-procesamiento en chat propio (self-chat / número propio)
         if (bodyStr && (
-            bodyStr.startsWith('⏰') || 
+            bodyStr.startsWith('') || 
             bodyStr.includes('Asistente - Tarea Programada') || 
             bodyStr.includes('Asistente (Aviso Programado') ||
-            bodyStr.startsWith('🔔 *ALARMA') ||
+            bodyStr.startsWith(' *ALARMA') ||
             bodyStr.includes('RECORDATORIO!') ||
             bodyStr.includes('NOTIFICACIÓN DE ASISTENTE:') ||
-            bodyStr.startsWith('👑 *Asistente') ||
-            bodyStr.startsWith('🤖 *Modo conversacional') ||
-            bodyStr.startsWith('📅 *¡Tarea Programada')
+            bodyStr.startsWith(' *Asistente') ||
+            bodyStr.startsWith(' *Modo conversacional') ||
+            bodyStr.startsWith(' *¡Tarea Programada')
         )) {
             return;
         }
@@ -2705,10 +2705,10 @@ client.on('message_create', async (msg) => {
     // --- COMANDOS DE YT Y KEYS ---
     if (lowerBody.startsWith('!bot keys') || lowerBody.startsWith('!bot claves')) {
         sincronizarLlavesDesdeArchivo();
-        let reply = `🔑 *Estado de las API Keys (Gemini)*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
+        let reply = ` *Estado de las API Keys (Gemini)*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
         API_KEYS.forEach((key, idx) => {
             const status = keyStatus[idx] || { status: 'Desconocido', requestsToday: 0 };
-            const isCurrent = idx === currentKeyIndex ? '📍 (Actual)' : '';
+            const isCurrent = idx === currentKeyIndex ? ' (Actual)' : '';
             reply += `[${idx + 1}] ${key.substring(0, 8)}... ${isCurrent}\nEstado: ${status.status} | Peticiones hoy: ${status.requestsToday}\n\n`;
         });
         reply += "_Usa *!bot addkey <clave>* para agregar o reactivar una llave._\n_Usa *!bot resetkeys* para reactivar todas las llaves._";
@@ -2726,7 +2726,7 @@ client.on('message_create', async (msg) => {
         currentKeyIndex = 0;
         currentModelIndex = 0;
         guardarKeysYCuotas();
-        await msg.reply(`✅ Todas las API Keys (${API_KEYS.length}) han sido restablecidas a *Activa*.`);
+        await msg.reply(` Todas las API Keys (${API_KEYS.length}) han sido restablecidas a *Activa*.`);
         return;
     }
 
@@ -2737,7 +2737,7 @@ client.on('message_create', async (msg) => {
             newKey = newKey.substring(1).trim();
         }
         if (newKey.length < 20 || (!newKey.startsWith('AIzaSy') && !newKey.startsWith('AQ.'))) {
-            await msg.reply("❌ Inválido. Usa: !bot addkey <TU_API_KEY>");
+            await msg.reply(" Inválido. Usa: !bot addkey <TU_API_KEY>");
             return;
         }
         const existingIdx = API_KEYS.indexOf(newKey);
@@ -2746,7 +2746,7 @@ client.on('message_create', async (msg) => {
             currentKeyIndex = existingIdx;
             currentModelIndex = 0;
             guardarKeysYCuotas();
-            await msg.reply(`✅ La API Key ya estaba registrada y ha sido *reactivada* con éxito como clave actual (Clave #${existingIdx + 1}).`);
+            await msg.reply(` La API Key ya estaba registrada y ha sido *reactivada* con éxito como clave actual (Clave #${existingIdx + 1}).`);
             return;
         }
         API_KEYS.push(newKey);
@@ -2754,24 +2754,24 @@ client.on('message_create', async (msg) => {
         currentKeyIndex = API_KEYS.length - 1;
         currentModelIndex = 0;
         guardarKeysYCuotas();
-        await msg.reply(`✅ API Key agregada, activada y guardada automáticamente en tu bloc de notas ("llaves API gemini.txt"). Ahora tienes ${API_KEYS.length} llaves.`);
+        await msg.reply(` API Key agregada, activada y guardada automáticamente en tu bloc de notas ("llaves API gemini.txt"). Ahora tienes ${API_KEYS.length} llaves.`);
         return;
     }
 
     if (lowerBody.startsWith('!bot ytadd')) {
         const url = textoOriginal.substring('!bot ytadd'.length).trim();
         if (!url) {
-            await msg.reply("❌ Usa: !bot ytadd <enlace, @handle o nombre del canal>");
+            await msg.reply(" Usa: !bot ytadd <enlace, @handle o nombre del canal>");
             return;
         }
-        await msg.reply("🔍 Buscando canal en YouTube...");
+        await msg.reply(" Buscando canal en YouTube...");
         const id = await obtenerIdCanal(url);
         if (!id) {
-            await msg.reply("❌ No pude encontrar el canal. Asegúrate de enviar un enlace válido, @usuario o nombre.");
+            await msg.reply(" No pude encontrar el canal. Asegúrate de enviar un enlace válido, @usuario o nombre.");
             return;
         }
         if (canalesYoutube.find(c => c.id === id)) {
-            await msg.reply("⚠️ Ese canal ya está en la lista de monitoreo.");
+            await msg.reply(" Ese canal ya está en la lista de monitoreo.");
             return;
         }
         const info = await obtenerUltimosVideosCanal(id, 1);
@@ -2779,9 +2779,9 @@ client.on('message_create', async (msg) => {
         const ultimoVid = info?.videos?.[0]?.link || '';
         canalesYoutube.push({ id: id, nombre: canalNombre, ultimoVideo: ultimoVid, chatId: chatId });
         guardarCanales();
-        let resp = `✅ ¡Canal agregado exitosamente al monitoreo!\n📺 *${canalNombre}* (\`${id}\`)`;
+        let resp = ` ¡Canal agregado exitosamente al monitoreo!\n *${canalNombre}* (\`${id}\`)`;
         if (info?.videos?.[0]) {
-            resp += `\n\n🎬 *Último video:* ${info.videos[0].titulo}\n🔗 ${info.videos[0].link}`;
+            resp += `\n\n *Último video:* ${info.videos[0].titulo}\n ${info.videos[0].link}`;
         }
         await msg.reply(resp);
         return;
@@ -2789,12 +2789,12 @@ client.on('message_create', async (msg) => {
 
     if (lowerBody.startsWith('!bot ytlist')) {
         if (canalesYoutube.length === 0) {
-            await msg.reply("📭 No hay canales de YouTube en monitoreo.");
+            await msg.reply(" No hay canales de YouTube en monitoreo.");
             return;
         }
-        let reply = "📺 *Canales de YouTube en Monitoreo:*\n\n";
+        let reply = " *Canales de YouTube en Monitoreo:*\n\n";
         canalesYoutube.forEach((c, idx) => {
-            const ult = c.ultimoVideo ? `\n   🔗 ${c.ultimoVideo}` : '';
+            const ult = c.ultimoVideo ? `\n    ${c.ultimoVideo}` : '';
             reply += `*${idx + 1}.* ${c.nombre}\n(ID: \`${c.id}\`)${ult}\n\n`;
         });
         reply += "_Para ver videos escribe: *!bot videos*_\n_Para eliminar uno usa: *!bot ytdel <numero>*_";
@@ -2805,12 +2805,12 @@ client.on('message_create', async (msg) => {
     if (lowerBody.startsWith('!bot ytdel')) {
         const num = parseInt(textoOriginal.substring('!bot ytdel'.length).trim());
         if (isNaN(num) || num < 1 || num > canalesYoutube.length) {
-            await msg.reply("❌ Inválido. Usa: !bot ytdel <numero>");
+            await msg.reply(" Inválido. Usa: !bot ytdel <numero>");
             return;
         }
         const borrado = canalesYoutube.splice(num - 1, 1)[0];
         guardarCanales();
-        await msg.reply(`🗑️ Canal eliminado: ${borrado.nombre}`);
+        await msg.reply(` Canal eliminado: ${borrado.nombre}`);
         return;
     }
 
@@ -2887,7 +2887,7 @@ client.on('message_create', async (msg) => {
                 }
             } catch (e) {
                 console.error("Error transcribiendo audio manual:", e);
-                return msg.reply('❌ *Asistente:* Lo siento Señor, mis sistemas fallaron al procesar este archivo. Asegúrese de que sea un formato de audio/video válido.');
+                return msg.reply(' *Asistente:* Lo siento Señor, mis sistemas fallaron al procesar este archivo. Asegúrese de que sea un formato de audio/video válido.');
             }
         }
     }
@@ -2920,7 +2920,7 @@ client.on('message_create', async (msg) => {
         }
 
         if (!mediaMsg && !urlDescargar) {
-            await msg.reply('❌ *Asistente:* Envía una imagen/video/gif con el caption `.sticker`, o responde a un mensaje con media/enlace escribiendo `.sticker`. También puedes enviar `.sticker <enlace_tiktok>`.');
+            await msg.reply(' *Asistente:* Envía una imagen/video/gif con el caption `.sticker`, o responde a un mensaje con media/enlace escribiendo `.sticker`. También puedes enviar `.sticker <enlace_tiktok>`.');
             return;
         }
 
@@ -2975,7 +2975,7 @@ client.on('message_create', async (msg) => {
             }
 
             if (!media || !media.data) {
-                await msg.reply('❌ *Asistente:* No pude descargar el archivo multimedia o el enlace. Intenta de nuevo.');
+                await msg.reply(' *Asistente:* No pude descargar el archivo multimedia o el enlace. Intenta de nuevo.');
                 return;
             }
 
@@ -3000,7 +3000,7 @@ client.on('message_create', async (msg) => {
             }
 
             if (!isVideo && !isImage) {
-                await msg.reply('❌ *Asistente:* Formato no soportado. Envía una imagen (jpg/png) o un video/gif corto.');
+                await msg.reply(' *Asistente:* Formato no soportado. Envía una imagen (jpg/png) o un video/gif corto.');
                 return;
             }
 
@@ -3227,7 +3227,7 @@ client.on('message_create', async (msg) => {
 
                 if (!success) {
                     cleanupFiles();
-                    await msg.reply('❌ *Asistente:* No pude convertir este video/gif a sticker. Es posible que sea demasiado pesado o que ffmpeg no esté instalado.');
+                    await msg.reply(' *Asistente:* No pude convertir este video/gif a sticker. Es posible que sea demasiado pesado o que ffmpeg no esté instalado.');
                     return;
                 }
             }
@@ -3235,7 +3235,7 @@ client.on('message_create', async (msg) => {
             // Paso 5: Enviar como sticker
             if (!fs.existsSync(outputFile)) {
                 cleanupFiles();
-                await msg.reply('❌ *Asistente:* Error interno: el archivo webp no se generó correctamente.');
+                await msg.reply(' *Asistente:* Error interno: el archivo webp no se generó correctamente.');
                 return;
             }
 
@@ -3261,7 +3261,7 @@ client.on('message_create', async (msg) => {
             if (err.message?.includes('download')) errorStep = 'descarga del archivo';
             else if (err.message?.includes('ffmpeg')) errorStep = 'conversión con ffmpeg';
             else if (err.message?.includes('send')) errorStep = 'envío del sticker';
-            await msg.reply(`❌ *Asistente:* Error en ${errorStep}: ${err.message || 'Error desconocido'}. Revisa la consola de Termux.`).catch(() => {});
+            await msg.reply(` *Asistente:* Error en ${errorStep}: ${err.message || 'Error desconocido'}. Revisa la consola de Termux.`).catch(() => {});
 
             // Limpieza de emergencia
             const tmpDir = path.join(__dirname, 'tmp_sticker');
@@ -3296,7 +3296,7 @@ client.on('message_create', async (msg) => {
                     return msg.reply(`0 *¡CORRECTO!* @${contact.number || senderName} ha acertado.\n\nLa respuesta era: *${juego.respuesta}*\n\n¡Has ganado este punto!`, undefined, { mentions: [contact] });
                 } else {
                     if (textoOriginal.length === 1) {
-                        return msg.reply(`❌ *Incorrecto*, @${contact.number || senderName}. Sigan intentando.`, undefined, { mentions: [contact] });
+                        return msg.reply(` *Incorrecto*, @${contact.number || senderName}. Sigan intentando.`, undefined, { mentions: [contact] });
                     }
                 }
             }
@@ -3346,19 +3346,19 @@ client.on('message_create', async (msg) => {
                     return msg.reply(respuestaFinal);
                 } catch (e) {
                     console.error("Error en comando custom IA:", e);
-                    return msg.reply("❌ *Asistente:* Ocurrió un error al procesar el comando con IA.");
+                    return msg.reply(" *Asistente:* Ocurrió un error al procesar el comando con IA.");
                 }
             }
             if (cmdConfig.tipo === 'codigo') {
                 if (chatId !== adminChatId) {
-                    return msg.reply("❌ Este comando personalizado de código está restringido al Administrador.");
+                    return msg.reply(" Este comando personalizado de código está restringido al Administrador.");
                 }
                 try {
                     const ejecutarCodigo = new AsyncFunction('msg', 'client', 'MessageMedia', 'ejecutarGeminiConRetries', 'limpiarRespuestaGemini', 'argumento', cmdConfig.contenido);
                     await ejecutarCodigo(msg, client, MessageMedia, ejecutarGeminiConRetries, limpiarRespuestaGemini, cmdArg);
                 } catch (e) {
                     console.error("Error ejecutando comando custom de código:", e);
-                    return msg.reply(`❌ *Error en código del comando:* ${e.message}`);
+                    return msg.reply(` *Error en código del comando:* ${e.message}`);
                 }
                 return;
             }
@@ -3368,7 +3368,7 @@ function obtenerDetalleAyuda(opcionRaw) {
     const opcion = (opcionRaw || '').toLowerCase().trim();
 
     if (opcion === '1' || opcion === 'finanzas' || opcion === 'tarjetas') {
-        return `💳 *1. FINANZAS KING & TARJETAS:*
+        return ` *1. FINANZAS KING & TARJETAS:*
 • \`!bot tarjetas\` - Resumen global de tus 14 tarjetas, endeudamiento y saldo disponible.
 • \`!bot tarjetas <nombre>\` - Consulta el detalle de una tarjeta (ej. \`!bot tarjetas bac\`).
 • \`!bot vencimientos\` - Chequea qué tarjetas vencen hoy, mañana o en los próximos días.
@@ -3377,14 +3377,14 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (opcion === '2' || opcion === 'flyers' || opcion === 'canva' || opcion === 'imagenes' || opcion === 'diseño' || opcion === 'diseno') {
-        return `🎨 *2. FLYERS, CANVA & DISEÑO:*
+        return ` *2. FLYERS, CANVA & DISEÑO:*
 • \`!bot flyer <tema>\` (o \`!bot canva <tema>\`) - Genera el copy publicitario persuasivo y enlaces directos a plantillas profesionales en Canva.
 • \`!bot imagina <idea>\` (o \`!bot dibuja <idea>\`) - Genera una imagen artística en alta resolución con IA (ChatGPT / FLUX).
 • \`!bot stickercrear <idea>\` - Crea un sticker vectorizado para WhatsApp a partir de tu idea.`;
     }
 
     if (opcion === '3' || opcion === 'memoria' || opcion === 'conocimiento' || opcion === 'recordar') {
-        return `🧠 *3. MEMORIA Y BASE DE DATOS PERSONAL:*
+        return ` *3. MEMORIA Y BASE DE DATOS PERSONAL:*
 • \`!bot guardar <tema> : <información>\` - Guarda datos personales, contraseñas, tallas o notas (ej. \`!bot guardar Talla : Camisa M, Calzado 42\`).
 • \`!bot memoria\` - Lista todo lo que Asistente tiene guardado sobre ti.
 • \`!bot olvidar <tema o número>\` - Elimina un registro de la memoria.
@@ -3393,7 +3393,7 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (opcion === '4' || opcion === 'programar' || opcion === 'cron' || opcion === 'alarmas' || opcion === 'programados') {
-        return `⏰ *4. TAREAS PROGRAMADAS Y RECORDATORIOS:*
+        return ` *4. TAREAS PROGRAMADAS Y RECORDATORIOS:*
 • \`!bot programar <HH:MM> | <instrucción>\` - Programa un mensaje automático diario (ej. \`!bot programar 05:00 | Frase motivacional\`).
 • \`!bot programados\` - Muestra todas las tareas programadas activas con su horario.
 • \`!bot desprogramar <número>\` - Cancela y borra una tarea programada.
@@ -3401,7 +3401,7 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (opcion === '5' || opcion === 'youtube' || opcion === 'musica' || opcion === 'video' || opcion === 'descargas') {
-        return `📢 *5. YOUTUBE Y DESCARGAS MULTIMEDIA:*
+        return ` *5. YOUTUBE Y DESCARGAS MULTIMEDIA:*
 • \`!bot videos\` - Consulta los últimos videos publicados por los canales a los que estás suscrito.
 • \`!bot videos <nombre>\` - Consulta los videos recientes de un canal específico (ej. \`!bot videos mrbeast\`).
 • \`!bot agregarcanal <enlace / @usuario>\` - Agrega un canal para monitoreo automático de videos.
@@ -3412,7 +3412,7 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (opcion === '6' || opcion === 'agentes' || opcion === 'ia' || opcion === 'inteligencia') {
-        return `⚡ *6. AGENTES DE IA Y CONVERSACIÓN:*
+        return ` *6. AGENTES DE IA Y CONVERSACIÓN:*
 • \`!iniciarbot <agente>\` - Inicia chat privado continuo con un agente (ej. \`!iniciarbot programador\`).
 • \`!botgrupal <agente>\` - Inicia modo agente dentro de un grupo de WhatsApp.
 • \`!finalizarbot\` - Cierra la conversación continua del agente.
@@ -3424,8 +3424,8 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (opcion === '7' || opcion === 'ajustes' || opcion === 'configuracion' || opcion === 'sistema' || opcion === 'conexiones' || opcion === 'voz') {
-        return `🔧 *7. AJUSTES, CONEXIONES Y SERVIDOR:*
-• \`!bot voz <hombre / mujer>\` - Configura la voz por defecto del bot (Masculina 👨 o Femenina 👩).
+        return ` *7. AJUSTES, CONEXIONES Y SERVIDOR:*
+• \`!bot voz <hombre / mujer>\` - Configura la voz por defecto del bot (Masculina  o Femenina ).
 • \`!bot settelegram <token>\` - Vincula tu bot de Telegram con token de @BotFather.
 • \`!bot telegram\` - Estado de la conexión con Telegram.
 • \`!bot setopenai <key>\` - Registra tu clave de OpenAI para ChatGPT y DALL-E.
@@ -3439,10 +3439,10 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (opcion === '8' || opcion === 'utilidades' || opcion === 'herramientas' || opcion === 'varios') {
-        return `🛠️ *8. UTILIDADES Y HERRAMIENTAS:*
+        return ` *8. UTILIDADES Y HERRAMIENTAS:*
 • \`!bot decir <texto>\` (o \`!bot tts <texto>\`) - Dicta audio con la voz activa actual.
-• \`!bot decir hombre <texto>\` (o \`!bot decir h <texto>\`) - Dicta con voz masculina 👨.
-• \`!bot decir mujer <texto>\` (o \`!bot decir m <texto>\`) - Dicta con voz femenina 👩.
+• \`!bot decir hombre <texto>\` (o \`!bot decir h <texto>\`) - Dicta con voz masculina .
+• \`!bot decir mujer <texto>\` (o \`!bot decir m <texto>\`) - Dicta con voz femenina .
 • \`!bot voz\` - Muestra el estado de la voz y cómo configurarla.
 • \`!bot tarea agregar <texto>\` - Agrega un pendiente personal.
 • \`!bot tareas\` - Muestra la lista de pendientes.
@@ -3476,14 +3476,14 @@ function obtenerDetalleAyuda(opcionRaw) {
     }
 
     if (primerPalabra === '!iniciarbot' || primerPalabra === '!botgrupal') {
-        if (primerPalabra === '!iniciarbot' && isGroup) return msg.reply("❌ Usa *!botgrupal* en grupos.");
-        if (primerPalabra === '!botgrupal' && !isGroup) return msg.reply("❌ Usa *!iniciarbot* en privado.");
+        if (primerPalabra === '!iniciarbot' && isGroup) return msg.reply(" Usa *!botgrupal* en grupos.");
+        if (primerPalabra === '!botgrupal' && !isGroup) return msg.reply(" Usa *!iniciarbot* en privado.");
 
         const partsInit = textoOriginal.split(' ');
         const nombreAgente = partsInit[1]?.toLowerCase() || 'kinbot';
 
         if (!agentesCustom[nombreAgente]) {
-            return msg.reply(`❌ *Asistente:* El agente *"${nombreAgente}"* no existe en mis registros. Escriba *!bot agentes* para ver la lista.`);
+            return msg.reply(` *Asistente:* El agente *"${nombreAgente}"* no existe en mis registros. Escriba *!bot agentes* para ver la lista.`);
         }
 
         chatsActivos.add(chatId);
@@ -3518,13 +3518,13 @@ Responde de forma clara, natural y concisa en español.`;
             { role: "model", parts: [{ text: `Entendido. Protocolo del Agente "${nombreAgente}" activado y en línea.` }] }
         ]);
 
-        return msg.reply(isGroup ? `🤖 *Modo conversacional grupal ACTIVADO (Agente: ${nombreAgente}).*` : `🤖 *Modo conversacional ACTIVADO (Agente: ${nombreAgente}).*`);
+        return msg.reply(isGroup ? ` *Modo conversacional grupal ACTIVADO (Agente: ${nombreAgente}).*` : ` *Modo conversacional ACTIVADO (Agente: ${nombreAgente}).*`);
     }
 
     if (primerPalabra === '!finalizarbot') {
         chatsActivos.delete(chatId);
         sesionesChat.delete(chatId);
-        return msg.reply("💤 *Modo conversacional DESACTIVADO.*");
+        return msg.reply(" *Modo conversacional DESACTIVADO.*");
     }
 
     // --- INTERCEPTOR DE COMPROBANTES / TRANSACCIONES REENVIADAS A WHATSAPP ---
@@ -3568,15 +3568,15 @@ Responde de forma clara, natural y concisa en español.`;
 
     // --- CONTROL DE ENERGÍA Y REPOSO (APAGAR / ENCENDER) ---
     if (comando === 'apagar' || comando === 'dormir' || comando === 'suspender') {
-        if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+        if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
         botPausado = true;
-        return msg.reply("🔌 *Asistente:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
+        return msg.reply(" *Asistente:* Modo reposo ACTIVADO. He pausado todas mis respuestas automáticas.\nPara reactivarme, escribe: `!bot encender`");
     }
 
     if (comando === 'encender' || comando === 'activar' || comando === 'despertar') {
-        if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+        if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
         botPausado = false;
-        return msg.reply("⚡ *Asistente:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
+        return msg.reply(" *Asistente:* Sistema REACTIVADO y en línea. Todas las funciones están operativas.");
     }
 
     if (botPausado) {
@@ -3598,7 +3598,7 @@ Responde de forma clara, natural y concisa en español.`;
         adminChatId = chatId;
         guardarAdminJson();
         try {
-            await client.sendMessage(chatId, "👑 *Asistente:* Te he reconocido como el Administrador Principal. De ahora en adelante, me activaré de forma automática y conversacional solo contigo en privado.");
+            await client.sendMessage(chatId, " *Asistente:* Te he reconocido como el Administrador Principal. De ahora en adelante, me activaré de forma automática y conversacional solo contigo en privado.");
         } catch (e) {
             console.error("Error al enviar mensaje de seradmin:", e.message);
         }
@@ -3635,40 +3635,40 @@ Responde de forma clara, natural y concisa en español.`;
                     return msg.reply(respuestaFinal);
                 } catch (e) {
                     console.error("Error en comando custom IA:", e);
-                    return msg.reply("❌ *Asistente:* Ocurrió un error al procesar el comando con IA.");
+                    return msg.reply(" *Asistente:* Ocurrió un error al procesar el comando con IA.");
                 }
             }
             if (cmdConfig.tipo === 'codigo') {
                 if (chatId !== adminChatId) {
-                    return msg.reply("❌ Este comando personalizado de código está restringido al Administrador.");
+                    return msg.reply(" Este comando personalizado de código está restringido al Administrador.");
                 }
                 try {
                     const ejecutarCodigo = new AsyncFunction('msg', 'client', 'MessageMedia', 'ejecutarGeminiConRetries', 'limpiarRespuestaGemini', 'argumento', cmdConfig.contenido);
                     await ejecutarCodigo(msg, client, MessageMedia, ejecutarGeminiConRetries, limpiarRespuestaGemini, argumento);
                 } catch (e) {
                     console.error("Error ejecutando comando custom de código:", e);
-                    return msg.reply(`❌ *Error en código del comando:* ${e.message}`);
+                    return msg.reply(` *Error en código del comando:* ${e.message}`);
                 }
                 return;
             }
         }
 
         if (comando === 'canva' || comando === 'flyer' || comando === 'banner') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Indique el tema o producto para el flyer. Ejemplo: `!bot flyer tarjeta de credito dorada para redes sociales`");
-            await msg.reply("🎨 *Asistente:* Diseñando propuesta publicitaria y buscando plantillas profesionales de Canva...");
+            if (!argumento) return msg.reply(" *Asistente:* Indique el tema o producto para el flyer. Ejemplo: `!bot flyer tarjeta de credito dorada para redes sociales`");
+            await msg.reply(" *Asistente:* Diseñando propuesta publicitaria y buscando plantillas profesionales de Canva...");
             try {
                 const promptDesign = `Eres un Director Creativo y Diseñador Publicitario de primer nivel.
 Crea una propuesta completa y profesional de flyer / banner para redes sociales sobre: "${argumento}".
 
 Estructura tu respuesta exactamente así:
-🎯 *TITULAR GANCHO:* (Titular llamativo de alto impacto para captar clientes)
-✨ *SUBTÍTULO / PROPUESTA DE VALOR:* (1 frase clara y persuasiva)
-📌 *BENEFICIOS CLAVE:*
+ *TITULAR GANCHO:* (Titular llamativo de alto impacto para captar clientes)
+ *SUBTÍTULO / PROPUESTA DE VALOR:* (1 frase clara y persuasiva)
+ *BENEFICIOS CLAVE:*
 • (Beneficio 1)
 • (Beneficio 2)
 • (Beneficio 3)
-🚀 *LLAMADO A LA ACCIÓN (CTA):* (Ej: "¡Solicítala hoy con 0% de interés!", "Pídela aquí", etc.)
-🎨 *DISEÑO & ESTILO RECOMENDADO:*
+ *LLAMADO A LA ACCIÓN (CTA):* (Ej: "¡Solicítala hoy con 0% de interés!", "Pídela aquí", etc.)
+ *DISEÑO & ESTILO RECOMENDADO:*
 • Paleta de colores sugerida: (Colores armónicos y modernos)
 • Tipografía: (Sans-Serif, Negrita, Elegante)
 • Elementos visuales: (Qué foto o fondo usar)`;
@@ -3683,24 +3683,24 @@ Estructura tu respuesta exactamente así:
                 const canvaUrl1 = `https://www.canva.com/templates/?query=${queryCanva}`;
                 const canvaUrl2 = `https://www.canva.com/templates/?query=${queryCanvaInstagram}`;
 
-                let respuestaCompleta = `🎨 *PROPUESTA DE DISEÑO & FLYER PUBLICITARIO* 🎨\n\n`;
+                let respuestaCompleta = ` *PROPUESTA DE DISEÑO & FLYER PUBLICITARIO* \n\n`;
                 respuestaCompleta += copyText.trim() + `\n\n`;
                 respuestaCompleta += `━━━━━━━━━━━━━━━━━━━━━\n`;
-                respuestaCompleta += `🖌️ *PLANTILLAS PROFESIONALES DE CANVA:*\n`;
+                respuestaCompleta += ` *PLANTILLAS PROFESIONALES DE CANVA:*\n`;
                 respuestaCompleta += `Abre estos enlaces para seleccionar y personalizar tu plantilla:\n\n`;
-                respuestaCompleta += `📱 *Posts de Instagram:* ${canvaUrl2}\n`;
-                respuestaCompleta += `📄 *Flyers / Banners:* ${canvaUrl1}\n\n`;
-                respuestaCompleta += `_💡 Consejo: Copia los textos sugeridos arriba y pégalos en la plantilla de Canva para tener un diseño listo en 2 minutos._`;
+                respuestaCompleta += ` *Posts de Instagram:* ${canvaUrl2}\n`;
+                respuestaCompleta += ` *Flyers / Banners:* ${canvaUrl1}\n\n`;
+                respuestaCompleta += `_ Consejo: Copia los textos sugeridos arriba y pégalos en la plantilla de Canva para tener un diseño listo en 2 minutos._`;
 
                 return msg.reply(respuestaCompleta);
             } catch (e) {
-                return msg.reply(`❌ *Asistente:* Error al estructurar la propuesta de diseño: ${e.message}`);
+                return msg.reply(` *Asistente:* Error al estructurar la propuesta de diseño: ${e.message}`);
             }
         }
 
         if (comando === 'imagina' || comando === 'dibuja' || comando === 'crear') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Dígame qué desea dibujar, Señor.");
-            await msg.reply("🎨 *Asistente:* Diseñando el concepto artístico con IA, por favor espere...");
+            if (!argumento) return msg.reply(" *Asistente:* Dígame qué desea dibujar, Señor.");
+            await msg.reply(" *Asistente:* Diseñando el concepto artístico con IA, por favor espere...");
             try {
                 // 1. Si hay clave de OpenAI configurada, intentar primero con OpenAI
                 if (openaiApiKey) {
@@ -3723,7 +3723,7 @@ Estructura tu respuesta exactamente así:
                             const imgResp = await fetch(openAiData.data[0].url);
                             const imgBuf = await imgResp.arrayBuffer();
                             const media = new MessageMedia('image/png', Buffer.from(imgBuf).toString('base64'), 'imagen_chatgpt.png');
-                            return msg.reply(media, undefined, { caption: `🤖 *Imagen generada con ChatGPT (OpenAI)*\n✨ _Prompt: ${argumento}_` });
+                            return msg.reply(media, undefined, { caption: ` *Imagen generada con ChatGPT (OpenAI)*\n _Prompt: ${argumento}_` });
                         }
                     } catch (errOpenAi) {
                         console.log("[!] OpenAI falló o sin saldo. Usando motor FLUX:", errOpenAi.message);
@@ -3744,7 +3744,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     });
                     if (resultText && resultText.trim()) {
                         promptMejorado = resultText.trim();
-                        console.log(`[🎨 Prompt Expandido]: ${promptMejorado}`);
+                        console.log(`[ Prompt Expandido]: ${promptMejorado}`);
                     }
                 } catch (e) {
                     console.error("No se pudo expandir el prompt con Gemini, usando original:", e);
@@ -3756,37 +3756,37 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 const arrayBuffer = await response.arrayBuffer();
                 const base64 = Buffer.from(arrayBuffer).toString('base64');
                 const media = new MessageMedia('image/jpeg', base64, 'imagen.jpg');
-                return msg.reply(media, undefined, { caption: `✨ *Concepto visual generado por IA:*\n"${argumento}"\n\n_Tip: Para crear un flyer con textos y plantillas de diseño, usa: !bot flyer <tema>_` });
-            } catch (e) { return msg.reply("❌ *Asistente:* Fallo en el renderizado de los servidores gráficos."); }
+                return msg.reply(media, undefined, { caption: ` *Concepto visual generado por IA:*\n"${argumento}"\n\n_Tip: Para crear un flyer con textos y plantillas de diseño, usa: !bot flyer <tema>_` });
+            } catch (e) { return msg.reply(" *Asistente:* Fallo en el renderizado de los servidores gráficos."); }
         }
 
         // --- SISTEMA DE BATERÍA HÍBRIDO (Windows / Android) ---
         if (comando === 'bateria' || comando === 'estado') {
             if (isTermux) {
                 exec('termux-battery-status', async (err, stdout) => {
-                    if (err) return msg.reply("❌ Error leyendo batería de Termux.");
+                    if (err) return msg.reply(" Error leyendo batería de Termux.");
                     try {
                         const data = JSON.parse(stdout);
                         const charging = data.status === 'CHARGING' ? 'x R Cargando' : 'x 9 Descargando';
-                        await msg.reply('✔️  *Estado del teléfono:*\n\nx 9 Carga: ' + data.percentage + '%\nxR Temp: ' + data.temperature + '°C\na Energía: ' + charging);
-                    } catch (e) { msg.reply("❌ Error decodificando estado de la batería."); }
+                        await msg.reply('  *Estado del teléfono:*\n\nx 9 Carga: ' + data.percentage + '%\nxR Temp: ' + data.temperature + '°C\na Energía: ' + charging);
+                    } catch (e) { msg.reply(" Error decodificando estado de la batería."); }
                 });
             } else {
-                return msg.reply("✔️  *Ejecutándose en Computadora de Escritorio (Windows).* Sistema de energía estable conectado a la red eléctrica.");
+                return msg.reply("  *Ejecutándose en Computadora de Escritorio (Windows).* Sistema de energía estable conectado a la red eléctrica.");
             }
             return;
         }
 
         // --- SISTEMA DE CÁMARA HÍBRIDO ---
         if (comando === 'foto' || comando === 'camara') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Bloqueado en grupos.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Bloqueado en grupos.");
             if (!isTermux) {
-                return msg.reply("✔️  *Ejecutándose en Windows:* Este comando (tomar foto con cámara interna) solo está disponible cuando el bot corre en Termux.");
+                return msg.reply("  *Ejecutándose en Windows:* Este comando (tomar foto con cámara interna) solo está disponible cuando el bot corre en Termux.");
             }
-            await msg.reply("✔️  Tomando foto...");
+            await msg.reply("  Tomando foto...");
             const file = 'foto_' + Date.now() + '.jpg';
             exec('termux-camera-photo -c 0 ' + file, async (err) => {
-                if (err) return msg.reply("❌ Revisa permisos de cámara en tu Android.");
+                if (err) return msg.reply(" Revisa permisos de cámara en tu Android.");
                 try {
                     const media = MessageMedia.fromFilePath(file);
                     await msg.reply(media);
@@ -3798,9 +3798,9 @@ Create a visually stunning commercial product photograph: clean composition, stu
 
         // --- SISTEMA DE AUDIO HÍBRIDO (Convertidor FFmpeg de Termux) ---
         if (comando === 'grabar' || comando === 'escuchar') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Bloqueado en grupos por privacidad.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Bloqueado en grupos por privacidad.");
             if (!isTermux) {
-                return msg.reply("✔️  *Ejecutándose en Windows:* Este comando (grabar micrófono ambiental) solo está disponible cuando el bot corre en Termux.");
+                return msg.reply("  *Ejecutándose en Windows:* Este comando (grabar micrófono ambiental) solo está disponible cuando el bot corre en Termux.");
             }
             const segundos = Math.min(parseInt(argumento) || 10, 30);
             await msg.reply('" Grabando ' + segundos + ' segundos de audio...');
@@ -3821,13 +3821,13 @@ Create a visually stunning commercial product photograph: clean composition, stu
                                         await msg.reply(media);
                                         fs.unlinkSync(fileMp3);
                                     } else {
-                                        await msg.reply("❌ Error al convertir el audio en Termux.");
+                                        await msg.reply(" Error al convertir el audio en Termux.");
                                     }
                                     fs.unlinkSync(fileCrudo);
                                 } catch (e) { console.error(e); }
                             });
                         } else {
-                            msg.reply("❌ No se generó el archivo de grabación en Termux.");
+                            msg.reply(" No se generó el archivo de grabación en Termux.");
                         }
                     });
                 }, (segundos * 1000) + 500);
@@ -3837,10 +3837,10 @@ Create a visually stunning commercial product photograph: clean composition, stu
 
         if (comando === 'videos' || comando === 'ultimosvideos' || comando === 'novedades' || comando === 'verificarcanales' || comando === 'ytvideos' || comando === 'revisarcanales') {
             if (canalesYoutube.length === 0) {
-                return msg.reply("📺 *Asistente:* No hay canales registrados en el sistema de seguimiento.\n\n_Puedes registrar uno con:_\n`!bot agregarcanal <enlace, @canal o nombre>`");
+                return msg.reply(" *Asistente:* No hay canales registrados en el sistema de seguimiento.\n\n_Puedes registrar uno con:_\n`!bot agregarcanal <enlace, @canal o nombre>`");
             }
 
-            await msg.reply("🔍 *Asistente:* Consultando los últimos videos de tus canales de YouTube...");
+            await msg.reply(" *Asistente:* Consultando los últimos videos de tus canales de YouTube...");
 
             // Si se especificó un canal por nombre o índice
             if (argumento) {
@@ -3862,25 +3862,25 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 }
 
                 if (!canalTarget) {
-                    return msg.reply(`❌ *Asistente:* No encontré el canal "${argumento}". Escribe *!bot canales* para ver tu lista.`);
+                    return msg.reply(` *Asistente:* No encontré el canal "${argumento}". Escribe *!bot canales* para ver tu lista.`);
                 }
 
                 const info = await obtenerUltimosVideosCanal(canalTarget.id, 5);
                 if (!info || !info.videos || info.videos.length === 0) {
-                    return msg.reply(`📺 *Asistente:* No se encontraron videos recientes en el canal *${canalTarget.nombre}*.`);
+                    return msg.reply(` *Asistente:* No se encontraron videos recientes en el canal *${canalTarget.nombre}*.`);
                 }
 
-                let respuesta = `📺 *ÚLTIMOS VIDEOS DE ${info.canalNombre.toUpperCase()}:*\n\n`;
+                let respuesta = ` *ÚLTIMOS VIDEOS DE ${info.canalNombre.toUpperCase()}:*\n\n`;
                 info.videos.forEach((v, i) => {
                     const f = v.fecha ? ` _(${v.fecha})_` : '';
-                    respuesta += `*${i + 1}.* *${v.titulo}*${f}\n🔗 ${v.link}\n\n`;
+                    respuesta += `*${i + 1}.* *${v.titulo}*${f}\n ${v.link}\n\n`;
                 });
                 respuesta += `_Para descargar un video escribe: *!bot video <enlace>*_`;
                 return msg.reply(respuesta);
             }
 
             // Consultar todos los canales registrados
-            let respuesta = `📺 *ÚLTIMOS VIDEOS DE TUS CANALES DE YOUTUBE:*\n\n`;
+            let respuesta = ` *ÚLTIMOS VIDEOS DE TUS CANALES DE YOUTUBE:*\n\n`;
             let totalEncontrados = 0;
 
             for (const canal of canalesYoutube) {
@@ -3890,10 +3890,10 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     canal.nombre = info.canalNombre;
                     canal.ultimoVideo = info.videos[0].link;
 
-                    respuesta += `🔴 *${info.canalNombre}*\n`;
+                    respuesta += ` *${info.canalNombre}*\n`;
                     info.videos.forEach(v => {
                         const f = v.fecha ? ` _(${v.fecha})_` : '';
-                        respuesta += `• *${v.titulo}*${f}\n  🔗 ${v.link}\n`;
+                        respuesta += `• *${v.titulo}*${f}\n   ${v.link}\n`;
                     });
                     respuesta += '\n';
                 }
@@ -3902,7 +3902,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
             guardarCanales();
 
             if (totalEncontrados === 0) {
-                return msg.reply("📺 *Asistente:* No se pudieron obtener videos recientes de los canales registrados en este momento.");
+                return msg.reply(" *Asistente:* No se pudieron obtener videos recientes de los canales registrados en este momento.");
             }
 
             respuesta += `_Para descargar cualquiera de ellos escribe: *!bot video <enlace>*_`;
@@ -3910,12 +3910,12 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
         if (comando === 'setcanal' || comando === 'canal' || comando === 'agregarcanal') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Proporcione el enlace, @handle, ID o nombre del canal de YouTube.\n_Ejemplo:_ `!bot agregarcanal @mkbhd` o `!bot agregarcanal MrBeast`");
-            await msg.reply("🔍 *Asistente:* Localizando canal en YouTube...");
+            if (!argumento) return msg.reply(" *Asistente:* Proporcione el enlace, @handle, ID o nombre del canal de YouTube.\n_Ejemplo:_ `!bot agregarcanal @mkbhd` o `!bot agregarcanal MrBeast`");
+            await msg.reply(" *Asistente:* Localizando canal en YouTube...");
             const nuevoId = await obtenerIdCanal(argumento);
             if (nuevoId) {
                 if (canalesYoutube.some(c => c.id === nuevoId)) {
-                    return msg.reply("⚠️ *Asistente:* Ese canal ya se encuentra en tu lista de seguimiento.");
+                    return msg.reply(" *Asistente:* Ese canal ya se encuentra en tu lista de seguimiento.");
                 }
                 const infoCanal = await obtenerUltimosVideosCanal(nuevoId, 1);
                 const nombreCanal = infoCanal?.canalNombre || 'Canal de YouTube';
@@ -3929,24 +3929,24 @@ Create a visually stunning commercial product photograph: clean composition, stu
                 });
                 guardarCanales();
                 
-                let respuesta = `✅ *Asistente:* ¡Canal agregado con éxito!\n\n📺 *${nombreCanal}*\n🆔 \`${nuevoId}\``;
+                let respuesta = ` *Asistente:* ¡Canal agregado con éxito!\n\n *${nombreCanal}*\n🆔 \`${nuevoId}\``;
                 if (infoCanal && infoCanal.videos && infoCanal.videos.length > 0) {
                     const v = infoCanal.videos[0];
-                    respuesta += `\n\n🎬 *Último video publicado:*\n• *${v.titulo}*\n🔗 ${v.link}`;
+                    respuesta += `\n\n *Último video publicado:*\n• *${v.titulo}*\n ${v.link}`;
                 }
                 respuesta += `\n\n_Escribe *!bot videos* para consultar novedades de tus canales._`;
                 return msg.reply(respuesta);
             }
-            return msg.reply("❌ *Asistente:* No pude encontrar el canal de YouTube. Asegúrate de ingresar un enlace válido, usuario (@handle) o nombre del canal.");
+            return msg.reply(" *Asistente:* No pude encontrar el canal de YouTube. Asegúrate de ingresar un enlace válido, usuario (@handle) o nombre del canal.");
         }
 
         if (comando === 'listacanal' || comando === 'canales') {
             if (canalesYoutube.length === 0) {
-                return msg.reply("📺 *Asistente:* No hay canales registrados en el sistema de seguimiento.\n_Agrega uno con:_ `!bot agregarcanal <enlace, @canal o nombre>`");
+                return msg.reply(" *Asistente:* No hay canales registrados en el sistema de seguimiento.\n_Agrega uno con:_ `!bot agregarcanal <enlace, @canal o nombre>`");
             }
-            let lista = `📺 *CANALES DE YOUTUBE EN SEGUIMIENTO:*\n\n`;
+            let lista = ` *CANALES DE YOUTUBE EN SEGUIMIENTO:*\n\n`;
             canalesYoutube.forEach((c, index) => {
-                const ult = c.ultimoVideo ? `\n   🔗 Último: ${c.ultimoVideo}` : '';
+                const ult = c.ultimoVideo ? `\n    Último: ${c.ultimoVideo}` : '';
                 lista += `*${index + 1}.* *${c.nombre}*\n   🆔: \`${c.id}\`${ult}\n\n`;
             });
             lista += `_Para consultar videos recientes: *!bot videos*_\n_Para eliminar un canal: *!bot borrarcanal <número>*_`;
@@ -3954,7 +3954,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
         if (comando === 'reiniciar') {
-            await msg.reply("✔️   *Asistente:* Iniciando secuencia de reinicio maestro. Despejando memoria y reajustando sistemas... Estaré en línea en unos segundos.");
+            await msg.reply(" *Asistente:* Iniciando secuencia de reinicio maestro. Despejando memoria y reajustando sistemas... Estaré en línea en unos segundos.");
             console.log('[x  ] Reinicio automático solicitado por el usuario. Lanzando nueva instancia...');
             
             // Lanza un nuevo proceso independiente de Node con este mismo script
@@ -3969,14 +3969,14 @@ Create a visually stunning commercial product photograph: clean composition, stu
         }
 
         if (comando === 'borrarcanal' || comando === 'eliminarcanal') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Especifique el número del canal que desea eliminar. Use *!bot canales* para ver la lista.");
+            if (!argumento) return msg.reply(" *Asistente:* Especifique el número del canal que desea eliminar. Use *!bot canales* para ver la lista.");
             const indice = parseInt(argumento) - 1;
             if (isNaN(indice) || indice < 0 || indice >= canalesYoutube.length) {
-                return msg.reply("❌ *Asistente:* Número de índice fuera de rango o inválido.");
+                return msg.reply(" *Asistente:* Número de índice fuera de rango o inválido.");
             }
             const eliminado = canalesYoutube.splice(indice, 1)[0];
             guardarCanales();
-            return msg.reply(`🗑️ *Asistente:* Se ha eliminado el canal *${eliminado.nombre}* de la lista.`);
+            return msg.reply(` *Asistente:* Se ha eliminado el canal *${eliminado.nombre}* de la lista.`);
         }
 
         if (comando === 'clima') {
@@ -3999,7 +3999,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     return;
                 } catch (e) {
                     console.error('Error capturando radar:', e);
-                    return await msg.reply('❌ *Asistente:* Error al obtener el radar visual del SNET: ' + e.message);
+                    return await msg.reply(' *Asistente:* Error al obtener el radar visual del SNET: ' + e.message);
                 }
             }
 
@@ -4061,7 +4061,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
         // DESCARGAS MULTIMEDIA CON PREVENCI N DE INYECCI N DE COMANDOS (Soporte YouTube, TikTok, Instagram, Twitter/X, etc.)
         // --- BUSCAR CANCI N POR NOMBRE (sin enlace) ---
         if (comando === 'cancion' || comando === 'buscarcancion' || comando === 'song') {
-            if (!argumento) return msg.reply('❌ *Asistente:* Especifica el nombre de la canción y el artista. Ej: *!bot cancion Blinding Lights | The Weeknd*');
+            if (!argumento) return msg.reply(' *Asistente:* Especifica el nombre de la canción y el artista. Ej: *!bot cancion Blinding Lights | The Weeknd*');
             const partsC = argumento.split('|');
             const cancionQuery = partsC[0]?.trim() || argumento;
             const artistaQuery = partsC[1]?.trim() || '';
@@ -4078,12 +4078,12 @@ Create a visually stunning commercial product photograph: clean composition, stu
             if (ffmpegDirAudio) searchArgs.unshift('--ffmpeg-location', ffmpegDirAudio);
 
             const child = spawn(getYtDlpBinary(), searchArgs, { shell: false });
-            child.on('error', () => msg.reply('❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp').catch(()=>{}));
+            child.on('error', () => msg.reply(' *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp').catch(()=>{}));
             child.on('close', async (code) => {
                 const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3','') + '.mp3';
                 if (code !== 0 || !fs.existsSync(possibleFile) || fs.statSync(possibleFile).size < 10000) {
                     if (fs.existsSync(possibleFile)) try { fs.unlinkSync(possibleFile); } catch(e){}
-                    return msg.reply(`❌ *Asistente:* No encontré esa canción. Verifica el nombre: *"${queryFull}"*`);
+                    return msg.reply(` *Asistente:* No encontré esa canción. Verifica el nombre: *"${queryFull}"*`);
                 }
                 try {
                     const media = MessageMedia.fromFilePath(possibleFile);
@@ -4091,19 +4091,19 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     if (fs.existsSync(possibleFile)) fs.unlinkSync(possibleFile);
                 } catch (err) {
                     console.error('[!] Error enviando canción:', err);
-                    msg.reply('❌ *Asistente:* Error al enviar el archivo de audio.').catch(()=>{});
+                    msg.reply(' *Asistente:* Error al enviar el archivo de audio.').catch(()=>{});
                 }
             });
             return;
         }
 
         if (comando === 'audio' || comando === 'musica') {
-            if (!argumento.includes('http')) return msg.reply("❌ *Asistente:* Por favor, proporcione un enlace de audio válido.");
+            if (!argumento.includes('http')) return msg.reply(" *Asistente:* Por favor, proporcione un enlace de audio válido.");
             
             try {
                 new URL(argumento);
             } catch (e) {
-                return msg.reply("❌ *Asistente:* La URL proporcionada tiene un formato incorrecto.");
+                return msg.reply(" *Asistente:* La URL proporcionada tiene un formato incorrecto.");
             }
 
             await msg.reply(' *Asistente:* Procesando y extrayendo audio de alta fidelidad, un momento...');
@@ -4116,13 +4116,13 @@ Create a visually stunning commercial product photograph: clean composition, stu
             
             child.on('error', (err) => {
                 console.error('[!] Error en yt-dlp:', err);
-                return msg.reply("❌ *Asistente:* No he podido iniciar el proceso. Verifique si yt-dlp está configurado en su sistema.");
+                return msg.reply(" *Asistente:* No he podido iniciar el proceso. Verifique si yt-dlp está configurado en su sistema.");
             });
 
             child.on('close', async (code) => {
                 if (code !== 0 || !fs.existsSync(outputFile) || fs.statSync(outputFile).size < 10000) {
                     if (fs.existsSync(outputFile)) try { fs.unlinkSync(outputFile); } catch(e){}
-                    return msg.reply("❌ *Asistente:* El servidor de descargas falló o el enlace es incorrecto.");
+                    return msg.reply(" *Asistente:* El servidor de descargas falló o el enlace es incorrecto.");
                 }
                 try {
                     if (fs.existsSync(outputFile)) {
@@ -4130,7 +4130,7 @@ Create a visually stunning commercial product photograph: clean composition, stu
                         await msg.reply(media);
                         fs.unlinkSync(outputFile);
                     } else {
-                        await msg.reply("❌ *Asistente:* Archivo de audio no encontrado tras la compilación.");
+                        await msg.reply(" *Asistente:* Archivo de audio no encontrado tras la compilación.");
                     }
                 } catch (e) {
                     console.error('[!] Error enviando audio:', e);
@@ -4169,16 +4169,16 @@ Create a visually stunning commercial product photograph: clean composition, stu
                     const result = await model.generateContent(['Genera una frase motivacional corta, elegante e inteligente al estilo de JARVIS de Iron Man. En español. Solo la frase, sin introducción ni explicación. Máximo 2 líneas.']);
                     return result.response.text();
                 });
-                return msg.reply('✔️  ' + limpiarRespuestaGemini(fraseRes));
+                return msg.reply('  ' + limpiarRespuestaGemini(fraseRes));
             } catch(e) {
-                return msg.reply('✔️  *"El éxito no es un destino, sino el resultado de tomar la decisión correcta, momento a momento."*');
+                return msg.reply('  *"El éxito no es un destino, sino el resultado de tomar la decisión correcta, momento a momento."*');
             }
         }
 
         // --- COMANDO ACTUALIZAR ---
         if (comando === 'actualizar') {
             if (!esAdminPrivado) return msg.reply('xa *Asistente:* Comando exclusivo del administrador.');
-            await msg.reply('✔️   *Asistente:* Iniciando protocolos de actualización del sistema...');
+            await msg.reply(' *Asistente:* Iniciando protocolos de actualización del sistema...');
             const updateLog = [];
             const runUpd = (cmd, args) => new Promise((resolve) => {
                 const p = spawn(cmd, args, { shell: true });
@@ -4206,8 +4206,8 @@ Create a visually stunning commercial product photograph: clean composition, stu
         if (comando === 'voz' || comando === 'setvoz') {
             const arg = (argumento || '').toLowerCase().trim();
             if (!arg) {
-                const nombreVozActual = vozDefault === 'mujer' ? 'Femenina 👩 (Lorena Neural)' : 'Masculina 👨 (Rodrigo Neural)';
-                return msg.reply(`🎙️ *CONFIGURACIÓN DE VOZ ASISTENTE:*
+                const nombreVozActual = vozDefault === 'mujer' ? 'Femenina  (Lorena Neural)' : 'Masculina  (Rodrigo Neural)';
+                return msg.reply(` *CONFIGURACIÓN DE VOZ ASISTENTE:*
 • *Voz predeterminada actual:* ${nombreVozActual}
 
 *¿Cómo cambiar la voz por defecto?*
@@ -4223,20 +4223,20 @@ Create a visually stunning commercial product photograph: clean composition, stu
             if (/^(hombre|h|masculino|male)$/i.test(arg)) {
                 vozDefault = 'hombre';
                 guardarAdminJson();
-                return msg.reply("✅ *Asistente:* Voz predeterminada configurada en *Masculina* 👨 (Rodrigo Neural).");
+                return msg.reply(" *Asistente:* Voz predeterminada configurada en *Masculina*  (Rodrigo Neural).");
             } else if (/^(mujer|m|femenino|female)$/i.test(arg)) {
                 vozDefault = 'mujer';
                 guardarAdminJson();
-                return msg.reply("✅ *Asistente:* Voz predeterminada configurada en *Femenina* 👩 (Lorena Neural).");
+                return msg.reply(" *Asistente:* Voz predeterminada configurada en *Femenina*  (Lorena Neural).");
             } else {
-                return msg.reply("❌ *Asistente:* Opción no válida. Escriba *!bot voz hombre* o *!bot voz mujer*.");
+                return msg.reply(" *Asistente:* Opción no válida. Escriba *!bot voz hombre* o *!bot voz mujer*.");
             }
         }
 
         // --- MÓDULO SÍNTESIS DE VOZ (TTS DUAL: HOMBRE / MUJER) ---
         if (comando === 'decir' || comando === 'tts' || comando === 'decirhombre' || comando === 'decirmujer') {
             if (!argumento) {
-                return msg.reply("❌ *Asistente:* Especifique el texto que desea que dicte.\n\n_Ejemplos:_\n• `!bot decir hombre Buenos días a todos`\n• `!bot decir mujer Buenos días a todos`\n• `!bot decir Buenos días` (usa la voz activa)");
+                return msg.reply(" *Asistente:* Especifique el texto que desea que dicte.\n\n_Ejemplos:_\n• `!bot decir hombre Buenos días a todos`\n• `!bot decir mujer Buenos días a todos`\n• `!bot decir Buenos días` (usa la voz activa)");
             }
 
             let textoFinal = argumento.trim();
@@ -4261,14 +4261,14 @@ Create a visually stunning commercial product photograph: clean composition, stu
             }
 
             if (!textoFinal) {
-                return msg.reply("❌ *Asistente:* Especifique el texto que desea que dicte.");
+                return msg.reply(" *Asistente:* Especifique el texto que desea que dicte.");
             }
 
-            const etiquetaVoz = generoVoz === 'mujer' ? 'femenina 👩' : 'masculina 👨';
-            await msg.reply(`🎙️ *Asistente:* Generando modulación de voz ${etiquetaVoz}...`);
+            const etiquetaVoz = generoVoz === 'mujer' ? 'femenina ' : 'masculina ';
+            await msg.reply(` *Asistente:* Generando modulación de voz ${etiquetaVoz}...`);
             const ttsExito = await generarAudioTTS(textoFinal, msg, generoVoz);
             if (!ttsExito) {
-                return msg.reply("❌ *Asistente:* Error interno en el módulo de sintetización de audio.");
+                return msg.reply(" *Asistente:* Error interno en el módulo de sintetización de audio.");
             }
             return;
         }
@@ -4281,30 +4281,30 @@ Create a visually stunning commercial product photograph: clean composition, stu
             }
 
             esperandoAyudaOpcion.set(chatId, true);
-            const menuMenu = `🤖 *CENTRO DE CONTROL ASISTENTE v6.0*
+            const menuMenu = ` *CENTRO DE CONTROL ASISTENTE v6.0*
 
 Señor Geovanny, seleccione una de las siguientes opciones respondiendo con el *número (1-8)* o usando \`!bot ayuda <número>\`:
 
-1️⃣ 💳 *Finanzas King & Tarjetas* (Saldos, tarjetas, vencimientos, estados de cuenta)
-2️⃣ 🎨 *Flyers, Canva & Diseño* (Plantillas Canva, imágenes IA, stickers)
-3️⃣ 🧠 *Memoria y Base Personal* (Guardar notas, datos personales, memoria)
-4️⃣ ⏰ *Tareas y Recordatorios* (Programar acciones automáticas, alarmas)
-5️⃣ 📢 *YouTube y Descargas* (Seguimiento de canales, descargar MP3 y MP4)
-6️⃣ ⚡ *Agentes de IA y Chat* (Modos de asistente, traductor, búsquedas)
-7️⃣ 🔧 *Ajustes y Conexiones* (Telegram, OpenAI, Gemini API, batería, servidor)
-8️⃣ 🛠️ *Utilidades y Herramientas* (Tareas pendientes, clima, QR, divisas, calculadora)
+1⃣  *Finanzas King & Tarjetas* (Saldos, tarjetas, vencimientos, estados de cuenta)
+2⃣  *Flyers, Canva & Diseño* (Plantillas Canva, imágenes IA, stickers)
+3⃣  *Memoria y Base Personal* (Guardar notas, datos personales, memoria)
+4⃣  *Tareas y Recordatorios* (Programar acciones automáticas, alarmas)
+5⃣  *YouTube y Descargas* (Seguimiento de canales, descargar MP3 y MP4)
+6⃣  *Agentes de IA y Chat* (Modos de asistente, traductor, búsquedas)
+7⃣  *Ajustes y Conexiones* (Telegram, OpenAI, Gemini API, batería, servidor)
+8⃣  *Utilidades y Herramientas* (Tareas pendientes, clima, QR, divisas, calculadora)
 
-🔌 *Control de Energía:*
+ *Control de Energía:*
 • \`!bot apagar\` - Pausar respuestas automáticas.
 • \`!bot encender\` - Reactivar el bot.
 
-_💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
+_ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             return msg.reply(menuMenu);
         }
 
         // --- NUEVAS IDEAS: GENERACIN DE STICKER CON IA ---
         if (comando === 'stickercrear') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme la idea para generar la imagen de su sticker.");
+            if (!argumento) return msg.reply(" *Asistente:* Indíqueme la idea para generar la imagen de su sticker.");
             await msg.reply(" *Asistente:* Generando diseño del sticker con IA...");
             try {
                 const stickerPromptExpansion = `Create a detailed, beautiful, and modern English prompt for a WhatsApp sticker based on the following idea: '${argumento}'. The prompt MUST specify: "vector sticker style, isolated on a clean solid white background, die-cut, bold outlines, vibrant colors, clean minimal design, cute or modern cartoon style, 3D look or clean 2D vector, no text unless requested". Respond ONLY with the prompt, no introduction, no quotes:\n\n${argumento}`;
@@ -4329,7 +4329,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 const media = new MessageMedia('image/jpeg', base64, 'sticker.jpg');
                 await msg.reply(media, msg.from, { sendMediaAsSticker: true, stickerName: 'Kinbot VIP', stickerAuthor: 'Geovanny' });
             } catch (e) {
-                return msg.reply("❌ *Asistente:* Error en los servidores gráficos al renderizar el sticker.");
+                return msg.reply(" *Asistente:* Error en los servidores gráficos al renderizar el sticker.");
             }
             return;
         }
@@ -4340,7 +4340,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const idiomaDestino = parts[0];
             const textoATraducir = parts.slice(1).join(' ');
             if (!idiomaDestino || !textoATraducir) {
-                return msg.reply("❌ *Asistente:* Uso correcto: *!bot traducir <idioma> <texto>*. Ejemplo: *!bot traducir ingles Hola mundo*");
+                return msg.reply(" *Asistente:* Uso correcto: *!bot traducir <idioma> <texto>*. Ejemplo: *!bot traducir ingles Hola mundo*");
             }
             await msg.reply(`xR *Asistente:* Traducción en proceso al ${idiomaDestino}...`);
             try {
@@ -4352,23 +4352,23 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 const respuestaLimpia = limpiarRespuestaGemini(respuesta);
                 return msg.reply(respuestaLimpia);
             } catch (e) {
-                return msg.reply("❌ *Asistente:* Ocurrió un error al intentar traducir.");
+                return msg.reply(" *Asistente:* Ocurrió un error al intentar traducir.");
             }
         }
 
         // --- NUEVAS IDEAS: CALCULADORA ---
         if (comando === 'calcular') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Especifique la operation matemática. Ejemplo: *!bot calcular 2 + 2 * (10 / 5)*");
+            if (!argumento) return msg.reply(" *Asistente:* Especifique la operation matemática. Ejemplo: *!bot calcular 2 + 2 * (10 / 5)*");
             const expression = argumento.replace(/\s+/g, '');
             const isSafe = /^[0-9+\-*/().%]+$/.test(expression);
             if (!isSafe) {
-                return msg.reply("❌ *Asistente:* Operación no válida. Solo se permiten números y los operadores básicos (+, -, *, /, %, (, )).");
+                return msg.reply(" *Asistente:* Operación no válida. Solo se permiten números y los operadores básicos (+, -, *, /, %, (, )).");
             }
             try {
                 const result = new Function(`return (${expression})`)();
-                return msg.reply(`👨‍💼 *Asistente:* El resultado es: *${result}*`);
+                return msg.reply(` *Asistente:* El resultado es: *${result}*`);
             } catch (e) {
-                return msg.reply("❌ *Asistente:* Error matemático en la expresión ingresada.");
+                return msg.reply(" *Asistente:* Error matemático en la expresión ingresada.");
             }
         }
 
@@ -4394,17 +4394,17 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                     }
                 } catch (e) {
                     console.error("Error resumiendo PDF:", e);
-                    return msg.reply("❌ *Asistente:* Ocurrió un error al procesar el documento PDF.");
+                    return msg.reply(" *Asistente:* Ocurrió un error al procesar el documento PDF.");
                 }
             }
 
             if (!argumento || !argumento.includes('http')) {
-                return msg.reply("❌ *Asistente:* Por favor proporcione una URL para resumir, o responda a un archivo PDF con *!bot resumir*.");
+                return msg.reply(" *Asistente:* Por favor proporcione una URL para resumir, o responda a un archivo PDF con *!bot resumir*.");
             }
             try {
                 new URL(argumento);
             } catch(e) {
-                return msg.reply("❌ *Asistente:* Enlace inválido.");
+                return msg.reply(" *Asistente:* Enlace inválido.");
             }
             await msg.reply("x *Asistente:* Extrayendo y analizando contenido web para su resumen...");
             try {
@@ -4427,7 +4427,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error("Error al resumir:", e);
-                return msg.reply("❌ *Asistente:* No se pudo recuperar el contenido web de esa dirección.");
+                return msg.reply(" *Asistente:* No se pudo recuperar el contenido web de esa dirección.");
             }
         }
 
@@ -4450,29 +4450,29 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const sysUptime = formatTime(os.uptime());
             const jarvisUptime = formatTime(process.uptime());
             
-            let statusReport = `📊 *DIAGNÓSTICO DE SISTEMA ASISTENTE*\n\n`;
-            statusReport += `🤖 *Asistente:* Activo y Operativo\n`;
+            let statusReport = ` *DIAGNÓSTICO DE SISTEMA ASISTENTE*\n\n`;
+            statusReport += ` *Asistente:* Activo y Operativo\n`;
             statusReport += `🆔 *PID del Proceso:* ${process.pid}\n`;
-            statusReport += `💻 *Plataforma:* ${platform === 'win32' ? 'Windows OS' : 'Termux / Linux'}\n`;
-            statusReport += `⚙️ *Arquitectura:* ${arch}\n`;
-            statusReport += `🧠 *Procesador:* ${cpuModel} (${cpuCores} núcleos)\n`;
-            statusReport += `📈 *Memoria RAM:* ${freeRAM} GB libres de ${totalRAM} GB totales\n`;
-            statusReport += `⏱️ *Uptime Servidor:* ${sysUptime}\n`;
-            statusReport += `⏳ *Uptime Asistente:* ${jarvisUptime}\n`;
+            statusReport += ` *Plataforma:* ${platform === 'win32' ? 'Windows OS' : 'Termux / Linux'}\n`;
+            statusReport += ` *Arquitectura:* ${arch}\n`;
+            statusReport += ` *Procesador:* ${cpuModel} (${cpuCores} núcleos)\n`;
+            statusReport += ` *Memoria RAM:* ${freeRAM} GB libres de ${totalRAM} GB totales\n`;
+            statusReport += ` *Uptime Servidor:* ${sysUptime}\n`;
+            statusReport += ` *Uptime Asistente:* ${jarvisUptime}\n`;
             
             if (isTermux) {
                 exec('termux-battery-status', async (err, stdout) => {
                     if (!err) {
                         try {
                             const data = JSON.parse(stdout);
-                            const charging = data.status === 'CHARGING' ? '🔌 Conectado' : '🔋 Desconectado';
-                            statusReport += `🔋 *Energía:* ${charging} (Nivel: ${data.percentage}%, Temp: ${data.temperature}°C)\n`;
+                            const charging = data.status === 'CHARGING' ? ' Conectado' : ' Desconectado';
+                            statusReport += ` *Energía:* ${charging} (Nivel: ${data.percentage}%, Temp: ${data.temperature}°C)\n`;
                         } catch(e) {}
                     }
                     await msg.reply(statusReport);
                 });
             } else {
-                statusReport += `⚡ *Energía:* Red Eléctrica Directa (Ilimitada)\n`;
+                statusReport += ` *Energía:* Red Eléctrica Directa (Ilimitada)\n`;
                 await msg.reply(statusReport);
             }
             return;
@@ -4480,8 +4480,8 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
         // --- NUEVO COMANDO: GENERADOR QR ---
         if (comando === 'qr') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Ingrese el texto o enlace que desea codificar.");
-            await msg.reply("x  *Asistente:* Renderizando matriz de código QR...");
+            if (!argumento) return msg.reply(" *Asistente:* Ingrese el texto o enlace que desea codificar.");
+            await msg.reply("x *Asistente:* Renderizando matriz de código QR...");
             try {
                 const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(argumento)}`;
                 const response = await fetch(url);
@@ -4491,31 +4491,31 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 await msg.reply(media);
             } catch (e) {
                 console.error("Error generando QR:", e);
-                return msg.reply("❌ *Asistente:* Servidor de codificación fuera de línea.");
+                return msg.reply(" *Asistente:* Servidor de codificación fuera de línea.");
             }
             return;
         }
 
         // --- NUEVO COMANDO: RECORDATORIOS ---
         if (comando === 'recordar' || comando === 'recordatorio') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido al administrador");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido al administrador");
             const parts = argumento.split(' ');
             const tiempoStr = parts[0];
             const mensajeRecordatorio = parts.slice(1).join(' ');
             
             let minutos = parseFloat(tiempoStr);
             if (isNaN(minutos) || minutos <= 0) {
-                return msg.reply("❌ *Asistente:* Uso correcto: *!bot recordar <minutos> <mensaje>*. Ejemplo: *!bot recordar 5 preparar examen*");
+                return msg.reply(" *Asistente:* Uso correcto: *!bot recordar <minutos> <mensaje>*. Ejemplo: *!bot recordar 5 preparar examen*");
             }
             if (!mensajeRecordatorio) {
-                return msg.reply("❌ *Asistente:* Debe indicarme qué desea recordar.");
+                return msg.reply(" *Asistente:* Debe indicarme qué desea recordar.");
             }
             
             await msg.reply(` *Asistente:* Entendido, recordatorio fijado en ${minutos} minutos, Señor. No lo olvidaré.`);
             
             setTimeout(async () => {
                 try {
-                    const alertMsg = `x   *ASISTENTE   RECORDATORIO!*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
+                    const alertMsg = `*ASISTENTE   RECORDATORIO!*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
                     await client.sendMessage(chatId, alertMsg);
                 } catch (e) {
                     console.error("Error al disparar recordatorio:", e);
@@ -4527,7 +4527,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         // --- BASE DE CONOCIMIENTO Y MEMORIA PERSISTENTE ---
         if (comando === 'memoria' || comando === 'datos' || comando === 'recuerdos') {
             if (isGroup || (adminChatId && chatId !== adminChatId)) {
-                return msg.reply("❌ Comando restringido al administrador en chat privado.");
+                return msg.reply(" Comando restringido al administrador en chat privado.");
             }
 
             if (argumento) {
@@ -4537,7 +4537,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
                 if (subCmd === 'guardar' || subCmd === 'add' || subCmd === 'set') {
                     if (!subArg) {
-                        return msg.reply("❌ *Uso correcto:* `!bot memoria guardar <tema> : <información>`\n_Ejemplo:_ `!bot memoria guardar Wifi Casa : MiClave1234`");
+                        return msg.reply(" *Uso correcto:* `!bot memoria guardar <tema> : <información>`\n_Ejemplo:_ `!bot memoria guardar Wifi Casa : MiClave1234`");
                     }
                     let clave = 'Dato';
                     let valor = subArg;
@@ -4552,38 +4552,38 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                     }
                     const res = guardarDatoEnMemoria(clave, valor);
                     const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
-                    return msg.reply(`🧠 *Asistente:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede consultármelo cuando lo desee hablando normalmente por chat._`);
+                    return msg.reply(` *Asistente:* ${label} con éxito, Señor:\n *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede consultármelo cuando lo desee hablando normalmente por chat._`);
                 }
 
                 if (subCmd === 'borrar' || subCmd === 'del' || subCmd === 'olvidar') {
-                    if (!subArg) return msg.reply("❌ Especifique el número o tema a borrar: `!bot memoria borrar <número/tema>`");
+                    if (!subArg) return msg.reply(" Especifique el número o tema a borrar: `!bot memoria borrar <número/tema>`");
                     const el = eliminarDatoDeMemoria(subArg);
-                    if (el) return msg.reply(`🗑️ *Asistente:* He borrado de mi memoria: *${el.clave}* (${el.valor})`);
-                    return msg.reply(`⚠️ *Asistente:* No encontré ningún dato en memoria que coincida con "${subArg}".`);
+                    if (el) return msg.reply(` *Asistente:* He borrado de mi memoria: *${el.clave}* (${el.valor})`);
+                    return msg.reply(` *Asistente:* No encontré ningún dato en memoria que coincida con "${subArg}".`);
                 }
 
                 if (subCmd === 'buscar' || subCmd === 'find') {
-                    if (!subArg) return msg.reply("❌ Especifique qué buscar: `!bot memoria buscar <palabra>`");
+                    if (!subArg) return msg.reply(" Especifique qué buscar: `!bot memoria buscar <palabra>`");
                     const q = subArg.toLowerCase();
                     const encontrados = memoriaGlobal.filter(m => m.clave.toLowerCase().includes(q) || m.valor.toLowerCase().includes(q));
-                    if (encontrados.length === 0) return msg.reply(`🔍 *Asistente:* No encontré ningún dato guardado sobre "${subArg}".`);
-                    let r = `🔍 *RESULTADOS EN MEMORIA PARA "${subArg}":*\n\n`;
+                    if (encontrados.length === 0) return msg.reply(` *Asistente:* No encontré ningún dato guardado sobre "${subArg}".`);
+                    let r = ` *RESULTADOS EN MEMORIA PARA "${subArg}":*\n\n`;
                     encontrados.forEach((m, i) => {
                         const f = m.fecha ? ` _(${m.fecha})_` : '';
-                        r += `*${i + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
+                        r += `*${i + 1}.*  *${m.clave}*${f}\n    ${m.valor}\n\n`;
                     });
                     return msg.reply(r);
                 }
             }
 
             if (memoriaGlobal.length === 0) {
-                return msg.reply("🧠 *Asistente:* No tengo datos guardados en mi memoria actualmente.\n\n_Puedes guardar información hablándome con naturalidad:_\n• _\"Guarda que mi talla de camisa es M\"_\n• _\"Acuérdate de que la clave del wifi es 1234\"_\n• O con comando: `!bot guardar <tema> : <información>`");
+                return msg.reply(" *Asistente:* No tengo datos guardados en mi memoria actualmente.\n\n_Puedes guardar información hablándome con naturalidad:_\n• _\"Guarda que mi talla de camisa es M\"_\n• _\"Acuérdate de que la clave del wifi es 1234\"_\n• O con comando: `!bot guardar <tema> : <información>`");
             }
 
-            let lista = `🧠 *BASE DE DATOS Y MEMORIA PERSISTENTE:*\n\n`;
+            let lista = ` *BASE DE DATOS Y MEMORIA PERSISTENTE:*\n\n`;
             memoriaGlobal.forEach((m, idx) => {
                 const f = m.fecha ? ` _(${m.fecha})_` : '';
-                lista += `*${idx + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
+                lista += `*${idx + 1}.*  *${m.clave}*${f}\n    ${m.valor}\n\n`;
             });
             lista += `_Para guardar un dato:_ \`!bot guardar <tema> : <información>\`\n_Para borrar un dato:_ \`!bot olvidar <número o tema>\`\n_O simplemente pregúntame cualquier dato en este chat._`;
             return msg.reply(lista);
@@ -4591,10 +4591,10 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
         if (comando === 'guardar' || comando === 'guardardato') {
             if (isGroup || (adminChatId && chatId !== adminChatId)) {
-                return msg.reply("❌ Comando restringido al administrador en chat privado.");
+                return msg.reply(" Comando restringido al administrador en chat privado.");
             }
             if (!argumento) {
-                return msg.reply("❌ *Uso correcto:* `!bot guardar <tema> : <información>`\n\n*Ejemplos prácticos:*\n• `!bot guardar Talla de camisa : M`\n• `!bot guardar Wifi Oficina : ClaveSegura2026!`\n• `!bot guardar Cumpleaños : 15 de marzo`\n• `!bot guardar Cliente Juan : Tel 7777-8888, interesado en producto B`");
+                return msg.reply(" *Uso correcto:* `!bot guardar <tema> : <información>`\n\n*Ejemplos prácticos:*\n• `!bot guardar Talla de camisa : M`\n• `!bot guardar Wifi Oficina : ClaveSegura2026!`\n• `!bot guardar Cumpleaños : 15 de marzo`\n• `!bot guardar Cliente Juan : Tel 7777-8888, interesado en producto B`");
             }
             let clave = 'Dato Personal';
             let valor = argumento.trim();
@@ -4609,34 +4609,34 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             }
             const res = guardarDatoEnMemoria(clave, valor);
             const label = res.accion === 'actualizado' ? 'Memoria actualizada' : 'Dato guardado en memoria';
-            return msg.reply(`🧠 *Asistente:* ${label} con éxito, Señor:\n📌 *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede preguntarme sobre este tema cuando lo desee en la conversación._`);
+            return msg.reply(` *Asistente:* ${label} con éxito, Señor:\n *${res.item.clave}*: ${res.item.valor}\n\n_Ahora puede preguntarme sobre este tema cuando lo desee en la conversación._`);
         }
 
         if (comando === 'olvidar' || comando === 'olvidardato') {
             if (isGroup || (adminChatId && chatId !== adminChatId)) {
-                return msg.reply("❌ Comando restringido al administrador en chat privado.");
+                return msg.reply(" Comando restringido al administrador en chat privado.");
             }
-            if (!argumento) return msg.reply("❌ Especifique el número o tema del dato que desea olvidar:\n`!bot olvidar <número o tema>`\n_Usa *!bot memoria* para ver la lista._");
+            if (!argumento) return msg.reply(" Especifique el número o tema del dato que desea olvidar:\n`!bot olvidar <número o tema>`\n_Usa *!bot memoria* para ver la lista._");
             const el = eliminarDatoDeMemoria(argumento);
-            if (el) return msg.reply(`🗑️ *Asistente:* He eliminado de mi memoria el dato sobre *${el.clave}* (${el.valor}).`);
-            return msg.reply(`⚠️ *Asistente:* No encontré ningún dato en memoria que coincida con "${argumento}".`);
+            if (el) return msg.reply(` *Asistente:* He eliminado de mi memoria el dato sobre *${el.clave}* (${el.valor}).`);
+            return msg.reply(` *Asistente:* No encontré ningún dato en memoria que coincida con "${argumento}".`);
         }
 
         // --- BLOC DE NOTAS ---
         if (comando === 'nota' || comando === 'guardarnota') {
-            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply("❌ Comando restringido al administrador");
-            if (!argumento) return msg.reply("❌ *Asistente:* Ingrese el texto de la nota que desea guardar.");
+            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply(" Comando restringido al administrador");
+            if (!argumento) return msg.reply(" *Asistente:* Ingrese el texto de la nota que desea guardar.");
             notasGuardadas.push({ texto: argumento, fecha: new Date().toLocaleDateString('es-ES') });
             guardarNotas();
-            return msg.reply(`📝 *Asistente:* Nota guardada con éxito, Señor.`);
+            return msg.reply(` *Asistente:* Nota guardada con éxito, Señor.`);
         }
 
         if (comando === 'notas') {
-            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply("❌ Comando restringido al administrador");
+            if (isGroup || (adminChatId && chatId !== adminChatId)) return msg.reply(" Comando restringido al administrador");
             if (notasGuardadas.length === 0) {
-                return msg.reply("📝 *Asistente:* No tiene notas archivadas.");
+                return msg.reply(" *Asistente:* No tiene notas archivadas.");
             }
-            let lista = `📝 *SUS NOTAS ARCHIVADAS:*\n\n`;
+            let lista = ` *SUS NOTAS ARCHIVADAS:*\n\n`;
             notasGuardadas.forEach((n, index) => {
                 lista += `${index + 1}. [${n.fecha || ''}] ${n.texto || n}\n`;
             });
@@ -4645,19 +4645,19 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         }
 
         if (comando === 'borrarnota') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Especifique el número de la nota que desea eliminar. Use *!bot notas* para ver la lista.");
+            if (!argumento) return msg.reply(" *Asistente:* Especifique el número de la nota que desea eliminar. Use *!bot notas* para ver la lista.");
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= notasGuardadas.length) {
-                return msg.reply("❌ *Asistente:* Número de nota inválido.");
+                return msg.reply(" *Asistente:* Número de nota inválido.");
             }
             const eliminada = notasGuardadas.splice(index, 1)[0];
             guardarNotas();
-            return msg.reply(`🗑️ *Asistente:* Nota "${eliminada.texto || eliminada}" eliminada.`);
+            return msg.reply(` *Asistente:* Nota "${eliminada.texto || eliminada}" eliminada.`);
         }
 
         // --- BaSQUEDA WEB INTELIGENTE ---
         if (comando === 'buscar' || comando === 'google') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Ingrese los términos de búsqueda.");
+            if (!argumento) return msg.reply(" *Asistente:* Ingrese los términos de búsqueda.");
             await msg.reply(`x *Asistente:* Realizando consulta y analizando fuentes en la red...`);
             try {
                 const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(argumento)}`;
@@ -4696,7 +4696,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error("Error en búsqueda:", e);
-                return msg.reply("❌ *Asistente:* Ha ocurrido un error al consultar las bases de datos de red.");
+                return msg.reply(" *Asistente:* Ha ocurrido un error al consultar las bases de datos de red.");
             }
         }
 
@@ -4709,7 +4709,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             
             if (subComando === 'crear' || subComando === 'agregar') {
                 if (!nombre || !instrucciones) {
-                    return msg.reply("❌ *Asistente:* Formato correcto: *!bot agente crear <nombre> <instrucciones>*");
+                    return msg.reply(" *Asistente:* Formato correcto: *!bot agente crear <nombre> <instrucciones>*");
                 }
                 agentesCustom[nombre] = instrucciones;
                 fs.writeFileSync('agentes.json', JSON.stringify(agentesCustom, null, 2));
@@ -4718,13 +4718,13 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             
             if (subComando === 'borrar' || subComando === 'eliminar') {
                 if (!nombre) {
-                    return msg.reply("❌ *Asistente:* Formato correcto: *!bot agente borrar <nombre>*");
+                    return msg.reply(" *Asistente:* Formato correcto: *!bot agente borrar <nombre>*");
                 }
                 if (nombre === 'kingbot' || nombre === 'programador' || nombre === 'entrenador' || nombre === 'traductor') {
-                    return msg.reply(`❌ *Asistente:* No puede eliminar los agentes del sistema principal.`);
+                    return msg.reply(` *Asistente:* No puede eliminar los agentes del sistema principal.`);
                 }
                 if (!agentesCustom[nombre]) {
-                    return msg.reply(`❌ *Asistente:* El agente *"${nombre}"* no existe.`);
+                    return msg.reply(` *Asistente:* El agente *"${nombre}"* no existe.`);
                 }
                 delete agentesCustom[nombre];
                 fs.writeFileSync('agentes.json', JSON.stringify(agentesCustom, null, 2));
@@ -4751,22 +4751,22 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
         // --- GESTIN DE COMANDOS PERSONALIZADOS ---
         if (comando === 'comandocrear' || comando === 'crearcomando') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             const partsCmd = argumento.split(' ');
             const nombre = partsCmd[0]?.toLowerCase();
             const tipo = partsCmd[1]?.toLowerCase();
             const contenido = partsCmd.slice(2).join(' ');
 
             if (!nombre || !tipo || !contenido) {
-                return msg.reply("❌ *Asistente:* Formato correcto: *!bot comandocrear <nombre> <tipo: texto/ia/codigo> <contenido/instrucciones/codigo>*");
+                return msg.reply(" *Asistente:* Formato correcto: *!bot comandocrear <nombre> <tipo: texto/ia/codigo> <contenido/instrucciones/codigo>*");
             }
             if (tipo !== 'texto' && tipo !== 'ia' && tipo !== 'codigo') {
-                return msg.reply("❌ *Asistente:* El tipo de comando debe ser *texto*, *ia* o *codigo*.");
+                return msg.reply(" *Asistente:* El tipo de comando debe ser *texto*, *ia* o *codigo*.");
             }
             
             const comandosSistema = ['reiniciar', 'ayuda', 'menu', 'help', 'comandos', 'musica', 'audio', 'video', 'decir', 'tts', 'foto', 'camara', 'grabar', 'escuchar', 'bateria', 'estado', 'sistema', 'hardware', 'qr', 'recordar', 'recordatorio', 'nota', 'guardarnota', 'notas', 'borrarnota', 'buscar', 'google', 'agente', 'agentes', 'agregarclave', 'addkey', 'claves', 'listkeys', 'restaurarclaves', 'resetkeys', 'borrarclaves', 'clearkeys', 'comandocrear', 'comandoborrar', 'comandoslista', 'setcanal', 'canal', 'agregarcanal', 'listacanal', 'canales', 'borrarcanal', 'eliminarcanal', 'clima', 'imagina', 'dibuja', 'crear', 'stickercrear', 'traducir', 'calcular', 'resumir'];
             if (comandosSistema.includes(nombre)) {
-                return msg.reply(`❌ *Asistente:* El nombre *"${nombre}"* está reservado para el sistema principal.`);
+                return msg.reply(` *Asistente:* El nombre *"${nombre}"* está reservado para el sistema principal.`);
             }
 
             comandosCustom[nombre] = { tipo, contenido };
@@ -4775,13 +4775,13 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         }
 
         if (comando === 'comandoborrar' || comando === 'borrarcomando') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             const nombre = argumento.toLowerCase().trim();
             if (!nombre) {
-                return msg.reply("❌ *Asistente:* Formato correcto: *!bot comandoborrar <nombre>*");
+                return msg.reply(" *Asistente:* Formato correcto: *!bot comandoborrar <nombre>*");
             }
             if (!comandosCustom[nombre]) {
-                return msg.reply(`❌ *Asistente:* El comando *"!${nombre}"* no existe.`);
+                return msg.reply(` *Asistente:* El comando *"!${nombre}"* no existe.`);
             }
             delete comandosCustom[nombre];
             guardarComandosCustom();
@@ -4789,7 +4789,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         }
 
         if (comando === 'comandoslista' || comando === 'listacomandos') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             const keys = Object.keys(comandosCustom);
             if (keys.length === 0) {
                 return msg.reply(" *Asistente:* No hay comandos personalizados registrados.");
@@ -4810,7 +4810,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const hora = parts[0];
             let msgAlarma = parts.slice(1).join(' ').trim();
             if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(hora) || !msgAlarma) {
-                return msg.reply("❌ *Asistente:* Formato correcto: *!bot alarma HH:MM mensaje [--diaria]*. Ejemplo: *!bot alarma 07:30 Despertarse --diaria*");
+                return msg.reply(" *Asistente:* Formato correcto: *!bot alarma HH:MM mensaje [--diaria]*. Ejemplo: *!bot alarma 07:30 Despertarse --diaria*");
             }
             let recurrente = false;
             if (msgAlarma.includes('--diaria') || msgAlarma.includes('--recurrente')) {
@@ -4824,7 +4824,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
         if (comando === 'alarmas') {
             if (alarmasGuardadas.length === 0) {
-                return msg.reply("  *Asistente:* No hay alarmas programadas.");
+                return msg.reply(" *Asistente:* No hay alarmas programadas.");
             }
             let list = ` *ALARMAS CONFIGURADAS:*\n\n`;
             alarmasGuardadas.forEach((al, idx) => {
@@ -4838,7 +4838,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
         if (comando === 'alarmaborrar') {
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= alarmasGuardadas.length) {
-                return msg.reply("❌ *Asistente:* Índice de alarma no válido. Escriba *!bot alarmas* para ver la lista.");
+                return msg.reply(" *Asistente:* Índice de alarma no válido. Escriba *!bot alarmas* para ver la lista.");
             }
             const borrada = alarmasGuardadas.splice(index, 1)[0];
             guardarAlarmas();
@@ -4847,89 +4847,89 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
         // --- SECCIÓN: FINANZAS Y TARJETAS (PWA INTEGRATION) ---
         if (comando === 'vencimientos' || comando === 'alertas') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
-                return msg.reply("❌ *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
+                return msg.reply(" *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
             }
             if (!firebaseUid) {
-                return msg.reply("❌ *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
+                return msg.reply(" *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
-            await msg.reply("🔍 *Asistente:* Consultando estado de vencimientos y pagos de tarjetas...");
+            await msg.reply(" *Asistente:* Consultando estado de vencimientos y pagos de tarjetas...");
             await chequearVencimientosYNotificar(true);
             return;
         }
 
         if (comando === 'setuid') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             const uidInput = argumento.trim();
             if (!uidInput) {
-                return msg.reply("❌ *Asistente:* Proporcione su UID de Firebase. Ejemplo: *!bot setuid aBc123XyZ*");
+                return msg.reply(" *Asistente:* Proporcione su UID de Firebase. Ejemplo: *!bot setuid aBc123XyZ*");
             }
             firebaseUid = uidInput;
             guardarAdminJson();
-            return msg.reply(`✅ *Asistente:* UID de Firebase establecido con éxito: \`${firebaseUid}\``);
+            return msg.reply(` *Asistente:* UID de Firebase establecido con éxito: \`${firebaseUid}\``);
         }
 
         if (comando === 'settelegramtoken' || comando === 'settelegram' || comando === 'telegramtoken') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             const tokenInput = argumento.trim();
             if (!tokenInput) {
-                return msg.reply("❌ *Asistente:* Proporcione su Token de Bot de Telegram obtenido de @BotFather.\n\nEjemplo: `!bot settelegram 123456789:ABCdefGhIJKlmNoPQ`");
+                return msg.reply(" *Asistente:* Proporcione su Token de Bot de Telegram obtenido de @BotFather.\n\nEjemplo: `!bot settelegram 123456789:ABCdefGhIJKlmNoPQ`");
             }
             telegramBotToken = tokenInput;
             guardarAdminJson();
             telegramPollingActive = false;
             iniciarTelegramPolling();
-            return msg.reply(`✅ *Asistente:* Token del Bot de Telegram registrado exitosamente. Servicio de escucha activado.`);
+            return msg.reply(` *Asistente:* Token del Bot de Telegram registrado exitosamente. Servicio de escucha activado.`);
         }
 
         if (comando === 'telegram' || comando === 'estadotelegram') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             if (!telegramBotToken) {
-                return msg.reply("ℹ️ *Asistente:* El Bot de Telegram no está configurado actualmente.\nPara activarlo escribe: `!bot settelegram <TOKEN_DE_BOTFATHER>`");
+                return msg.reply("ℹ *Asistente:* El Bot de Telegram no está configurado actualmente.\nPara activarlo escribe: `!bot settelegram <TOKEN_DE_BOTFATHER>`");
             }
-            const estado = telegramPollingActive ? "✅ Activo y escuchando" : "⚠️ Detenido";
+            const estado = telegramPollingActive ? " Activo y escuchando" : " Detenido";
             const mask = telegramBotToken.substring(0, 8) + '...' + telegramBotToken.substring(telegramBotToken.length - 5);
-            return msg.reply(`📲 *ESTADO DE TELEGRAM (Finanzas King):*\n\n• Token: \`${mask}\`\n• Estado: *${estado}*\n\nPuedes enviar estados de cuenta (PDF o foto), comprobantes o tickets directamente a tu bot de Telegram y se sincronizarán automáticamente con Finanzas King.`);
+            return msg.reply(` *ESTADO DE TELEGRAM (Finanzas King):*\n\n• Token: \`${mask}\`\n• Estado: *${estado}*\n\nPuedes enviar estados de cuenta (PDF o foto), comprobantes o tickets directamente a tu bot de Telegram y se sincronizarán automáticamente con Finanzas King.`);
         }
 
         if (comando === 'setopenai' || comando === 'setopenaikey' || comando === 'openaikey') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             const keyInput = argumento.trim();
             if (!keyInput) {
-                return msg.reply("❌ *Asistente:* Proporcione su clave de OpenAI (comienza con `sk-...`).");
+                return msg.reply(" *Asistente:* Proporcione su clave de OpenAI (comienza con `sk-...`).");
             }
             openaiApiKey = keyInput;
             guardarAdminJson();
-            return msg.reply(`✅ *Asistente:* Clave de OpenAI registrada exitosamente.`);
+            return msg.reply(` *Asistente:* Clave de OpenAI registrada exitosamente.`);
         }
 
         if (comando === 'openai' || comando === 'estadoopenai') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             if (!openaiApiKey) {
-                return msg.reply("ℹ️ *Asistente:* OpenAI no está configurado actualmente.\nPara activarlo escribe: `!bot setopenai <TU_API_KEY>`");
+                return msg.reply("ℹ *Asistente:* OpenAI no está configurado actualmente.\nPara activarlo escribe: `!bot setopenai <TU_API_KEY>`");
             }
             const mask = openaiApiKey.substring(0, 7) + '...' + openaiApiKey.substring(openaiApiKey.length - 4);
-            return msg.reply(`🤖 *ESTADO DE OPENAI (ChatGPT):*\n\n• Clave: \`${mask}\`\n• Estado: *Configurada*\n\nLas imágenes con \`!bot imagina\` intentarán usar los modelos oficiales de OpenAI si la clave tiene saldo prepagado.`);
+            return msg.reply(` *ESTADO DE OPENAI (ChatGPT):*\n\n• Clave: \`${mask}\`\n• Estado: *Configurada*\n\nLas imágenes con \`!bot imagina\` intentarán usar los modelos oficiales de OpenAI si la clave tiene saldo prepagado.`);
         }
 
         if (comando === 'tarjetas' || comando === 'finanzas') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
-                return msg.reply("❌ *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
+                return msg.reply(" *Asistente:* No se ha detectado el archivo `serviceAccount.json`. Consiga sus credenciales de Firebase para conectar su PWA de finanzas.");
             }
             if (!firebaseUid) {
-                return msg.reply("❌ *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
+                return msg.reply(" *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
             try {
                 const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
                 const snapshot = await cardsRef.get();
                 if (snapshot.empty) {
-                    return msg.reply("💳 *Asistente:* No tiene tarjetas registradas en su base de datos de finanzas.");
+                    return msg.reply(" *Asistente:* No tiene tarjetas registradas en su base de datos de finanzas.");
                 }
 
                 const cardQuery = argumento ? argumento.trim() : null;
@@ -4952,26 +4952,26 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                         const avail = limit > 0 ? (limit - debt) : 0;
                         const pct = limit > 0 ? ((debt / limit) * 100).toFixed(0) : 0;
 
-                        let report = `💳 *DETALLE DE TARJETA: ${matchingCard.name}*\n\n`;
-                        if (matchingCard.last4) report += `🔢 *Terminación:* •••• ${matchingCard.last4}\n`;
-                        report += `💰 *Deuda Actual:* $${debt.toFixed(2)}\n`;
-                        if (payGoal > 0) report += `🎯 *Pago p/no intereses:* $${payGoal.toFixed(2)}\n`;
+                        let report = ` *DETALLE DE TARJETA: ${matchingCard.name}*\n\n`;
+                        if (matchingCard.last4) report += ` *Terminación:* •••• ${matchingCard.last4}\n`;
+                        report += ` *Deuda Actual:* $${debt.toFixed(2)}\n`;
+                        if (payGoal > 0) report += ` *Pago p/no intereses:* $${payGoal.toFixed(2)}\n`;
                         if (limit > 0) {
-                            report += `📊 *Límite:* $${limit.toFixed(2)} | *Disponible:* $${avail.toFixed(2)} (${100 - pct}% libre)\n`;
+                            report += ` *Límite:* $${limit.toFixed(2)} | *Disponible:* $${avail.toFixed(2)} (${100 - pct}% libre)\n`;
                         }
-                        if (matchingCard.cutDay) report += `✂️ *Día de corte:* ${matchingCard.cutDay}\n`;
-                        if (matchingCard.payDay) report += `📅 *Día de pago:* ${matchingCard.payDay}\n`;
+                        if (matchingCard.cutDay) report += ` *Día de corte:* ${matchingCard.cutDay}\n`;
+                        if (matchingCard.payDay) report += ` *Día de pago:* ${matchingCard.payDay}\n`;
 
                         return msg.reply(report);
                     } else {
-                        return msg.reply(`⚠️ *Asistente:* No se encontró la tarjeta "${cardQuery}" en Finanzas King.`);
+                        return msg.reply(` *Asistente:* No se encontró la tarjeta "${cardQuery}" en Finanzas King.`);
                     }
                 }
 
                 // Resumen general
                 let tDebt = 0;
                 let tLimit = 0;
-                let cardsReport = `💳 *ESTADO DE TARJETAS (Finanzas King)* 💳\n\n`;
+                let cardsReport = ` *ESTADO DE TARJETAS (Finanzas King)* \n\n`;
 
                 snapshot.forEach(doc => {
                     const c = doc.data();
@@ -4985,38 +4985,38 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                     const pagoStr = c.payDay ? `Pago: ${c.payDay}` : '';
                     const fechas = [corteStr, pagoStr].filter(Boolean).join(' | ');
 
-                    cardsReport += `🔹 *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
-                    cardsReport += `   💰 Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
-                    if (limit > 0) cardsReport += `   💵 Disp: $${avail.toFixed(2)}\n`;
-                    if (fechas) cardsReport += `   📅 ${fechas}\n`;
+                    cardsReport += ` *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
+                    cardsReport += `    Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
+                    if (limit > 0) cardsReport += `    Disp: $${avail.toFixed(2)}\n`;
+                    if (fechas) cardsReport += `    ${fechas}\n`;
                     cardsReport += `\n`;
                 });
 
                 const ratio = tLimit > 0 ? (tDebt / tLimit) * 100 : 0;
-                cardsReport += `📊 *Resumen Global:*\n`;
-                cardsReport += `🔴 *Deuda Total:* $${tDebt.toFixed(2)}\n`;
-                cardsReport += `🟢 *Disponible Total:* $${(tLimit - tDebt).toFixed(2)}\n`;
-                cardsReport += `📈 *Endeudamiento:* ${ratio.toFixed(1)}%\n\n`;
+                cardsReport += ` *Resumen Global:*\n`;
+                cardsReport += ` *Deuda Total:* $${tDebt.toFixed(2)}\n`;
+                cardsReport += ` *Disponible Total:* $${(tLimit - tDebt).toFixed(2)}\n`;
+                cardsReport += ` *Endeudamiento:* ${ratio.toFixed(1)}%\n\n`;
 
-                if (ratio < 30) cardsReport += `✅ *Estado óptimo.*`;
-                else if (ratio < 50) cardsReport += `⚠️ *Estado moderado.*`;
-                else cardsReport += `🚨 *Alerta: Nivel de deuda elevado.*`;
+                if (ratio < 30) cardsReport += ` *Estado óptimo.*`;
+                else if (ratio < 50) cardsReport += ` *Estado moderado.*`;
+                else cardsReport += ` *Alerta: Nivel de deuda elevado.*`;
 
                 return msg.reply(cardsReport);
             } catch (e) {
                 console.error("Error en tarjetas firebase:", e);
-                return msg.reply(`❌ *Asistente:* Error al acceder a Firestore: ${e.message}`);
+                return msg.reply(` *Asistente:* Error al acceder a Firestore: ${e.message}`);
             }
         }
 
         if (comando === 'gasto' || comando === 'abono') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             if (!dbFirebase) inicializarFirebase();
             if (!dbFirebase) {
-                return msg.reply("❌ *Asistente:* No se ha detectado el archivo `serviceAccount.json`.");
+                return msg.reply(" *Asistente:* No se ha detectado el archivo `serviceAccount.json`.");
             }
             if (!firebaseUid) {
-                return msg.reply("❌ *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
+                return msg.reply(" *Asistente:* Primero configure su UID de Firebase con el comando *!bot setuid <UID>*");
             }
 
             const parts = argumento.split('|').map(p => p.trim());
@@ -5026,7 +5026,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
 
             const firstSpace = textGasto.indexOf(' ');
             if (firstSpace === -1 || !cardQuery) {
-                return msg.reply(`❌ *Asistente:* Formato correcto:\n*!bot ${comando} <monto> <concepto> | <tarjeta> [| <categoría>]*\n\nEjemplo: *!bot gasto 15 Cena | Bac Gold | Comida*`);
+                return msg.reply(` *Asistente:* Formato correcto:\n*!bot ${comando} <monto> <concepto> | <tarjeta> [| <categoría>]*\n\nEjemplo: *!bot gasto 15 Cena | Bac Gold | Comida*`);
             }
 
             const amtStr = textGasto.substring(0, firstSpace);
@@ -5034,7 +5034,7 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const amt = parseFloat(amtStr);
 
             if (isNaN(amt) || amt <= 0 || !concept) {
-                return msg.reply("❌ *Asistente:* El monto y el concepto son obligatorios.");
+                return msg.reply(" *Asistente:* El monto y el concepto son obligatorios.");
             }
 
             try {
@@ -5052,14 +5052,14 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 });
 
                 if (!matchingCard) {
-                    return msg.reply(`❌ *Asistente:* No se encontró ninguna tarjeta registrada en Finanzas King que coincida con "${cardQuery}".`);
+                    return msg.reply(` *Asistente:* No se encontró ninguna tarjeta registrada en Finanzas King que coincida con "${cardQuery}".`);
                 }
 
                 const type = (comando === 'gasto') ? 'expense' : 'payment';
-                const defaultCats = ['🛒 Supermercado', '🍔 Comida', '⛽ Transporte', '🐜 Hormiga', '💡 Servicios', '📦 Compras', '💊 Salud', '🎓 Educación'];
-                const defaultPayCats = ['💵 Abono Capital', '💰 Sueldo/Ingreso', '🔄 Transferencia'];
+                const defaultCats = [' Supermercado', ' Comida', ' Transporte', ' Hormiga', ' Servicios', ' Compras', ' Salud', ' Educación'];
+                const defaultPayCats = [' Abono Capital', ' Sueldo/Ingreso', ' Transferencia'];
                 
-                let category = (type === 'payment') ? '💵 Abono Capital' : '🐜 Hormiga';
+                let category = (type === 'payment') ? ' Abono Capital' : ' Hormiga';
 
                 if (catQuery) {
                     const cleanCat = catQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -5097,17 +5097,17 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 await batch.commit();
 
                 const titulo = type === 'expense' ? 'Gasto Registrado' : 'Abono Registrado';
-                let respMsg = `💳 *${titulo}*\n\n`;
+                let respMsg = ` *${titulo}*\n\n`;
                 respMsg += `• *Monto:* $${amt.toFixed(2)}\n`;
                 respMsg += `• *Tarjeta:* ${matchingCard.name}\n`;
                 respMsg += `• *Concepto:* ${concept}\n`;
                 respMsg += `• *Categoría:* ${category}\n\n`;
-                respMsg += `✅ _Guardado exitosamente_`;
+                respMsg += ` _Guardado exitosamente_`;
                 return msg.reply(respMsg);
 
             } catch (e) {
                 console.error("Error al registrar movimiento:", e);
-                return msg.reply(`❌ *Asistente:* Error en Firebase: ${e.message}`);
+                return msg.reply(` *Asistente:* Error en Firebase: ${e.message}`);
             }
         }
 
@@ -5117,18 +5117,18 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const subComando = parts[0]?.toLowerCase();
             const desc = parts.slice(1).join(' ').trim();
             if (subComando === 'agregar' || subComando === 'crear' || subComando === 'add') {
-                if (!desc) return msg.reply("❌ *Asistente:* Especifique la descripción de la tarea.");
+                if (!desc) return msg.reply(" *Asistente:* Especifique la descripción de la tarea.");
                 tareasGuardadas.push({ texto: desc, completada: false, fecha: new Date().toLocaleDateString() });
                 guardarTareas();
                 return msg.reply(`S& *Asistente:* Tarea agregada: _"${desc}"_.`);
             }
-            return msg.reply("❌ *Asistente:* Formato correcto: *!bot tarea agregar <descripción>*. O use *!bot tareas*.");
+            return msg.reply(" *Asistente:* Formato correcto: *!bot tarea agregar <descripción>*. O use *!bot tareas*.");
         }
 
         
         if (comando === 'programar') {
             if (!argumento) {
-                return msg.reply("❌ *Uso del comando:* `!bot programar <HH:MM> | <instrucción o comando> | [diaria/unavez]`\n\n*Ejemplos prácticos:*\n• `!bot programar 05:00 | Dame una frase motivacional poderosa para iniciar el día`\n• `!bot programar 08:00 | Busca las noticias de futbol más importantes de hoy`\n• `!bot programar 08:30 | !bot noticias | diaria`\n• `!bot programar 21:00 | Recordar planificar el día de mañana | diaria`");
+                return msg.reply(" *Uso del comando:* `!bot programar <HH:MM> | <instrucción o comando> | [diaria/unavez]`\n\n*Ejemplos prácticos:*\n• `!bot programar 05:00 | Dame una frase motivacional poderosa para iniciar el día`\n• `!bot programar 08:00 | Busca las noticias de futbol más importantes de hoy`\n• `!bot programar 08:30 | !bot noticias | diaria`\n• `!bot programar 21:00 | Recordar planificar el día de mañana | diaria`");
             }
             const parts = argumento.split('|').map(p => p.trim());
             const horaStr = parts[0];
@@ -5137,12 +5137,12 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
             const recurrente = (tipoStr !== 'unavez' && tipoStr !== 'una vez' && tipoStr !== 'false');
 
             if (!horaStr || !accionStr) {
-                return msg.reply("❌ *Formato incompleto.*\nDebes indicar la hora y la instrucción separadas por `|`:\n`!bot programar 05:00 | Dame una frase motivacional`");
+                return msg.reply(" *Formato incompleto.*\nDebes indicar la hora y la instrucción separadas por `|`:\n`!bot programar 05:00 | Dame una frase motivacional`");
             }
 
             const cronExpr = horaToCron(horaStr);
             if (!cronExpr) {
-                return msg.reply(`❌ *Hora no válida ("${horaStr}").*\nUsa formato de 24 horas (ej. 05:00, 08:00, 14:30) o 12 horas (ej. 5:00 AM, 8:00 PM).`);
+                return msg.reply(` *Hora no válida ("${horaStr}").*\nUsa formato de 24 horas (ej. 05:00, 08:00, 14:30) o 12 horas (ej. 5:00 AM, 8:00 PM).`);
             }
 
             // Evitar duplicados idénticos o conflicto de horario en el mismo chat
@@ -5168,10 +5168,10 @@ _💡 Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`
                 if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
 
                 const recLabel = recurrente ? 'Todos los días' : 'Una sola vez';
-                return msg.reply(`🔄 *¡Tarea Programada Actualizada con Éxito!*
-⏰ *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
-👉 *Nueva Instrucción:* "${accionStr}"
-📍 *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
+                return msg.reply(` *¡Tarea Programada Actualizada con Éxito!*
+ *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
+ *Nueva Instrucción:* "${accionStr}"
+ *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
 _Se actualizó la tarea existente a las ${horaStr} para evitar duplicados._`);
             }
 
@@ -5191,23 +5191,23 @@ _Se actualizó la tarea existente a las ${horaStr} para evitar duplicados._`);
             if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
 
             const recLabel = recurrente ? 'Todos los días' : 'Una sola vez';
-            return msg.reply(`📅 *¡Tarea Programada con Éxito!*
-⏰ *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
-👉 *Instrucción:* "${accionStr}"
-📍 *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
+            return msg.reply(` *¡Tarea Programada con Éxito!*
+ *Hora:* ${horaStr} _(${recLabel} - Zona Horaria El Salvador)_
+ *Instrucción:* "${accionStr}"
+ *Destino:* ${destNormalizado.endsWith('@g.us') ? 'Este grupo' : 'Chat propio'}
 _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         }
 
         if (comando === 'programados') {
             if (tareasProgramadas.length === 0) {
-                return msg.reply("❌ *Asistente:* No tienes tareas programadas activas.\n\n_Puedes programar una escribiendo:_\n`!bot programar 05:00 | Frase motivacional`");
+                return msg.reply(" *Asistente:* No tienes tareas programadas activas.\n\n_Puedes programar una escribiendo:_\n`!bot programar 05:00 | Frase motivacional`");
             }
-            let list = `📅 *TAREAS PROGRAMADAS ACTIVAS:*\n\n`;
+            let list = ` *TAREAS PROGRAMADAS ACTIVAS:*\n\n`;
             tareasProgramadas.forEach((t, i) => {
-                const rec = t.recurrente !== false ? '🔁 Diaria' : '1️⃣ Una sola vez';
+                const rec = t.recurrente !== false ? ' Diaria' : '1⃣ Una sola vez';
                 const destEsAdmin = !t.chatId || sonMismoChatDestino(t.chatId, adminChatId);
-                const destLabel = destEsAdmin ? '👤 Privado (Tú)' : (t.chatId?.endsWith('@g.us') ? '👥 Grupo' : '💬 Chat');
-                list += `*${i + 1}*. [ ⏰ ${t.hora || t.cron} ] _(${rec} | ${destLabel})_\n   👉 ${t.descripcion || t.accion}\n\n`;
+                const destLabel = destEsAdmin ? ' Privado (Tú)' : (t.chatId?.endsWith('@g.us') ? ' Grupo' : ' Chat');
+                list += `*${i + 1}*. [  ${t.hora || t.cron} ] _(${rec} | ${destLabel})_\n    ${t.descripcion || t.accion}\n\n`;
             });
             list += `_Para borrar una tarea usa: *!bot desprogramar <número>* o *!bot desprogramar todas*_`;
             return msg.reply(list);
@@ -5215,14 +5215,14 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         if (comando === 'desprogramar') {
             if (!argumento) {
-                return msg.reply("❌ *Uso:* `!bot desprogramar <número>` o `!bot desprogramar todas`.\n\n_Para ver la lista escribe: *!bot programados*_");
+                return msg.reply(" *Uso:* `!bot desprogramar <número>` o `!bot desprogramar todas`.\n\n_Para ver la lista escribe: *!bot programados*_");
             }
             if (argumento.toLowerCase() === 'todas' || argumento.toLowerCase() === 'todo') {
                 const cant = tareasProgramadas.length;
                 tareasProgramadas = [];
                 guardarTareasProgramadas();
                 if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-                return msg.reply(`🗑️ *Asistente:* Se han cancelado y eliminado todas las tareas programadas (${cant} tareas eliminadas).`);
+                return msg.reply(` *Asistente:* Se han cancelado y eliminado todas las tareas programadas (${cant} tareas eliminadas).`);
             }
             const rawIdx = parseInt(argumento, 10);
             let index = rawIdx - 1; // 1-indexed
@@ -5230,18 +5230,18 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 if (!isNaN(rawIdx) && rawIdx >= 0 && rawIdx < tareasProgramadas.length) {
                     index = rawIdx; // 0-indexed fallback
                 } else {
-                    return msg.reply("❌ *Asistente:* Número de tarea no válido. Escribe `!bot programados` para ver la lista.");
+                    return msg.reply(" *Asistente:* Número de tarea no válido. Escribe `!bot programados` para ver la lista.");
                 }
             }
             const eliminada = tareasProgramadas.splice(index, 1)[0];
             guardarTareasProgramadas();
             if (typeof global.inicializarTareas === 'function') global.inicializarTareas();
-            return msg.reply(`🗑️ *Asistente:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
+            return msg.reply(` *Asistente:* Tarea desprogramada con éxito: "${eliminada.descripcion || eliminada.accion}"`);
         }
 
         if (comando === 'tareas') {
             if (tareasGuardadas.length === 0) {
-                return msg.reply("  *Asistente:* No hay tareas pendientes.");
+                return msg.reply(" *Asistente:* No hay tareas pendientes.");
             }
             let list = `x 9 *LISTA DE TAREAS PENDIENTES:*\n\n`;
             tareasGuardadas.forEach((t, idx) => {
@@ -5256,7 +5256,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         if (comando === 'tareacompletar' || comando === 'completartarea') {
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= tareasGuardadas.length) {
-                return msg.reply("❌ *Asistente:* Índice de tarea no válido.");
+                return msg.reply(" *Asistente:* Índice de tarea no válido.");
             }
             const completada = tareasGuardadas.splice(index, 1)[0];
             guardarTareas();
@@ -5266,16 +5266,16 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         if (comando === 'tareaborrar' || comando === 'borrartarea') {
             const index = parseInt(argumento) - 1;
             if (isNaN(index) || index < 0 || index >= tareasGuardadas.length) {
-                return msg.reply("❌ *Asistente:* Índice de tarea no válido.");
+                return msg.reply(" *Asistente:* Índice de tarea no válido.");
             }
             const borrada = tareasGuardadas.splice(index, 1)[0];
             guardarTareas();
-            return msg.reply(`x   *Asistente:* Tarea eliminada de la lista: _"${borrada.texto}"_.`);
+            return msg.reply(`*Asistente:* Tarea eliminada de la lista: _"${borrada.texto}"_.`);
         }
 
         // 3. Ficha de Películas y Series (IMDb/TMDB fallback)
         if (comando === 'info' || comando === 'pelicula' || comando === 'serie') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme el nombre de la película o serie que desea consultar.");
+            if (!argumento) return msg.reply(" *Asistente:* Indíqueme el nombre de la película o serie que desea consultar.");
             await msg.reply(` *Asistente:* Consultando información sobre "${argumento}"...`);
             try {
                 const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(argumento + ' pelicula serie tmdb imdb sinopsis reparto')}`;
@@ -5306,14 +5306,14 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error(e);
-                return msg.reply("❌ *Asistente:* Ocurrió un error al buscar la información cinematográfica.");
+                return msg.reply(" *Asistente:* Ocurrió un error al buscar la información cinematográfica.");
             }
         }
 
         // 4. Generador de Memes
         if (comando === 'meme') {
             if (!argumento) {
-                return msg.reply("❌ *Asistente:* Formato correcto:\n*!bot meme plantilla | texto arriba | texto abajo*\nPlantillas populares: drake, doge, fine, two-buttons, disastergirl, success, sad-pablo, trump.");
+                return msg.reply(" *Asistente:* Formato correcto:\n*!bot meme plantilla | texto arriba | texto abajo*\nPlantillas populares: drake, doge, fine, two-buttons, disastergirl, success, sad-pablo, trump.");
             }
             if (argumento.includes('|')) {
                 const parts = argumento.split('|').map(p => p.trim());
@@ -5332,7 +5332,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                         return msg.reply(media);
                     }
                 } catch(e) {}
-                return msg.reply("❌ *Asistente:* Plantilla no soportada o error en el servidor de memes.");
+                return msg.reply(" *Asistente:* Plantilla no soportada o error en el servidor de memes.");
             } else {
                 await msg.reply("x *Asistente:* Analizando tu idea para diseñar el meme ideal...");
                 try {
@@ -5355,7 +5355,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 } catch (e) {
                     console.error("Error en meme inteligente:", e);
                 }
-                return msg.reply("❌ *Asistente:* No he podido procesar esa idea de meme. Intenta con el formato estructurado.");
+                return msg.reply(" *Asistente:* No he podido procesar esa idea de meme. Intenta con el formato estructurado.");
             }
         }
 
@@ -5363,7 +5363,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         if (comando === 'transcribir' || comando === 'vozatexto') {
             let mensajeConAudio = mensajeAProcesar;
             if (!mensajeConAudio.hasMedia || (mensajeConAudio.type !== 'audio' && mensajeConAudio.type !== 'ptt')) {
-                return msg.reply("❌ *Asistente:* Por favor, responda a una nota de voz o mensaje de audio con este comando.");
+                return msg.reply(" *Asistente:* Por favor, responda a una nota de voz o mensaje de audio con este comando.");
             }
             await msg.reply("*Asistente:* Transcribiendo el archivo de audio...");
             try {
@@ -5383,16 +5383,16 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error("Error en comando transcribir:", e);
             }
-            return msg.reply("❌ *Asistente:* No pude transcribir este audio.");
+            return msg.reply(" *Asistente:* No pude transcribir este audio.");
         }
 
         // 6. Acortador de URLs
         if (comando === 'acortar' || comando === 'short') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Proporcione la URL que desea acortar.");
+            if (!argumento) return msg.reply(" *Asistente:* Proporcione la URL que desea acortar.");
             try {
                 new URL(argumento);
             } catch (e) {
-                return msg.reply("❌ *Asistente:* El enlace tiene un formato incorrecto.");
+                return msg.reply(" *Asistente:* El enlace tiene un formato incorrecto.");
             }
             await msg.reply("x *Asistente:* Generando enlace corto...");
             try {
@@ -5408,14 +5408,14 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error("Error acortando URL:", e);
             }
-            return msg.reply("❌ *Asistente:* Servidor de acortamiento fuera de línea.");
+            return msg.reply(" *Asistente:* Servidor de acortamiento fuera de línea.");
         }
 
         // 7. Conversor de divisas
         if (comando === 'divisas' || comando === 'convertir' || comando === 'convert') {
             const match = argumento.match(/^(\d+(?:\.\d+)?)\s*([a-zA-Z]{3})\s*(?:a|to)\s*([a-zA-Z]{3})$/i);
             if (!match) {
-                return msg.reply("❌ *Asistente:* Formato correcto: *!bot divisas <cantidad> <origen> a <destino>*. Ejemplo: *!bot divisas 100 usd a eur*");
+                return msg.reply(" *Asistente:* Formato correcto: *!bot divisas <cantidad> <origen> a <destino>*. Ejemplo: *!bot divisas 100 usd a eur*");
             }
             const cantidad = parseFloat(match[1]);
             const origen = match[2].toUpperCase();
@@ -5435,12 +5435,12 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error(e);
             }
-            return msg.reply(`❌ *Asistente:* Moneda no soportada o error al consultar el tipo de cambio.`);
+            return msg.reply(` *Asistente:* Moneda no soportada o error al consultar el tipo de cambio.`);
         }
 
         // 8. Búsqueda en Wikipedia
         if (comando === 'wiki' || comando === 'wikipedia') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme el término que desea buscar en Wikipedia.");
+            if (!argumento) return msg.reply(" *Asistente:* Indíqueme el término que desea buscar en Wikipedia.");
             await msg.reply(`x *Asistente:* Buscando "${argumento}" en Wikipedia...`);
             try {
                 const url = `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(argumento)}`;
@@ -5462,16 +5462,16 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error(e);
             }
-            return msg.reply("❌ *Asistente:* No se encontró ningún artículo en Wikipedia para esa consulta.");
+            return msg.reply(" *Asistente:* No se encontró ningún artículo en Wikipedia para esa consulta.");
         }
 
         // 9. Noticias RSS (BBC)
         if (comando === 'noticias' || comando === 'news') {
-            await msg.reply("x  *Asistente:* Extrayendo los titulares y noticias internacionales más recientes...");
+            await msg.reply("x *Asistente:* Extrayendo los titulares y noticias internacionales más recientes...");
             try {
                 const feed = await rssParser.parseURL('https://www.bbc.com/mundo/index.xml');
                 if (feed.items && feed.items.length > 0) {
-                    let newsReport = `x  *PRINCIPALES NOTICIAS DEL DÍA (BBC Mundo):*\n\n`;
+                    let newsReport = `*PRINCIPALES NOTICIAS DEL DÍA (BBC Mundo):*\n\n`;
                     const items = feed.items.slice(0, 5);
                     items.forEach((item, idx) => {
                         newsReport += `${idx + 1}. *${item.title}*\n   _${item.contentSnippet || item.content || ''}_\n   x   ${item.link}\n\n`;
@@ -5481,12 +5481,12 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } catch (e) {
                 console.error("Error en noticias RSS:", e);
             }
-            return msg.reply("❌ *Asistente:* No se pudo recuperar el feed de noticias.");
+            return msg.reply(" *Asistente:* No se pudo recuperar el feed de noticias.");
         }
 
         // 10. Resultados Deportivos (Gemini + search)
         if (comando === 'deportes' || comando === 'marcador') {
-            if (!argumento) return msg.reply("❌ *Asistente:* Especifique el deporte, equipo o competición. Ejemplo: *!bot deportes resultados Liga Española de Futbol*");
+            if (!argumento) return msg.reply(" *Asistente:* Especifique el deporte, equipo o competición. Ejemplo: *!bot deportes resultados Liga Española de Futbol*");
             await msg.reply(`a *Asistente:* Buscando últimos resultados deportivos sobre "${argumento}"...`);
             try {
                 const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(argumento + ' resultados deportivos marcador clasificacion')}`;
@@ -5518,19 +5518,19 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 return msg.reply(respuestaLimpia);
             } catch (e) {
                 console.error(e);
-                return msg.reply("❌ *Asistente:* Error en los servidores deportivos.");
+                return msg.reply(" *Asistente:* Error en los servidores deportivos.");
             }
         }
 
         // 11. Leer SMS del teléfono (Termuonly)
         if (comando === 'sms') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             if (!isTermux) {
                 return msg.reply("x *Ejecutándose en Windows:* La lectura de SMS requiere que el bot esté activo en TermuAndroid.");
             }
             await msg.reply("x *Asistente:* Consultando bandeja de entrada de SMS...");
             exec('termux-sms-list -l 5', async (err, stdout) => {
-                if (err) return msg.reply("❌ Error al leer la bandeja de SMS. Asegúrese de otorgar permisos.");
+                if (err) return msg.reply(" Error al leer la bandeja de SMS. Asegúrese de otorgar permisos.");
                 try {
                     const dataSMS = JSON.parse(stdout);
                     if (dataSMS.length === 0) {
@@ -5542,7 +5542,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                     });
                     await msg.reply(report);
                 } catch (e) {
-                    await msg.reply("❌ Error decodificando la lista de SMS.");
+                    await msg.reply(" Error decodificando la lista de SMS.");
                 }
             });
             return;
@@ -5550,14 +5550,14 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         // 12. Terminal Remota (Exec command)
         if (comando === 'cmd' || comando === 'run') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
-            if (!argumento) return msg.reply("❌ *Asistente:* Indíqueme el comando de consola a ejecutar, Señor.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (!argumento) return msg.reply(" *Asistente:* Indíqueme el comando de consola a ejecutar, Señor.");
             await msg.reply("x *Asistente:* Ejecutando comando en consola remota...");
             exec(argumento, { timeout: 10000 }, async (err, stdout, stderr) => {
                 let output = "";
                 if (stdout) output += "*STDOUT:*\n```\n" + stdout.substring(0, 1500) + "\n```\n";
                 if (stderr) output += "*STDERR:*\n```\n" + stderr.substring(0, 1000) + "\n```\n";
-                if (err) output += "❌ *ERROR DE EJECUCIN:* " + err.message + "\n";
+                if (err) output += " *ERROR DE EJECUCIN:* " + err.message + "\n";
                 if (!output) output = "S& *Comando ejecutado con éxito.* (Sin salida de consola)";
                 await msg.reply(output);
             });
@@ -5570,17 +5570,17 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             const pregunta = parts[0];
             const opciones = parts.slice(1);
             if (!pregunta || opciones.length < 2) {
-                return msg.reply("❌ *Asistente:* Formato correcto: *!bot encuesta ¿Pregunta? | Opción 1 | Opción 2 | ...* (Mínimo 2 opciones)");
+                return msg.reply(" *Asistente:* Formato correcto: *!bot encuesta ¿Pregunta? | Opción 1 | Opción 2 | ...* (Mínimo 2 opciones)");
             }
             if (opciones.length > 12) {
-                return msg.reply("❌ *Asistente:* WhatsApp tiene un límite de 12 opciones por encuesta.");
+                return msg.reply(" *Asistente:* WhatsApp tiene un límite de 12 opciones por encuesta.");
             }
             try {
                 const pollObj = new Poll(pregunta, opciones, { allowMultipleAnswers: false });
                 await client.sendMessage(chatId, pollObj);
             } catch (e) {
                 console.error("Error al enviar encuesta nativa:", e);
-                return msg.reply("❌ *Asistente:* No se pudo enviar la encuesta nativa.");
+                return msg.reply(" *Asistente:* No se pudo enviar la encuesta nativa.");
             }
             return;
         }
@@ -5602,7 +5602,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                     const triviaData = JSON.parse(rTrivia.replace(/```json|```/g, '').trim());
                     juegosEstado.set(chatId, { tipo: 'trivia', respuesta: triviaData.correcta.toUpperCase().trim(), chatId });
                     return msg.reply(" *TRIVIA GRUPAL ACTIVA* \n\n*Pregunta:* " + triviaData.pregunta + "\n\nx! " + triviaData.opcionA + "\nx! " + triviaData.opcionB + "\nx! " + triviaData.opcionC + "\nx! " + triviaData.opcionD + "\n\n_¡Responda solo con la letra (A, B, C, D)!_");
-                } catch (e) { console.error("Error trivia:", e); return msg.reply("❌ *Asistente:* No pude generar la trivia en este momento."); }
+                } catch (e) { console.error("Error trivia:", e); return msg.reply(" *Asistente:* No pude generar la trivia en este momento."); }
             }
             if (subJuego === 'adivinar' || subJuego === 'numero') {
                 if (juegosEstado.has(chatId)) return msg.reply("a *Asistente:* Ya hay un juego activo en este chat.");
@@ -5615,7 +5615,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         // 15. OCR (Imagen a texto)
         if (comando === 'ocr' || comando === 'leertexto') {
-            if (!mensajeAProcesar.hasMedia) return msg.reply("❌ *Asistente:* Por favor, responda a una imagen con este comando.");
+            if (!mensajeAProcesar.hasMedia) return msg.reply(" *Asistente:* Por favor, responda a una imagen con este comando.");
             await msg.reply("x *Asistente:* Extrayendo y analizando texto de la imagen con IA...");
             try {
                 const mediaOCR = await mensajeAProcesar.downloadMedia();
@@ -5625,13 +5625,13 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                     return msg.reply(limpiarRespuestaGemini(rOCR));
                 }
             } catch (e) { console.error("Error en OCR:", e); }
-            return msg.reply("❌ *Asistente:* No se pudo leer el texto de la imagen.");
+            return msg.reply(" *Asistente:* No se pudo leer el texto de la imagen.");
         }
 
         // --- GESTI N DE CLAVES API DINÁMICAS ---
         if (comando === 'agregarclave' || comando === 'addkey') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
-            if (!argumento || (!argumento.startsWith('AIzaSy') && !argumento.startsWith('AQ.'))) return msg.reply("❌ *Asistente:* Proporcione una clave API de Gemini válida.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
+            if (!argumento || (!argumento.startsWith('AIzaSy') && !argumento.startsWith('AQ.'))) return msg.reply(" *Asistente:* Proporcione una clave API de Gemini válida.");
             sincronizarLlavesDesdeArchivo();
             const existingIdx = API_KEYS.indexOf(argumento);
             if (existingIdx !== -1) {
@@ -5639,7 +5639,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 currentKeyIndex = existingIdx;
                 currentModelIndex = 0;
                 guardarKeysYCuotas();
-                return msg.reply(`✅ *Asistente:* La clave API ya existía y ha sido *reactivada* (Clave #${existingIdx + 1}).`);
+                return msg.reply(` *Asistente:* La clave API ya existía y ha sido *reactivada* (Clave #${existingIdx + 1}).`);
             }
             API_KEYS.push(argumento);
             const newIdxK = API_KEYS.length - 1;
@@ -5647,31 +5647,31 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             currentKeyIndex = newIdxK;
             currentModelIndex = 0;
             guardarKeysYCuotas();
-            return msg.reply("✅ *Asistente:* Clave API agregada y guardada automáticamente en tu bloc de notas. Total: " + API_KEYS.length);
+            return msg.reply(" *Asistente:* Clave API agregada y guardada automáticamente en tu bloc de notas. Total: " + API_KEYS.length);
         }
         if (comando === 'claves' || comando === 'listkeys') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             sincronizarLlavesDesdeArchivo();
-            let listK = `🔑 *ESTADO DE CLAVES API GEMINI:*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
+            let listK = ` *ESTADO DE CLAVES API GEMINI:*\nModelo activo: *${MODELS[currentModelIndex]}*\n\n`;
             API_KEYS.forEach((key, idx) => {
                 const mask = key.substring(0, 10) + '...' + key.substring(key.length - 4);
-                const st = keyStatus[idx]?.status === 'Activa' ? '✅ Activa' : '❌ Agotada';
+                const st = keyStatus[idx]?.status === 'Activa' ? ' Activa' : ' Agotada';
                 const cnt = keyStatus[idx]?.requestsToday || 0;
-                const am = idx === currentKeyIndex ? ' 📍 (En uso)' : '';
+                const am = idx === currentKeyIndex ? '  (En uso)' : '';
                 listK += (idx + 1) + ". `" + mask + "`\n   Estado: " + st + "\n   Consultas hoy: " + cnt + am + "\n\n";
             });
             listK += "_Para agregar: *!bot agregarclave <clave>*_\n_Para restaurar: *!bot restaurarclaves*_";
             return msg.reply(listK);
         }
         if (comando === 'restaurarclaves' || comando === 'resetkeys') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             API_KEYS.forEach((key, idx) => { if (keyStatus[idx]) { keyStatus[idx].status = 'Activa'; keyStatus[idx].requestsToday = 0; } });
             currentKeyIndex =  0; currentModelIndex =  0;
             guardarKeysYCuotas();
-            return msg.reply("✅ *Asistente:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
+            return msg.reply(" *Asistente:* Todas las claves API restablecidas a *Activa* y contadores reiniciados.");
         }
         if (comando === 'borrarclaves' || comando === 'clearkeys') {
-            if (isGroup || chatId !== adminChatId) return msg.reply("❌ Comando restringido solo al Administrador.");
+            if (isGroup || chatId !== adminChatId) return msg.reply(" Comando restringido solo al Administrador.");
             API_KEYS.splice(0, API_KEYS.length);
             if (Array.isArray(keyStatus)) {
                 keyStatus.splice(0, keyStatus.length);
@@ -5681,7 +5681,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             currentKeyIndex = 0;
             currentModelIndex = 0;
             guardarKeysYCuotas();
-            return msg.reply("🗑️ *Asistente:* Todas las claves API han sido eliminadas permanentemente. El sistema ahora no tiene llaves. Usa `!bot addkey <llave>` para agregar nuevas.");
+            return msg.reply(" *Asistente:* Todas las claves API han sido eliminadas permanentemente. El sistema ahora no tiene llaves. Usa `!bot addkey <llave>` para agregar nuevas.");
         }
 
         // --- INTERCEPTOR DE ARCHIVOS Y DOCUMENTOS FINANCIEROS ---
@@ -5699,7 +5699,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                             dbFirebase = null;
                             adminFirebase = null;
                             inicializarFirebase();
-                            return msg.reply("🔥 *Asistente:* Archivo `serviceAccount.json` recibido y guardado con éxito. Conexión con Firebase Firestore (Finanzas King) activada.");
+                            return msg.reply(" *Asistente:* Archivo `serviceAccount.json` recibido y guardado con éxito. Conexión con Firebase Firestore (Finanzas King) activada.");
                         }
                     } catch (errJson) {}
                 }
@@ -5740,7 +5740,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
                 if (downloadedMedia) {
                     await msg.reply(downloadedMedia, msg.from, { sendMediaAsSticker: true, stickerName: 'Bot VIP Multiplataforma', stickerAuthor: 'Geovanny' });
                 } else {
-                    await msg.reply('❌ *Asistente:* No se pudo descargar el archivo multimedia para crear el sticker.');
+                    await msg.reply(' *Asistente:* No se pudo descargar el archivo multimedia para crear el sticker.');
                 }
                 return;
             }
@@ -5831,16 +5831,16 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         const noteText = match[1].trim();
                         notasGuardadas.push(noteText);
                         guardarNotas();
-                        console.log(`[🤖 Agentic Note Add]: ${noteText}`);
-                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n📝 *Nota guardada:* "${noteText}"`).trim();
+                        console.log(`[ Agentic Note Add]: ${noteText}`);
+                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Nota guardada:* "${noteText}"`).trim();
                     }
                 }
                 
                 if (respuestaTexto.includes('[ACTION_NOTE_LIST]')) {
                     if (notasGuardadas.length === 0) {
-                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n📝 *No tienes notas guardadas.*`).trim();
+                        respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n *No tienes notas guardadas.*`).trim();
                     } else {
-                        let listStr = `\n\n📝 *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
+                        let listStr = `\n\n *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
                         respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', listStr).trim();
                     }
                 }
@@ -5859,9 +5859,9 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         }
                         if (borrada) {
                             guardarNotas();
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Nota eliminada:* "${borrada}"`).trim();
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Nota eliminada:* "${borrada}"`).trim();
                         } else {
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
                         }
                     }
                 }
@@ -5871,8 +5871,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                     const match = respuestaTexto.match(/\[ACTION_SEARCH:\s*([^\]]+)\]/);
                     if (match) {
                         const query = match[1].trim();
-                        console.log(`[🤖 Agentic Search]: Ejecutando búsqueda para: ${query}`);
-                        await msg.reply(`🔍 *Asistente:* Buscando "${query}" en la red, un momento...`);
+                        console.log(`[ Agentic Search]: Ejecutando búsqueda para: ${query}`);
+                        await msg.reply(` *Asistente:* Buscando "${query}" en la red, un momento...`);
                         
                         let searchContext = "";
                         try {
@@ -5935,8 +5935,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         const notaTexto = match[1].trim();
                         notasGuardadas.push({ texto: notaTexto, fecha: new Date().toLocaleDateString() });
                         fs.writeFileSync('notas.json', JSON.stringify(notasGuardadas, null, 2));
-                        console.log(`[🤖 Agentic Note Add]: Nota guardada: ${notaTexto}`);
-                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n📝 *Nota guardada:* "${notaTexto}"`).trim();
+                        console.log(`[ Agentic Note Add]: Nota guardada: ${notaTexto}`);
+                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Nota guardada:* "${notaTexto}"`).trim();
                     }
                 }
                 
@@ -5944,9 +5944,9 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 if (respuestaTexto.includes('[ACTION_NOTE_LIST]')) {
                     let lista = "";
                     if (notasGuardadas.length === 0) {
-                        lista = "\n\n📝 *Bloc de notas vacío.*";
+                        lista = "\n\n *Bloc de notas vacío.*";
                     } else {
-                        lista = `\n\n📝 *SUS NOTAS ARCHIVADAS:*\n`;
+                        lista = `\n\n *SUS NOTAS ARCHIVADAS:*\n`;
                         notasGuardadas.forEach((n, index) => {
                             lista += `${index + 1}. [${n.fecha}] ${n.texto}\n`;
                         });
@@ -5990,7 +5990,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             console.log(`[x  Agentic Remind]: Recordatorio en ${minutos}m: ${mensajeRecordatorio}`);
                             setTimeout(async () => {
                                 try {
-                                    const alertMsg = `x   *NOTIFICACI N DE KINBOT:*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
+                                    const alertMsg = `*NOTIFICACI N DE KINBOT:*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
                                     await client.sendMessage(chatId, alertMsg);
                                 } catch (e) {
                                     console.error("Error al disparar recordatorio automático:", e);
@@ -6044,13 +6044,13 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de música agentic URL:', err);
-                            msg.reply("❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
+                            msg.reply(" *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
                         });
                         
                         child.on('close', async (code) => {
                             const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3', '') + '.mp3';
                             if (code !== 0 || !fs.existsSync(possibleFile)) {
-                                msg.reply(`❌ *Asistente:* No pude descargar el audio del enlace proporcionado.`).catch(()=>{});
+                                msg.reply(` *Asistente:* No pude descargar el audio del enlace proporcionado.`).catch(()=>{});
                                 return;
                             }
                             try {
@@ -6060,7 +6060,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 const media = MessageMedia.fromFilePath(possibleFile);
                                 if (sizeMB > 15) {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: true });
-                                    await msg.reply('  *Asistente:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
+                                    await msg.reply(' *Asistente:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
                                 } else {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: false });
                                 }
@@ -6091,24 +6091,24 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 if (canalId) {
                                     const info = await obtenerUltimosVideosCanal(canalId, 3);
                                     if (info && info.videos && info.videos.length > 0) {
-                                        videosReporte = `📺 *Últimos videos de ${info.canalNombre}:*\n\n`;
+                                        videosReporte = ` *Últimos videos de ${info.canalNombre}:*\n\n`;
                                         info.videos.forEach((v, idx) => {
                                             const f = v.fecha ? ` _(${v.fecha})_` : '';
-                                            videosReporte += `*${idx + 1}.* *${v.titulo}*${f}\n🔗 ${v.link}\n\n`;
+                                            videosReporte += `*${idx + 1}.* *${v.titulo}*${f}\n ${v.link}\n\n`;
                                         });
                                         videosReporte += `_Para descargar un video escribe: *!bot video <enlace>*_`;
                                     } else {
-                                        videosReporte = `📺 *Canal:* ${info?.canalNombre || targetCanal}\nNo se encontraron videos recientes o el canal no tiene publicaciones públicas.`;
+                                        videosReporte = ` *Canal:* ${info?.canalNombre || targetCanal}\nNo se encontraron videos recientes o el canal no tiene publicaciones públicas.`;
                                     }
                                 } else {
-                                    videosReporte = `⚠️ No pude localizar el canal "${targetCanal}" en YouTube. Verifica el nombre o utiliza *!bot agregarcanal <enlace>*.`;
+                                    videosReporte = ` No pude localizar el canal "${targetCanal}" en YouTube. Verifica el nombre o utiliza *!bot agregarcanal <enlace>*.`;
                                 }
                             } else {
                                 // Consultar todos los canales registrados
                                 if (canalesYoutube.length === 0) {
-                                    videosReporte = "📺 No tienes canales de YouTube registrados en monitoreo.\nPuedes agregar uno escribiendo: `!bot agregarcanal <enlace o @canal>`";
+                                    videosReporte = " No tienes canales de YouTube registrados en monitoreo.\nPuedes agregar uno escribiendo: `!bot agregarcanal <enlace o @canal>`";
                                 } else {
-                                    videosReporte = "📺 *ÚLTIMOS VIDEOS DE TUS CANALES DE YOUTUBE:*\n\n";
+                                    videosReporte = " *ÚLTIMOS VIDEOS DE TUS CANALES DE YOUTUBE:*\n\n";
                                     let totalEncontrados = 0;
                                     for (const c of canalesYoutube) {
                                         const info = await obtenerUltimosVideosCanal(c.id, 2);
@@ -6116,17 +6116,17 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                             totalEncontrados++;
                                             c.nombre = info.canalNombre;
                                             c.ultimoVideo = info.videos[0].link;
-                                            videosReporte += `🔴 *${info.canalNombre}*\n`;
+                                            videosReporte += ` *${info.canalNombre}*\n`;
                                             info.videos.forEach(v => {
                                                 const f = v.fecha ? ` _(${v.fecha})_` : '';
-                                                videosReporte += `• *${v.titulo}*${f}\n  🔗 ${v.link}\n`;
+                                                videosReporte += `• *${v.titulo}*${f}\n   ${v.link}\n`;
                                             });
                                             videosReporte += '\n';
                                         }
                                     }
                                     guardarCanales();
                                     if (totalEncontrados === 0) {
-                                        videosReporte = "📺 No se encontraron videos recientes en los canales monitoreados en este momento.";
+                                        videosReporte = " No se encontraron videos recientes en los canales monitoreados en este momento.";
                                     } else {
                                         videosReporte += "_Para descargar cualquiera de ellos escribe: *!bot video <enlace>*_";
                                     }
@@ -6134,7 +6134,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             }
                         } catch (errYt) {
                             console.error("[Agentic YouTube Check Error]:", errYt.message);
-                            videosReporte = "⚠️ Ocurrió un inconveniente al consultar los canales de YouTube.";
+                            videosReporte = " Ocurrió un inconveniente al consultar los canales de YouTube.";
                         }
 
                         respuestaTexto = respuestaTexto.replace(match[0], `\n\n${videosReporte}`).trim();
@@ -6152,10 +6152,10 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             const valor = match[2].trim();
                             const resultado = guardarDatoEnMemoria(clave, valor);
                             const confirmacion = resultado && resultado.accion === 'actualizado'
-                                ? `\n\n🧠 *Memoria actualizada con éxito:*\n📌 *${clave}*: ${valor}`
-                                : `\n\n🧠 *Dato guardado en memoria con éxito:*\n📌 *${clave}*: ${valor}`;
+                                ? `\n\n *Memoria actualizada con éxito:*\n *${clave}*: ${valor}`
+                                : `\n\n *Dato guardado en memoria con éxito:*\n *${clave}*: ${valor}`;
                             respuestaTexto = respuestaTexto.replace(match[0], confirmacion).trim();
-                            console.log(`[🧠 Memoria] Dato guardado (${resultado?.accion}): "${clave}" = "${valor}"`);
+                            console.log(`[ Memoria] Dato guardado (${resultado?.accion}): "${clave}" = "${valor}"`);
                         }
                     }
                 }
@@ -6170,9 +6170,9 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             const target = match[1].trim();
                             const eliminado = eliminarDatoDeMemoria(target);
                             if (eliminado) {
-                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Dato eliminado de la memoria:* "${eliminado.clave}" (${eliminado.valor})`).trim();
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Dato eliminado de la memoria:* "${eliminado.clave}" (${eliminado.valor})`).trim();
                             } else {
-                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No encontré ningún dato en memoria que coincida con "${target}".`).trim();
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n No encontré ningún dato en memoria que coincida con "${target}".`).trim();
                             }
                         }
                     }
@@ -6184,12 +6184,12 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', '').trim();
                     } else {
                         if (memoriaGlobal.length === 0) {
-                            respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', `\n\n🧠 *No tienes datos guardados en la memoria actualmente.*`).trim();
+                            respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', `\n\n *No tienes datos guardados en la memoria actualmente.*`).trim();
                         } else {
-                            let listStr = `\n\n🧠 *DATOS GUARDADOS EN MEMORIA:*\n\n`;
+                            let listStr = `\n\n *DATOS GUARDADOS EN MEMORIA:*\n\n`;
                             memoriaGlobal.forEach((m, idx) => {
                                 const f = m.fecha ? ` _(${m.fecha})_` : '';
-                                listStr += `*${idx + 1}.* 📌 *${m.clave}*${f}\n   👉 ${m.valor}\n\n`;
+                                listStr += `*${idx + 1}.*  *${m.clave}*${f}\n    ${m.valor}\n\n`;
                             });
                             listStr += `_Para borrar un dato:_ \`!bot olvidar <número o tema>\``;
                             respuestaTexto = respuestaTexto.replace('[ACTION_MEMORY_LIST]', listStr).trim();
@@ -6255,7 +6255,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 if (typeof global.inicializarTareas === 'function') {
                                     global.inicializarTareas();
                                 }
-                                console.log(`[🤖 Agentic] Tarea programada actualizada: "${descripcion}" a las ${horaStr} para ${destNormalizado}`);
+                                console.log(`[ Agentic] Tarea programada actualizada: "${descripcion}" a las ${horaStr} para ${destNormalizado}`);
                             } else {
                                 const nuevaTarea = {
                                     id: Date.now(),
@@ -6274,14 +6274,14 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 if (typeof global.inicializarTareas === 'function') {
                                     global.inicializarTareas();
                                 }
-                                console.log(`[🤖 Agentic] Tarea programada guardada: "${descripcion}" a las ${horaStr} (${cronExpr}) para ${destNormalizado}`);
+                                console.log(`[ Agentic] Tarea programada guardada: "${descripcion}" a las ${horaStr} (${cronExpr}) para ${destNormalizado}`);
                             }
 
                             const tipoTexto = recurrente ? "todos los días" : "una sola vez";
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n📅 *Tarea programada confirmada:*\n👉 "${descripcion}"\n⏰ Hora: ${horaStr} (${tipoTexto} - Zona El Salvador)\n_Escribe *!bot programados* para ver todas tus tareas activas._`).trim();
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Tarea programada confirmada:*\n "${descripcion}"\n Hora: ${horaStr} (${tipoTexto} - Zona El Salvador)\n_Escribe *!bot programados* para ver todas tus tareas activas._`).trim();
                         } else {
-                            console.error(`[🤖 Agentic] Formato de hora/cron inválido: ${horaStr}`);
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No pude reconocer el formato de hora "${horaStr}". Por favor especifica la hora como HH:MM (ej. 05:00 o 5:00 AM).`).trim();
+                            console.error(`[ Agentic] Formato de hora/cron inválido: ${horaStr}`);
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n No pude reconocer el formato de hora "${horaStr}". Por favor especifica la hora como HH:MM (ej. 05:00 o 5:00 AM).`).trim();
                         }
                     }
                 }
@@ -6294,8 +6294,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         const artista = partes[1]?.trim() || '';
                         const query = artista ? `${cancion} ${artista}` : cancion;
                         
-                        console.log(`[🤖 Agentic Música]: Buscando: ${query}`);
-                        await msg.reply(`🎵 *Asistente:* Buscando la canción "${query}", por favor espere...`);
+                        console.log(`[ Agentic Música]: Buscando: ${query}`);
+                        await msg.reply(` *Asistente:* Buscando la canción "${query}", por favor espere...`);
                         respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         
                         const outputAudio = 'musica_' + Date.now() + '.mp3';
@@ -6310,14 +6310,14 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de música agentic:', err);
-                            msg.reply("❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
+                            msg.reply(" *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
                         });
                         
                         child.on('close', async (code) => {
                             // yt-dlp may save as .mp3 or as .mp3.mp3 depending on version
                             const possibleFile = fs.existsSync(outputAudio) ? outputAudio : outputAudio.replace('.mp3', '') + '.mp3';
                             if (code !== 0 || !fs.existsSync(possibleFile)) {
-                                msg.reply(`❌ *Asistente:* No encontré "${cancion}" de "${artista}". Verifica el nombre del artista o canción.`).catch(()=>{});
+                                msg.reply(` *Asistente:* No encontré "${cancion}" de "${artista}". Verifica el nombre del artista o canción.`).catch(()=>{});
                                 return;
                             }
                             try {
@@ -6326,14 +6326,14 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 const media = MessageMedia.fromFilePath(possibleFile);
                                 if (sizeMB > 15) {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: true });
-                                    await msg.reply('  *Asistente:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
+                                    await msg.reply(' *Asistente:* El audio se envió como documento debido a que es muy pesado/largo (' + sizeMB.toFixed(1) + ' MB).');
                                 } else {
                                     await msg.reply(media, undefined, { sendMediaAsDocument: false });
                                 }
                                 if (fs.existsSync(possibleFile)) fs.unlinkSync(possibleFile);
                             } catch (err) {
                                 console.error('[!] Error enviando música agentic:', err);
-                                msg.reply("❌ *Asistente:* Error al enviar el archivo de audio.").catch(()=>{});
+                                msg.reply(" *Asistente:* Error al enviar el archivo de audio.").catch(()=>{});
                             }
                         });
                     }
@@ -6366,8 +6366,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             const noteText = match[1].trim();
                             notasGuardadas.push(noteText);
                             guardarNotas();
-                            console.log(`[🤖 Agentic Note Add]: ${noteText}`);
-                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n📝 *Nota guardada:* "${noteText}"`).trim();
+                            console.log(`[ Agentic Note Add]: ${noteText}`);
+                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Nota guardada:* "${noteText}"`).trim();
                         }
                     }
                 }
@@ -6377,9 +6377,9 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', '').trim();
                     } else {
                         if (notasGuardadas.length === 0) {
-                            respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n📝 *No tienes notas guardadas.*`).trim();
+                            respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', `\n\n *No tienes notas guardadas.*`).trim();
                         } else {
-                            let listStr = `\n\n📝 *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
+                            let listStr = `\n\n *Notas Guardadas:*\n` + notasGuardadas.map((n, i) => `${i + 1}. ${n}`).join('\n');
                             respuestaTexto = respuestaTexto.replace('[ACTION_NOTE_LIST]', listStr).trim();
                         }
                     }
@@ -6402,9 +6402,9 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                             }
                             if (borrada) {
                                 guardarNotas();
-                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n🗑️ *Nota eliminada:* "${borrada}"`).trim();
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n *Nota eliminada:* "${borrada}"`).trim();
                             } else {
-                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
+                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n *No se encontró ninguna nota que coincida con:* "${argBorrar}"`).trim();
                             }
                         }
                     }
@@ -6414,8 +6414,8 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                     const match = respuestaTexto.match(/\[ACTION_VIDEO_BUSCAR:\s*([^\]]+)\]/);
                     if (match) {
                         const query = match[1].trim();
-                        console.log(`[🤖 Agentic Video]: Buscando: ${query}`);
-                        await msg.reply(`🎬 *Asistente:* Buscando el video "${query}", por favor espere...`);
+                        console.log(`[ Agentic Video]: Buscando: ${query}`);
+                        await msg.reply(` *Asistente:* Buscando el video "${query}", por favor espere...`);
                         respuestaTexto = respuestaTexto.replace(match[0], '').trim();
                         
                         const outputVideo = 'video_' + Date.now() + '.mp4';
@@ -6430,12 +6430,12 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                         
                         child.on('error', (err) => {
                             console.error('[!] Error en búsqueda de video agentic:', err);
-                            msg.reply("❌ *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
+                            msg.reply(" *Asistente:* yt-dlp no disponible. Instala con: pip install yt-dlp").catch(()=>{});
                         });
 
                         child.on('close', async (code) => {
                             if (code !== 0 || !fs.existsSync(outputVideo)) {
-                                msg.reply(`❌ *Asistente:* No pude descargar el video de la búsqueda "${query}". Es posible que no exista o esté muy restringido.`).catch(()=>{});
+                                msg.reply(` *Asistente:* No pude descargar el video de la búsqueda "${query}". Es posible que no exista o esté muy restringido.`).catch(()=>{});
                                 return;
                             }
                             try {
@@ -6450,7 +6450,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 if (fs.existsSync(outputVideo)) fs.unlinkSync(outputVideo);
                             } catch (err) {
                                 console.error('[!] Error enviando video agentic:', err);
-                                msg.reply("❌ *Asistente:* Error al enviar el archivo de video.").catch(()=>{});
+                                msg.reply(" *Asistente:* Error al enviar el archivo de video.").catch(()=>{});
                             }
                         });
                     }
@@ -6523,17 +6523,17 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                     const match = respuestaTexto.match(/\[ACTION_FINANCE_CARDS(?::\s*([^\]]+))?\]/);
                     if (match) {
                         if (chatId !== adminChatId) {
-                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Las funciones de finanzas están restringidas al Administrador.').trim();
+                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n Las funciones de finanzas están restringidas al Administrador.').trim();
                         } else {
                             if (!dbFirebase) inicializarFirebase();
                             if (!dbFirebase || !firebaseUid) {
-                                respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Firebase no está configurado (falta serviceAccount.json o firebaseUid).').trim();
+                                respuestaTexto = respuestaTexto.replace(match[0], '\n\n Firebase no está configurado (falta serviceAccount.json o firebaseUid).').trim();
                             } else {
                                 try {
                                     const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
                                     const snapshot = await cardsRef.get();
                                     if (snapshot.empty) {
-                                        respuestaTexto = respuestaTexto.replace(match[0], '\n\n💳 *No hay tarjetas registradas en Finanzas King.*').trim();
+                                        respuestaTexto = respuestaTexto.replace(match[0], '\n\n *No hay tarjetas registradas en Finanzas King.*').trim();
                                     } else {
                                         const cardQuery = match[1] ? match[1].trim() : null;
                                         if (cardQuery) {
@@ -6555,24 +6555,24 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                                 const avail = limit > 0 ? (limit - debt) : 0;
                                                 const pct = limit > 0 ? ((debt / limit) * 100).toFixed(0) : 0;
 
-                                                let report = `\n\n💳 *DETALLE DE TARJETA: ${matchingCard.name}*\n\n`;
-                                                if (matchingCard.last4) report += `🔢 *Terminación:* •••• ${matchingCard.last4}\n`;
-                                                report += `💰 *Deuda Actual:* $${debt.toFixed(2)}\n`;
-                                                if (payGoal > 0) report += `🎯 *Pago p/no intereses:* $${payGoal.toFixed(2)}\n`;
+                                                let report = `\n\n *DETALLE DE TARJETA: ${matchingCard.name}*\n\n`;
+                                                if (matchingCard.last4) report += ` *Terminación:* •••• ${matchingCard.last4}\n`;
+                                                report += ` *Deuda Actual:* $${debt.toFixed(2)}\n`;
+                                                if (payGoal > 0) report += ` *Pago p/no intereses:* $${payGoal.toFixed(2)}\n`;
                                                 if (limit > 0) {
-                                                    report += `📊 *Límite:* $${limit.toFixed(2)} | *Disponible:* $${avail.toFixed(2)} (${100 - pct}% libre)\n`;
+                                                    report += ` *Límite:* $${limit.toFixed(2)} | *Disponible:* $${avail.toFixed(2)} (${100 - pct}% libre)\n`;
                                                 }
-                                                if (matchingCard.cutDay) report += `✂️ *Día de corte:* ${matchingCard.cutDay}\n`;
-                                                if (matchingCard.payDay) report += `📅 *Día de pago:* ${matchingCard.payDay}\n`;
+                                                if (matchingCard.cutDay) report += ` *Día de corte:* ${matchingCard.cutDay}\n`;
+                                                if (matchingCard.payDay) report += ` *Día de pago:* ${matchingCard.payDay}\n`;
 
                                                 respuestaTexto = respuestaTexto.replace(match[0], report).trim();
                                             } else {
-                                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ No se encontró la tarjeta "${cardQuery}" en Finanzas King.`).trim();
+                                                respuestaTexto = respuestaTexto.replace(match[0], `\n\n No se encontró la tarjeta "${cardQuery}" en Finanzas King.`).trim();
                                             }
                                         } else {
                                             // Resumen general de todas las tarjetas
                                             let tDebt = 0, tLimit = 0;
-                                            let cardsReport = `\n\n💳 *ESTADO DE TARJETAS (Finanzas King)* 💳\n\n`;
+                                            let cardsReport = `\n\n *ESTADO DE TARJETAS (Finanzas King)* \n\n`;
                                             snapshot.forEach(doc => {
                                                 const c = doc.data();
                                                 const debt = parseFloat(c.balance || 0);
@@ -6583,24 +6583,24 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                                 const pagoStr = c.payDay ? `Pago: ${c.payDay}` : '';
                                                 const fechas = [corteStr, pagoStr].filter(Boolean).join(' | ');
 
-                                                cardsReport += `🔹 *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
-                                                cardsReport += `   💰 Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
-                                                if (limit > 0) cardsReport += `   💵 Disp: $${avail.toFixed(2)}\n`;
-                                                if (fechas) cardsReport += `   📅 ${fechas}\n`;
+                                                cardsReport += ` *${c.name}* ${c.last4 ? `(••${c.last4})` : ''}\n`;
+                                                cardsReport += `    Deuda: $${debt.toFixed(2)} ${limit > 0 ? `/ Límite: $${limit.toFixed(2)}` : ''}\n`;
+                                                if (limit > 0) cardsReport += `    Disp: $${avail.toFixed(2)}\n`;
+                                                if (fechas) cardsReport += `    ${fechas}\n`;
                                                 cardsReport += `\n`;
                                             });
 
                                             const ratio = tLimit > 0 ? (tDebt / tLimit) * 100 : 0;
-                                            cardsReport += `📊 *Resumen Global:*\n`;
-                                            cardsReport += `🔴 *Deuda Total:* $${tDebt.toFixed(2)}\n`;
-                                            cardsReport += `🟢 *Disponible Total:* $${(tLimit - tDebt).toFixed(2)}\n`;
-                                            cardsReport += `📈 *Endeudamiento:* ${ratio.toFixed(1)}%`;
+                                            cardsReport += ` *Resumen Global:*\n`;
+                                            cardsReport += ` *Deuda Total:* $${tDebt.toFixed(2)}\n`;
+                                            cardsReport += ` *Disponible Total:* $${(tLimit - tDebt).toFixed(2)}\n`;
+                                            cardsReport += ` *Endeudamiento:* ${ratio.toFixed(1)}%`;
                                             respuestaTexto = respuestaTexto.replace(match[0], cardsReport).trim();
                                         }
                                     }
                                 } catch (e) {
                                     console.error("Error en agentic cards:", e);
-                                    respuestaTexto = respuestaTexto.replace(match[0], `\n\n❌ Error al obtener tarjetas: ${e.message}`).trim();
+                                    respuestaTexto = respuestaTexto.replace(match[0], `\n\n Error al obtener tarjetas: ${e.message}`).trim();
                                 }
                             }
                         }
@@ -6610,17 +6610,17 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 // Finance Alerts (Agentic: alertas de vencimiento de tarjetas)
                 if (respuestaTexto.includes('[ACTION_FINANCE_ALERTS]')) {
                     if (chatId !== adminChatId) {
-                        respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n⚠️ Funciones de finanzas restringidas al Administrador.').trim();
+                        respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n Funciones de finanzas restringidas al Administrador.').trim();
                     } else {
                         if (!dbFirebase) inicializarFirebase();
                         if (!dbFirebase || !firebaseUid) {
-                            respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n⚠️ Firebase no configurado.').trim();
+                            respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', '\n\n Firebase no configurado.').trim();
                         } else {
                             try {
                                 const alertaStr = await chequearVencimientosYNotificar(true);
-                                respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', alertaStr ? `\n\n${alertaStr}` : '\n\n✅ *No hay vencimientos próximos pendientes.*').trim();
+                                respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', alertaStr ? `\n\n${alertaStr}` : '\n\n *No hay vencimientos próximos pendientes.*').trim();
                             } catch (errAl) {
-                                respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', `\n\n❌ Error verificando vencimientos: ${errAl.message}`).trim();
+                                respuestaTexto = respuestaTexto.replace('[ACTION_FINANCE_ALERTS]', `\n\n Error verificando vencimientos: ${errAl.message}`).trim();
                             }
                         }
                     }
@@ -6631,11 +6631,11 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                     const match = respuestaTexto.match(/\[ACTION_FINANCE_ADD:\s*([^\]]+)\]/);
                     if (match) {
                         if (chatId !== adminChatId) {
-                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Función de finanzas restringida al Administrador.').trim();
+                            respuestaTexto = respuestaTexto.replace(match[0], '\n\n Función de finanzas restringida al Administrador.').trim();
                         } else {
                             if (!dbFirebase) inicializarFirebase();
                             if (!dbFirebase || !firebaseUid) {
-                                respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Firebase no configurado.').trim();
+                                respuestaTexto = respuestaTexto.replace(match[0], '\n\n Firebase no configurado.').trim();
                             } else {
                                 const parts = match[1].split('|').map(p => p.trim());
                                 const type = parts[0]?.toLowerCase() === 'payment' ? 'payment' : 'expense';
@@ -6645,7 +6645,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                 const catQuery = parts[4] || '';
 
                                 if (isNaN(amt) || amt <= 0 || !cardQuery) {
-                                    respuestaTexto = respuestaTexto.replace(match[0], '\n\n⚠️ Datos de transacción inválidos en la acción de finanzas.').trim();
+                                    respuestaTexto = respuestaTexto.replace(match[0], '\n\n Datos de transacción inválidos en la acción de finanzas.').trim();
                                 } else {
                                     try {
                                         const cardsRef = dbFirebase.collection('users').doc(firebaseUid).collection('cards');
@@ -6662,11 +6662,11 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                         });
 
                                         if (!matchingCard) {
-                                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n⚠️ Tarjeta "${cardQuery}" no encontrada en Finanzas King.`).trim();
+                                            respuestaTexto = respuestaTexto.replace(match[0], `\n\n Tarjeta "${cardQuery}" no encontrada en Finanzas King.`).trim();
                                         } else {
-                                            const defaultCats = ['🛒 Supermercado', '🍔 Comida', '⛽ Transporte', '🐜 Hormiga', '💡 Servicios', '📦 Compras', '💊 Salud', '🎓 Educación'];
-                                            const defaultPayCats = ['💵 Abono Capital', '💰 Sueldo/Ingreso', '🔄 Transferencia'];
-                                            let category = (type === 'payment') ? '💵 Abono Capital' : '🐜 Hormiga';
+                                            const defaultCats = [' Supermercado', ' Comida', ' Transporte', ' Hormiga', ' Servicios', ' Compras', ' Salud', ' Educación'];
+                                            const defaultPayCats = [' Abono Capital', ' Sueldo/Ingreso', ' Transferencia'];
+                                            let category = (type === 'payment') ? ' Abono Capital' : ' Hormiga';
 
                                             if (catQuery) {
                                                 const cleanCat = catQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -6702,7 +6702,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                             await batch.commit();
 
                                             const titulo = type === 'expense' ? 'Gasto Registrado' : 'Abono Registrado';
-                                            let regReport = `\n\n💳 *${titulo}*\n`;
+                                            let regReport = `\n\n *${titulo}*\n`;
                                             regReport += `• *Monto:* $${amt.toFixed(2)}\n`;
                                             regReport += `• *Tarjeta:* ${matchingCard.name}\n`;
                                             regReport += `• *Concepto:* ${concept}\n`;
@@ -6712,7 +6712,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                                         }
                                     } catch (e) {
                                         console.error("Error en agentic finance add:", e);
-                                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n❌ Error al registrar movimiento: ${e.message}`).trim();
+                                        respuestaTexto = respuestaTexto.replace(match[0], `\n\n Error al registrar movimiento: ${e.message}`).trim();
                                     }
                                 }
                             }
@@ -6748,7 +6748,7 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                 await msg.reply(respuestaTexto);
             }
         } else {
-            await msg.reply("⚠️ *Las llaves API de Gemini están agotadas o inhabilitadas por Google.*\n\nObtén una llave gratis en https://aistudio.google.com/app/apikey y agrégala con:\n*!bot addkey <TU_API_KEY>*");
+            await msg.reply(" *Las llaves API de Gemini están agotadas o inhabilitadas por Google.*\n\nObtén una llave gratis en https://aistudio.google.com/app/apikey y agrégala con:\n*!bot addkey <TU_API_KEY>*");
         }
     } catch (error) {
         console.error("Error general:", error);
