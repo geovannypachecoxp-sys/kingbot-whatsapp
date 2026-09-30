@@ -4501,11 +4501,12 @@ Responde de forma minimalista, precisa y concisa en español.`;
     // 1. WhatsApp @-mención (en msg.mentionedIds o en el texto con @King, @Kingbot, @botNumber, etc.)
     let botMencionado = false;
     if (Array.isArray(msg.mentionedIds) && msg.mentionedIds.length > 0) {
-        botMencionado = msg.mentionedIds.some(id => 
-            (botWid && id === botWid) || 
-            (botNumber && id.includes(botNumber)) || 
-            ADMIN_NUMBERS.some(n => id.includes(n))
-        );
+        botMencionado = msg.mentionedIds.some(id => {
+            const idStr = typeof id === 'object' ? (id._serialized || id.user || '') : String(id);
+            return (botWid && idStr === botWid) || 
+                   (botNumber && idStr.includes(botNumber)) || 
+                   ADMIN_NUMBERS.some(n => idStr.includes(n));
+        });
     }
     const regexMentionText = new RegExp(`@(?:king|kingbot|kinbot|bot|asistente|${botNumber})\\b`, 'i');
     if (!botMencionado && regexMentionText.test(textoOriginal)) {
@@ -4538,21 +4539,20 @@ Responde de forma minimalista, precisa y concisa en español.`;
         llamadoPorNombre = true;
     }
 
-    // Limpiar caracteres invisibles de formato que WhatsApp inserta al mencionar o copiar
-    textoOriginal = textoOriginal.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '').trim();
+    // Limpiar caracteres invisibles y de formato unicode que WhatsApp inserta al mencionar (incluye directional isolates U+2060 a U+206F)
+    textoOriginal = textoOriginal.replace(/[\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF]/g, '').trim();
 
     // Limpieza de texto de invocación para evaluar comandos y contenido real
     let textoSinInvocacion = textoOriginal;
-    if (textoSinInvocacion.startsWith('@')) {
-        textoSinInvocacion = textoSinInvocacion.replace(/^@\S+\s*/, '').trim();
-    }
-    if (botMencionado) {
+    // Remover menciones @usuario o @número al inicio (incluyendo múltiples)
+    textoSinInvocacion = textoSinInvocacion.replace(/^(?:@\S+\s*)+/, '').trim();
+    // Si el bot fue mencionado o citado, remover cualquier @mención remanente
+    if (botMencionado || citadoAlBot) {
         textoSinInvocacion = textoSinInvocacion.replace(/@\S+/g, '').trim();
     }
-    if (llamadoPorNombre) {
-        textoSinInvocacion = textoSinInvocacion.replace(/^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)[,:\s-]*/i, '').trim();
-        textoSinInvocacion = textoSinInvocacion.replace(/(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i, '').trim();
-    }
+    // Remover llamados nominales ("King", "Oye King", "Bot", etc.)
+    textoSinInvocacion = textoSinInvocacion.replace(/^(?:(?:oye|hola|hey|che|buenas|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches)\s+)?(?:king|kingbot|kinbot|bot|asistente)[,:\s-]*/i, '').trim();
+    textoSinInvocacion = textoSinInvocacion.replace(/(?:[,.]\s*|\s+)(?:king|kingbot|kinbot|bot|asistente)\s*[?!.]*$/i, '').trim();
     if (!textoSinInvocacion) textoSinInvocacion = textoOriginal;
 
     const usaPrefijo = textoOriginal.toLowerCase().startsWith('!bot') || textoSinInvocacion.toLowerCase().startsWith('!bot');
@@ -4689,10 +4689,15 @@ NORMAS ESTRICTAS DE ESTILO Y CONDUCTA:
 
     // --- CONSULTA DIRECTA DE CLIMA (LENGUAJE NATURAL Y COMANDO) ---
     const regexClima = /^(?:c[oó]mo\s+est[aá]\s+(?:el\s+)?clima(?:\s+hoy)?(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?|clima(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+)|\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?|el\s+clima(?:\s+de\s+hoy)?(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?|pron[oó]stico(?:\s+del\s+tiempo)?(?:\s+en\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s,.-]+))?)\s*$/i;
-    const matchClima = textoLimpio.trim().match(regexClima);
-    if (comando === 'clima' || matchClima) {
-        const ciudadPedida = (argumento || matchClima?.[1] || matchClima?.[2] || matchClima?.[3] || matchClima?.[4] || matchClima?.[5] || 'Chalchuapa').trim();
-        const reporte = await obtenerReporteClima(ciudadPedida);
+    const matchClima = textoLimpio.trim().match(regexClima) || textoNormalizado.match(regexClima);
+    const esComandoClima = comando === 'clima' || matchClima || /^clima\b/i.test(textoLimpio.trim()) || /^clima\b/i.test(textoNormalizado);
+    if (esComandoClima) {
+        let ciudadPedida = argumento || matchClima?.[1] || matchClima?.[2] || matchClima?.[3] || matchClima?.[4] || matchClima?.[5];
+        if (!ciudadPedida || ciudadPedida === 'clima') {
+            ciudadPedida = textoLimpio.replace(/^clima\s*/i, '').trim();
+        }
+        if (!ciudadPedida) ciudadPedida = 'Chalchuapa';
+        const reporte = await obtenerReporteClima(ciudadPedida.trim());
         return msg.reply(reporte);
     }
 
@@ -6893,6 +6898,7 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             const contact = await msg.getContact();
             if (contact) senderName = contact.pushname || contact.name || contact.number || "Usuario";
         } catch (eCont) {}
+        if (esAdmin(chatId, msg)) senderName = "Geovanny";
 
         let textoParaGemini = textoLimpio;
         if (isGroup && textoLimpio) textoParaGemini = '[Mensaje de ' + senderName + ']: ' + textoLimpio;
@@ -6937,7 +6943,8 @@ NORMAS ESTRICTAS DE ESTILO Y CONDUCTA:
 1. MINIMALISTA, PRECISO Y CONCISO: Ve directamente al grano. CERO saludos pomposos ("Es un placer asistirle"), CERO introducciones de cortesía ("Nuestros sistemas indican...", "He analizado...") y CERO despedidas serviles ("Estoy a su disposición", "solo indíquemelo").
 2. Entrega de inmediato la respuesta exacta y concreta solicitada, en líneas breves y limpias.
 3. ABSOLUTAMENTE CERO EMOJIS en todas tus respuestas.
-4. PRIVACIDAD: Prohibido revelar finanzas, tarjetas bancarias, contraseñas o notas personales de Geovanny Pacheco.`;
+4. PRIVACIDAD: Prohibido revelar finanzas, tarjetas bancarias, contraseñas o notas personales de Geovanny Pacheco.
+5. Para consultar el clima usa [ACTION_CLIMA: ciudad]. Para buscar en Google información reciente usa [ACTION_SEARCH: consulta].`;
                 sesionesChat.set(chatId, [
                     { role: "user", parts: [{ text: systemPromptFluid }] },
                     { role: "model", parts: [{ text: "Modo conversacional grupal activado y en línea." }] }
@@ -6981,9 +6988,18 @@ NORMAS ESTRICTAS DE ESTILO Y CONDUCTA:
             } else {
                 respuestaTexto = await ejecutarGeminiConRetries(async (model) => {
                     let contenidoCopia = [...contenido];
-                    const esTercero = isGroup || !esAdmin(chatId, msg);
                     let promptStr = "";
-                    if (esTercero) {
+                    if (isGroup) {
+                        promptStr = `Eres King, un asistente virtual de inteligencia artificial moderno, minimalista, preciso y conciso.
+Estás interactuando en un grupo de WhatsApp.
+NORMAS ESTRICTAS DE ESTILO Y CONDUCTA:
+1. MINIMALISTA, PRECISO Y CONCISO: Ve directamente al grano. CERO saludos pomposos ("Es un placer asistirle"), CERO introducciones de cortesía ("Nuestros sistemas indican...", "He analizado...") y CERO despedidas serviles ("Estoy a su disposición", "solo indíquemelo").
+2. Entrega de inmediato la respuesta exacta y concreta solicitada, en líneas breves y limpias.
+3. ABSOLUTAMENTE CERO EMOJIS en todas tus respuestas.
+4. PRIVACIDAD: Prohibido revelar finanzas, tarjetas bancarias, contraseñas o notas personales de Geovanny Pacheco.
+5. Para consultar el clima usa [ACTION_CLIMA: ciudad]. Para buscar información reciente usa [ACTION_SEARCH: consulta].
+${fechaContexto}`;
+                    } else if (!esAdmin(chatId, msg)) {
                         promptStr = `Eres el asistente personal humano de Geovanny Pacheco. Estás interactuando con otra persona en WhatsApp que busca comunicarse con Geovanny o necesita ayuda. 
 Bajo ninguna circunstancia debes referirte a ti mismo como un 'bot', 'asistente virtual' o 'inteligencia artificial'. 
 Háblales como lo haría un secretario humano real: de forma empática, natural, educada y profesional, sin sonar a robot. 
@@ -7094,6 +7110,12 @@ IMPORTANTE: No utilices razonamientos silenciosos ni prefijos como '[SILENT]'. T
                     const match = respuestaTexto.match(/\[ACTION_SEARCH:\s*([^\]]+)\]/);
                     if (match) {
                         const query = match[1].trim();
+                        if (/clima|tiempo|temperatura|pron[oó]stico/i.test(query)) {
+                            const ciudadExtraida = query.replace(/clima|tiempo|temperatura|pron[oó]stico|en|de|hoy|el|la|para|actual/gi, '').trim() || 'Chalchuapa';
+                            const reporte = await obtenerReporteClima(ciudadExtraida);
+                            respuestaTexto = reporte;
+                            break;
+                        }
                         console.log(`[ Agentic Search]: Ejecutando búsqueda para: ${query}`);
                         
                         let searchContext = "";
