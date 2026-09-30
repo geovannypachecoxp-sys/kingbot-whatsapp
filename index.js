@@ -348,10 +348,17 @@ async function ejecutarGeminiConRetries(callback) {
 const rssParser = new Parser();
 
 function esAdmin(chatId, msg) {
-    if (msg && msg.fromMe) return true;
-    if (!chatId) return false;
-    if (chatId.includes("50378419704")) return true;
-    if (adminChatId && (chatId === adminChatId || chatId.includes(adminChatId.replace(/@.*$/, "")))) return true;
+    let target = chatId;
+    if (!target && msg) {
+        target = (typeof getRealChatId === 'function' ? getRealChatId(msg) : '') || msg.from;
+    }
+    if (!target) return false;
+    const clean = target.replace(/@.*$/, '');
+    if (clean.includes('50378419704') || target.includes('50378419704')) return true;
+    if (adminChatId) {
+        const cleanAdmin = adminChatId.replace(/@.*$/, '');
+        if (target === adminChatId || clean === cleanAdmin) return true;
+    }
     return false;
 }
 
@@ -2657,29 +2664,34 @@ client.on('auth_failure', (msg) => {
 });
 
 client.on('message_create', async (msg) => {
-    console.log(`[MSG_IN] fromMe=${msg.fromMe} from=${msg.from} to=${msg.to} body="${msg.body}"`);
+    // Si el mensaje es saliente (enviado por el propio bot / msg.fromMe === true):
     if (msg.fromMe) {
+        const isSelfChat = msg.to && msg.from && (
+            msg.to === msg.from || 
+            msg.to.replace(/@.*$/, '') === msg.from.replace(/@.*$/, '')
+        );
+        // Si el mensaje fue enviado por el bot a un contacto (como Geovanny) o grupo, NUNCA procesarlo (evita bucles)
+        if (!isSelfChat) return;
+
         const bodyStr = msg.body || "";
         const lowerBody = bodyStr.toLowerCase();
         const isCommand = lowerBody.startsWith('!bot') || lowerBody.startsWith('.s') || lowerBody.startsWith('.sticker') || lowerBody.startsWith('!iniciarbot') || lowerBody.startsWith('!finalizarbot');
-        const isSelfChat = (msg.to === msg.from) || esAdmin(msg.to, msg) || esAdmin(msg.from, msg);
+        
+        // En auto-chat s�lo procesar si es un comando expl�cito
+        if (!isCommand) return;
 
-        // Si es un mensaje automático generado por el propio Asistente (tareas programadas, avisos, alarmas),
-        // ignorar totalmente para evitar ciclos de re-procesamiento en chat propio (self-chat / número propio)
         if (bodyStr && (
-                        bodyStr.includes('Asistente - Tarea Programada') || 
+            bodyStr.includes('Asistente - Tarea Programada') || 
             bodyStr.includes('Asistente (Aviso Programado') ||
             bodyStr.startsWith(' *ALARMA') ||
             bodyStr.includes('RECORDATORIO!') ||
-            bodyStr.includes('NOTIFICACIÓN DE ASISTENTE:') ||
+            bodyStr.includes('NOTIFICACI�N DE ASISTENTE:') ||
             bodyStr.startsWith(' *Asistente') ||
             bodyStr.startsWith(' *Modo conversacional') ||
-            bodyStr.startsWith(' *¡Tarea Programada')
+            bodyStr.startsWith(' *�Tarea Programada')
         )) {
             return;
         }
-
-        if (!isCommand && !isSelfChat) return; // Ignorar mensajes propios que no sean comandos
     }
     const originalReply = msg.reply.bind(msg);
     msg.reply = async (...args) => {
