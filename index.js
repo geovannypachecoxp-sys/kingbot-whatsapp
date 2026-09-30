@@ -1072,28 +1072,12 @@ function procesarNuevaAlarma(parsed, chatId) {
             chatId: dest,
             recurrente: false,
             fecha: fechaStr,
+            timestampObjetivo: parsed.fechaObj.getTime(),
             creada: new Date().toISOString()
         };
 
         alarmasGuardadas.push(nuevaAlarma);
         guardarAlarmas();
-
-        // Disparo exacto en memoria
-        const ms = parsed.minutos * 60 * 1000;
-        if (ms > 0 && ms <= 24 * 3600 * 1000) {
-            setTimeout(async () => {
-                try {
-                    const idx = alarmasGuardadas.indexOf(nuevaAlarma);
-                    if (idx !== -1) {
-                        alarmasGuardadas.splice(idx, 1);
-                        guardarAlarmas();
-                    }
-                    await client.sendMessage(dest, `*Alarma:*\n${parsed.mensaje}`);
-                } catch (e) {
-                    console.error('Error al enviar alarma:', e.message);
-                }
-            }, ms);
-        }
 
         return `Alarma establecida: en ${parsed.minutos} min (${parsed.horaDisplay})\nMensaje: ${parsed.mensaje}`;
     }
@@ -1102,12 +1086,28 @@ function procesarNuevaAlarma(parsed, chatId) {
         const hora24 = horaTo24(parsed.horaStr);
         const fechaObjetivo = getFechaObjetivoAlarma(hora24);
 
+        let timestampObjetivo = null;
+        try {
+            const partsF = fechaObjetivo.split('/');
+            const partsH = hora24.split(':');
+            if (partsF.length === 3 && partsH.length === 2) {
+                const day = parseInt(partsF[0], 10);
+                const month = parseInt(partsF[1], 10) - 1;
+                const year = parseInt(partsF[2], 10);
+                const hour = parseInt(partsH[0], 10);
+                const min = parseInt(partsH[1], 10);
+                // El Salvador está en UTC-6
+                timestampObjetivo = Date.UTC(year, month, day, hour + 6, min, 0);
+            }
+        } catch (e) {}
+
         const nuevaAlarma = {
             hora: hora24,
             mensaje: parsed.mensaje,
             chatId: dest,
             recurrente: false,
             fecha: fechaObjetivo,
+            timestampObjetivo: timestampObjetivo,
             creada: new Date().toISOString()
         };
 
@@ -3056,11 +3056,12 @@ REGLAS ESTRICTAS:
             console.log('[NODE-CRON] Cuotas diarias de Gemini reiniciadas a la medianoche.');
         });
 
-        // 4. Cron para alarmas persistentes (verificación cada 20 segundos)
-        cron.schedule('*/20 * * * * *', async () => {
+        // 4. Cron para alarmas persistentes (verificación cada 10 segundos)
+        cron.schedule('*/10 * * * * *', async () => {
             if (!botGlobalmenteActivo || alarmasGuardadas.length === 0) return;
             
             const hoy = new Date();
+            const ahora = Date.now();
             const horaStr = getHoraElSalvador(hoy);
             const fechaStr = getFechaElSalvador(hoy);
             const fechaHoraActual = fechaStr + ' ' + horaStr;
@@ -3072,8 +3073,16 @@ REGLAS ESTRICTAS:
                 
                 let debeDisparar = false;
 
-                if (!alarma.recurrente) {
-                    if (alarma.fecha === fechaStr) {
+                if (alarma.recurrente) {
+                    if (horaAlarmaNorm === horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
+                        debeDisparar = true;
+                    }
+                } else {
+                    if (alarma.timestampObjetivo) {
+                        if (ahora >= alarma.timestampObjetivo) {
+                            debeDisparar = true;
+                        }
+                    } else if (alarma.fecha === fechaStr) {
                         if (horaAlarmaNorm <= horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
                             debeDisparar = true;
                         }
@@ -3091,10 +3100,6 @@ REGLAS ESTRICTAS:
                             continue;
                         }
                     }
-                } else {
-                    if (horaAlarmaNorm === horaStr && alarma.ultimoDisparo !== fechaHoraActual) {
-                        debeDisparar = true;
-                    }
                 }
 
                 if (debeDisparar) {
@@ -3104,7 +3109,8 @@ REGLAS ESTRICTAS:
                     const dest = alarma.chatId || adminChatId;
                     if (dest) {
                         try {
-                            await client.sendMessage(dest, `*Alarma (${alarma.hora}):*\n${alarma.mensaje}`);
+                            const tit = alarma.hora ? `*Alarma (${alarma.hora}):*` : `*Alarma:*`;
+                            await client.sendMessage(dest, `${tit}\n${alarma.mensaje}`);
                         } catch (e) {
                             console.error("Error enviando alarma:", e.message);
                         }
