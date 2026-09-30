@@ -710,6 +710,7 @@ const puppeteerConfig = {
 };
 
 // Si detectamos que es Termux, inyectamos la ruta del Chromium móvil de forma automática
+if (fs.existsSync('/usr/bin/chromium-browser')) { puppeteerConfig.executablePath = '/usr/bin/chromium-browser'; }
 if (isTermux) {
     puppeteerConfig.executablePath = '/data/data/com.termux/files/usr/bin/chromium-browser';
     puppeteerConfig.args.push(
@@ -3762,7 +3763,8 @@ Create a visually stunning commercial product photograph: clean composition, stu
 
         // --- SISTEMA DE BATERÍA HÍBRIDO (Windows / Android) ---
         if (comando === 'bateria' || comando === 'estado') {
-            if (isTermux) {
+            if (fs.existsSync('/usr/bin/chromium-browser')) { puppeteerConfig.executablePath = '/usr/bin/chromium-browser'; }
+if (isTermux) {
                 exec('termux-battery-status', async (err, stdout) => {
                     if (err) return msg.reply(" Error leyendo batería de Termux.");
                     try {
@@ -4460,7 +4462,8 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             statusReport += ` *Uptime Servidor:* ${sysUptime}\n`;
             statusReport += ` *Uptime Asistente:* ${jarvisUptime}\n`;
             
-            if (isTermux) {
+            if (fs.existsSync('/usr/bin/chromium-browser')) { puppeteerConfig.executablePath = '/usr/bin/chromium-browser'; }
+if (isTermux) {
                 exec('termux-battery-status', async (err, stdout) => {
                     if (!err) {
                         try {
@@ -6813,4 +6816,5 @@ process.on('SIGINT', () => {
 });
 
 client.initialize();
+
 
