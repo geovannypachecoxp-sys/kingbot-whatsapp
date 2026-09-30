@@ -687,6 +687,11 @@ function parsearInstruccionProgramacion(texto) {
     if (!texto || typeof texto !== 'string') return null;
     let t = texto.trim();
 
+    // Si es una alarma o temporizador relativo, no debe procesarse como cron
+    if (/\b(?:alarma|temporizador)\b/i.test(t) || /\b(?:en|dentro\s+de)\s+\d+\s*(?:minutos?|mins?|m|horas?|hrs?|h|segundos?|segs?|s)\b/i.test(t)) {
+        return null;
+    }
+
     // Remover prefijos comunes si los trae
     t = t.replace(/^(!bot\s+programar\s*|programar?\s+|agendar?\s+|recu[eé]rdame\s+|av[ií]same\s+)/i, '').trim();
 
@@ -718,11 +723,12 @@ function parsearInstruccionProgramacion(texto) {
         t = t.replace(/\b(todos\s+los\s+d[ií]as|diari[ao]|cada\s+d[ií]a)\b/gi, '').trim();
     }
 
-    const horaRegex = /(?:(?:a|para)\s+las?\s+)?(\b\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?|\b\d{1,2}:\d{2}\b)/i;
+    const horaRegex = /(?:(?:a|para)\s+las?\s+)(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?)|\b(\d{1,2}:\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?)\b|\b(\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.))\b/i;
     const match = t.match(horaRegex);
     if (!match) return null;
 
-    const horaCandidata = match[1].trim();
+    const horaCandidata = (match[1] || match[2] || match[3] || '').trim();
+    if (!horaCandidata) return null;
     const cronExpr = horaToCron(horaCandidata);
     if (!cronExpr) return null;
 
@@ -920,6 +926,198 @@ Humedad: ${humedad}% | Viento: ${viento} km/h`;
         console.error('Error al obtener clima:', e.message);
         return `No fue posible consultar el clima para "${ciudad}". Intenta de nuevo más tarde.`;
     }
+}
+
+function horaTo24(horaStr) {
+    if (!horaStr) return '00:00';
+    let s = horaStr.trim().toLowerCase();
+    const isPM = s.includes('pm') || s.includes('p.m.');
+    const isAM = s.includes('am') || s.includes('a.m.');
+    s = s.replace(/am|pm|a\.m\.|p\.m\./g, '').trim();
+    let h = 0, m = 0;
+    if (s.includes(':')) {
+        const parts = s.split(':');
+        h = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10);
+    } else {
+        h = parseInt(s, 10);
+        m = 0;
+    }
+    if (isNaN(h) || isNaN(m)) return '00:00';
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function parsearAlarma(texto) {
+    if (!texto) return null;
+    let t = texto.trim().replace(/^[¿¡?!.,\s]+|[¿¡?!.,\s]+$/g, '');
+
+    // 1. Temporizador / Alarma relativa ("en X minutos", "dentro de X minutos", "en media hora")
+    let minutos = null;
+    let matchStr = null;
+
+    if (/\b(?:en|dentro\s+de)\s+media\s+hora\b/i.test(t)) {
+        minutos = 30;
+        matchStr = t.match(/\b(?:en|dentro\s+de)\s+media\s+hora\b/i)[0];
+    } else {
+        const regexRel = /\b(?:para\s+)?(?:en|dentro\s+de)\s+(\d+(?:\.\d+)?)\s*(minutos?|mins?|m|horas?|hrs?|h|segundos?|segs?|s)\b/i;
+        const match = t.match(regexRel);
+        if (match) {
+            const cantidad = parseFloat(match[1]);
+            const unidad = match[2].toLowerCase();
+            minutos = cantidad;
+            if (unidad.startsWith('h')) minutos = cantidad * 60;
+            else if (unidad.startsWith('s')) minutos = cantidad / 60;
+            matchStr = match[0];
+        }
+    }
+
+    if (minutos !== null) {
+        let mensaje = t.replace(matchStr, ' ');
+        mensaje = mensaje.replace(/\b(?:programa(?:r)?|pon(?:er)?|crea(?:r)?|establece(?:r)?|av[ií]same|recu[eé]rdame)\b/gi, ' ');
+        mensaje = mensaje.replace(/\b(?:una\s+)?(?:alarma|recordatorio|temporizador|aviso)\b/gi, ' ');
+        mensaje = mensaje.replace(/^(?:record[aá]ndome|para|de|que|a)\s+/i, ' ');
+        mensaje = mensaje.replace(/\b(?:record[aá]ndome|para)\s+/i, ' ');
+        mensaje = mensaje.replace(/^[\s,;:\-–—]+/, '');
+        mensaje = mensaje.replace(/\s{2,}/g, ' ').trim();
+
+        const fechaObj = new Date(Date.now() + (minutos * 60000));
+        let hES = (fechaObj.getUTCHours() - 6 + 24) % 24;
+        let mES = fechaObj.getUTCMinutes();
+        const ampm = hES >= 12 ? 'PM' : 'AM';
+        const h12 = hES % 12 || 12;
+        const horaDisplay = `${String(h12).padStart(2, '0')}:${String(mES).padStart(2, '0')} ${ampm}`;
+        const hora24 = `${String(hES).padStart(2, '0')}:${String(mES).padStart(2, '0')}`;
+
+        return {
+            tipo: 'relativa',
+            minutos,
+            horaDisplay,
+            hora24,
+            fechaObj,
+            mensaje: mensaje || 'Alarma'
+        };
+    }
+
+    // 2. Alarma a hora específica ("alarma a las 7:00 am", "alarma a las 06:30")
+    if (/\b(?:alarma|recordatorio|temporizador)\b/i.test(t)) {
+        const regexHora = /(?:(?:a|para)\s+las?\s+)(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?)|\b(\d{1,2}:\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?)\b|\b(\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.))\b/i;
+        const matchH = t.match(regexHora);
+        if (matchH) {
+            const horaStr = (matchH[1] || matchH[2] || matchH[3]).trim();
+            let mensaje = t.replace(matchH[0], ' ');
+            mensaje = mensaje.replace(/\b(?:programa(?:r)?|pon(?:er)?|crea(?:r)?|establece(?:r)?|av[ií]same|recu[eé]rdame)\b/gi, ' ');
+            mensaje = mensaje.replace(/\b(?:una\s+)?(?:alarma|recordatorio|temporizador|aviso)\b/gi, ' ');
+            mensaje = mensaje.replace(/^(?:record[aá]ndome|para|de|que|a)\s+/i, ' ');
+            mensaje = mensaje.replace(/^[\s,;:\-–—]+/, '');
+            mensaje = mensaje.replace(/\s{2,}/g, ' ').trim();
+
+            return {
+                tipo: 'absoluta',
+                horaStr,
+                mensaje: mensaje || 'Alarma'
+            };
+        }
+    }
+
+    return null;
+}
+
+function formatearAlarmas() {
+    if (!alarmasGuardadas || alarmasGuardadas.length === 0) {
+        return "No hay alarmas configuradas.";
+    }
+    let res = "*Alarmas activas:*\n";
+    alarmasGuardadas.forEach((al, idx) => {
+        const tipo = al.recurrente ? 'Diaria' : 'Una vez';
+        res += `${idx + 1}. [${al.hora}] ${tipo} - ${al.mensaje}\n`;
+    });
+    return res.trim();
+}
+
+function cancelarAlarma(param) {
+    if (!alarmasGuardadas || alarmasGuardadas.length === 0) {
+        return "No hay alarmas configuradas para cancelar.";
+    }
+    const p = String(param || '').trim().toLowerCase();
+    if (p === 'todas' || p === 'todo' || p.includes('todas')) {
+        const cant = alarmasGuardadas.length;
+        alarmasGuardadas = [];
+        guardarAlarmas();
+        return `Se cancelaron todas las alarmas (${cant}).`;
+    }
+    const rawIdx = parseInt(p, 10);
+    let index = rawIdx - 1;
+    if (isNaN(index) || index < 0 || index >= alarmasGuardadas.length) {
+        if (!isNaN(rawIdx) && rawIdx >= 0 && rawIdx < alarmasGuardadas.length) {
+            index = rawIdx;
+        } else {
+            return `Número de alarma no válido. Alarmas disponibles: 1 a ${alarmasGuardadas.length}.`;
+        }
+    }
+    const borrada = alarmasGuardadas.splice(index, 1)[0];
+    guardarAlarmas();
+    return `Alarma eliminada: ${borrada.mensaje} (${borrada.hora})`;
+}
+
+function procesarNuevaAlarma(parsed, chatId) {
+    const dest = normalizarDestinoChat(chatId);
+    if (parsed.tipo === 'relativa') {
+        const fechaStr = getFechaElSalvador(parsed.fechaObj);
+
+        const nuevaAlarma = {
+            hora: parsed.hora24,
+            mensaje: parsed.mensaje,
+            chatId: dest,
+            recurrente: false,
+            fecha: fechaStr,
+            creada: new Date().toISOString()
+        };
+
+        alarmasGuardadas.push(nuevaAlarma);
+        guardarAlarmas();
+
+        // Disparo exacto en memoria
+        const ms = parsed.minutos * 60 * 1000;
+        if (ms > 0 && ms <= 24 * 3600 * 1000) {
+            setTimeout(async () => {
+                try {
+                    const idx = alarmasGuardadas.indexOf(nuevaAlarma);
+                    if (idx !== -1) {
+                        alarmasGuardadas.splice(idx, 1);
+                        guardarAlarmas();
+                    }
+                    await client.sendMessage(dest, `*Alarma:*\n${parsed.mensaje}`);
+                } catch (e) {
+                    console.error('Error al enviar alarma:', e.message);
+                }
+            }, ms);
+        }
+
+        return `Alarma establecida: en ${parsed.minutos} min (${parsed.horaDisplay})\nMensaje: ${parsed.mensaje}`;
+    }
+
+    if (parsed.tipo === 'absoluta') {
+        const hora24 = horaTo24(parsed.horaStr);
+        const fechaObjetivo = getFechaObjetivoAlarma(hora24);
+
+        const nuevaAlarma = {
+            hora: hora24,
+            mensaje: parsed.mensaje,
+            chatId: dest,
+            recurrente: false,
+            fecha: fechaObjetivo,
+            creada: new Date().toISOString()
+        };
+
+        alarmasGuardadas.push(nuevaAlarma);
+        guardarAlarmas();
+
+        return `Alarma establecida: ${parsed.horaStr}\nMensaje: ${parsed.mensaje}`;
+    }
+
+    return "Indica el tiempo o la hora de la alarma. Ejemplo: Alarma en 5 minutos cerrar el navegador";
 }
 
 function guardarAlarmas() {
@@ -2906,7 +3104,7 @@ REGLAS ESTRICTAS:
                     const dest = alarma.chatId || adminChatId;
                     if (dest) {
                         try {
-                            await client.sendMessage(dest, ` *ALARMA ASISTENTE (Hora: ${alarma.hora}):*\n\n"${alarma.mensaje}"\n\n_Para ver o borrar alarmas: *!bot alarmas*_`);
+                            await client.sendMessage(dest, `*Alarma (${alarma.hora}):*\n${alarma.mensaje}`);
                         } catch (e) {
                             console.error("Error enviando alarma:", e.message);
                         }
@@ -3927,9 +4125,24 @@ Responde de forma clara, natural y concisa en español.`;
         return;
     }
 
-    // --- GESTIÓN DIRECTA DE TAREAS PROGRAMADAS (LENGUAJE NATURAL Y COMANDOS) ---
-    const textoNormalizado = textoLimpio.trim().replace(/^[¿¡?!.,\s]+|[¿¡?!.,\s]+$/g, '');
+    // --- GESTIÓN DIRECTA DE ALARMAS Y TEMPORIZADORES ---
+    const regexConsultarAlarmas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?alarmas|qu[eé]\s+alarmas\s+(?:tengo|hay)|ver\s+alarmas|mis\s+alarmas|lista\s+de\s+alarmas|alarmas)\s*$/i;
+    if (regexConsultarAlarmas.test(textoNormalizado)) {
+        return msg.reply(formatearAlarmas());
+    }
 
+    const regexCancelarAlarma = /^(?:cancela(?:r)?|elimina(?:r)?|borra(?:r)?)\s+(?:(?:la\s+)?alarma\s+)?(\d+|todas?)\s*$/i;
+    const matchCancAlarma = textoNormalizado.match(regexCancelarAlarma);
+    if (matchCancAlarma) {
+        return msg.reply(cancelarAlarma(matchCancAlarma[1]));
+    }
+
+    const parsedAlarma = parsearAlarma(textoNormalizado);
+    if (parsedAlarma) {
+        return msg.reply(procesarNuevaAlarma(parsedAlarma, chatId));
+    }
+
+    // --- GESTIÓN DIRECTA DE TAREAS PROGRAMADAS (LENGUAJE NATURAL Y COMANDOS) ---
     const regexConsultarTareas = /^(?:cu[aá]les\s+son\s+(?:mis\s+)?tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|qu[eé]\s+tareas\s+(?:tengo|hay)(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|ver\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|mis\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|lista\s+de\s+tareas(?:\s+(?:programadas?|programables?|automatizadas?|agendadas?))?|tareas\s+(?:programadas?|programables?|automatizadas?|agendadas?)|programados)\s*$/i;
     if (regexConsultarTareas.test(textoNormalizado)) {
         return msg.reply(formatearTareasProgramadas());
@@ -4984,32 +5197,14 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
             return;
         }
 
-        // --- NUEVO COMANDO: RECORDATORIOS ---
+        // --- COMANDO RECORDATORIOS / ALARMAS RELATIVAS ---
         if (comando === 'recordar' || comando === 'recordatorio') {
-            if (isGroup || !esAdmin(chatId, msg)) return msg.reply(" Comando restringido al administrador");
-            const parts = argumento.split(' ');
-            const tiempoStr = parts[0];
-            const mensajeRecordatorio = parts.slice(1).join(' ');
-            
-            let minutos = parseFloat(tiempoStr);
-            if (isNaN(minutos) || minutos <= 0) {
-                return msg.reply(" *Asistente:* Uso correcto: *!bot recordar <minutos> <mensaje>*. Ejemplo: *!bot recordar 5 preparar examen*");
+            if (isGroup || !esAdmin(chatId, msg)) return msg.reply("Comando restringido al administrador");
+            const parsed = parsearAlarma(argumento) || parsearAlarma(`en ${argumento}`);
+            if (parsed) {
+                return msg.reply(procesarNuevaAlarma(parsed, chatId));
             }
-            if (!mensajeRecordatorio) {
-                return msg.reply(" *Asistente:* Debe indicarme qué desea recordar.");
-            }
-            
-            await msg.reply(` *Asistente:* Entendido, recordatorio fijado en ${minutos} minutos, Señor. No lo olvidaré.`);
-            
-            setTimeout(async () => {
-                try {
-                    const alertMsg = `*ASISTENTE   RECORDATORIO!*\n\nSeñor Geovanny, le recuerdo su tarea programada:\n\n_"${mensajeRecordatorio}"_`;
-                    await client.sendMessage(chatId, alertMsg);
-                } catch (e) {
-                    console.error("Error al disparar recordatorio:", e);
-                }
-            }, minutos * 60 * 1000);
-            return;
+            return msg.reply("Uso: !bot recordar <minutos> <mensaje>\nEjemplo: !bot recordar 5 preparar examen");
         }
 
         // --- BASE DE CONOCIMIENTO Y MEMORIA PERSISTENTE ---
@@ -5302,45 +5497,27 @@ _ Escriba del *1* al *8* para ver los comandos detallados de cada módulo._`;
 
         // --- NUEVAS CAPACIDADES - FASE 4.5 ---
 
-        // 1. Alarmas Persistentes
+        // 1. Alarmas y Temporizadores
         if (comando === 'alarma') {
-            const parts = argumento.split(' ');
-            const hora = parts[0];
-            let msgAlarma = parts.slice(1).join(' ').trim();
-            if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(hora) || !msgAlarma) {
-                return msg.reply(" *Asistente:* Formato correcto: *!bot alarma HH:MM mensaje [--diaria]*. Ejemplo: *!bot alarma 07:30 Despertarse --diaria*");
+            if (!argumento) {
+                return msg.reply("Uso: !bot alarma <minutos o HH:MM> <mensaje>\nEjemplo: !bot alarma 5 cerrar navegador");
             }
-            let recurrente = false;
-            if (msgAlarma.includes('--diaria') || msgAlarma.includes('--recurrente')) {
-                recurrente = true;
-                msgAlarma = msgAlarma.replace('--diaria', '').replace('--recurrente', '').trim();
+            const parsed = parsearAlarma(argumento);
+            if (parsed) {
+                return msg.reply(procesarNuevaAlarma(parsed, chatId));
             }
-            alarmasGuardadas.push({ hora, mensaje: msgAlarma, chatId, recurrente, fecha: getFechaObjetivoAlarma(hora) });
-            guardarAlarmas();
-            return msg.reply(` *Asistente:* Alarma establecida con éxito a las ${hora} para: _"${msgAlarma}"_ ${recurrente ? '(Diaria x )' : '(Una vez x" )'}.`);
+            return msg.reply("Formato no reconocido. Ejemplo: !bot alarma en 5 minutos cerrar navegador");
         }
 
         if (comando === 'alarmas') {
-            if (alarmasGuardadas.length === 0) {
-                return msg.reply(" *Asistente:* No hay alarmas programadas.");
-            }
-            let list = ` *ALARMAS CONFIGURADAS:*\n\n`;
-            alarmasGuardadas.forEach((al, idx) => {
-                const recurrenceType = al.recurrente ? 'x  Diaria' : 'x"  Una vez';
-                list += `${idx + 1}. [${al.hora}] ${al.mensaje} _(${recurrenceType})_\n`;
-            });
-            list += `\n_Para borrar use: *!bot alarmaborrar <índice>*_`;
-            return msg.reply(list);
+            return msg.reply(formatearAlarmas());
         }
 
         if (comando === 'alarmaborrar') {
-            const index = parseInt(argumento) - 1;
-            if (isNaN(index) || index < 0 || index >= alarmasGuardadas.length) {
-                return msg.reply(" *Asistente:* Índice de alarma no válido. Escriba *!bot alarmas* para ver la lista.");
+            if (!argumento) {
+                return msg.reply("Uso: !bot alarmaborrar <número> o !bot alarmaborrar todas");
             }
-            const borrada = alarmasGuardadas.splice(index, 1)[0];
-            guardarAlarmas();
-            return msg.reply(`S& *Asistente:* Alarma de las ${borrada.hora} ("${borrada.mensaje}") eliminada.`);
+            return msg.reply(cancelarAlarma(argumento));
         }
 
         // --- SECCIÓN: FINANZAS Y TARJETAS (PWA INTEGRATION) ---
