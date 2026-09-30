@@ -932,108 +932,146 @@ Humedad: ${humedad}% | Viento: ${viento} km/h`;
     }
 }
 
-async function descargarMediaSeguro(mensaje, maxIntentos = 2) {
+function descifrarMediaWhatsApp(bufferEncrypted, mediaKeyBase64, mediaType = 'image') {
+    try {
+        const mediaKey = Buffer.isBuffer(mediaKeyBase64) ? mediaKeyBase64 : Buffer.from(mediaKeyBase64, 'base64');
+        const infoMap = {
+            image: 'WhatsApp Image Keys',
+            video: 'WhatsApp Video Keys',
+            audio: 'WhatsApp Audio Keys',
+            document: 'WhatsApp Document Keys',
+            sticker: 'WhatsApp Image Keys'
+        };
+        const infoStr = infoMap[mediaType] || 'WhatsApp Image Keys';
+        
+        const derived = crypto.hkdfSync('sha256', mediaKey, Buffer.alloc(32), Buffer.from(infoStr, 'utf-8'), 112);
+        const iv = derived.subarray(0, 16);
+        const cipherKey = derived.subarray(16, 48);
+        
+        const cipherText = bufferEncrypted.subarray(0, bufferEncrypted.length - 10);
+        const decipher = crypto.createDecipheriv('aes-256-cbc', cipherKey, iv);
+        return Buffer.concat([decipher.update(cipherText), decipher.final()]);
+    } catch (e) {
+        console.error('[descifrarMediaWhatsApp] Error al descifrar:', e.message);
+        return null;
+    }
+}
+
+async function descargarDirectoCDN(directPath, mediaKey, mediaType = 'image') {
+    if (!directPath || !mediaKey) return null;
+    try {
+        const url = directPath.startsWith('http') ? directPath : `https://mmg.whatsapp.net${directPath}`;
+        console.log(`[descargarDirectoCDN] Intentando descarga directa desde CDN: ${url}...`);
+        const resp = await fetch(url, {
+            headers: {
+                'User-Agent': 'WhatsApp/2.24.6.77 Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                'Origin': 'https://web.whatsapp.com',
+                'Referer': 'https://web.whatsapp.com/'
+            }
+        });
+        if (resp.ok) {
+            const encBuffer = Buffer.from(await resp.arrayBuffer());
+            const decrypted = descifrarMediaWhatsApp(encBuffer, mediaKey, mediaType);
+            if (decrypted && decrypted.length > 50) {
+                console.log(`[descargarDirectoCDN] ¡Descifrado exitoso! Tamaño: ${decrypted.length} bytes`);
+                return decrypted;
+            }
+        } else {
+            console.warn(`[descargarDirectoCDN] CDN respondió status ${resp.status}`);
+        }
+    } catch (e) {
+        console.error(`[descargarDirectoCDN] Error:`, e.message);
+    }
+    return null;
+}
+
+async function descargarMediaSeguro(mensaje, maxIntentos = 1) {
     if (!mensaje) return null;
 
     // 1. Intento nativo estándar con mensaje.downloadMedia()
     if (typeof mensaje.downloadMedia === 'function') {
-        for (let i = 0; i < maxIntentos; i++) {
-            try {
-                const media = await mensaje.downloadMedia();
-                if (media && media.data) return media;
-            } catch (e) {
-                console.warn(`[descargarMediaSeguro] Intento nativo ${i + 1}/${maxIntentos} falló:`, e?.message || e);
-                if (i < maxIntentos - 1) {
-                    await new Promise(r => setTimeout(r, 600));
-                }
-            }
+        try {
+            const media = await mensaje.downloadMedia();
+            if (media && media.data) return media;
+        } catch (e) {
+            console.warn('[descargarMediaSeguro] Intento nativo falló:', e?.message || e);
         }
     }
 
-    // 2. Extracción directa y profunda desde la sesión web de Puppeteer
+    // 2. Descarga y descifrado directo por CDN (Node.js nativo con crypto)
+    const rawData = mensaje._data || {};
+    const directPath = rawData.directPath || mensaje.directPath;
+    const mediaKey = rawData.mediaKey || mensaje.mediaKey;
+    const mediaType = rawData.type || mensaje.type || 'image';
+    const mimetype = rawData.mimetype || mensaje.mimetype || 'image/jpeg';
+    const filename = rawData.filename || mensaje.filename || 'imagen.jpg';
+
+    if (directPath && mediaKey) {
+        const bufDec = await descargarDirectoCDN(directPath, mediaKey, mediaType);
+        if (bufDec) {
+            return new MessageMedia(mimetype, bufDec.toString('base64'), filename);
+        }
+    }
+
+    // 3. Extracción directa y profunda desde la sesión web de Puppeteer
     try {
         const pupPage = mensaje.client?.pupPage || client?.pupPage;
         const msgId = mensaje.id?._serialized;
-        if (pupPage && msgId) {
-            console.log(`[descargarMediaSeguro] Ejecutando extracción profunda en página para msgId: ${msgId}...`);
-            const res = await pupPage.evaluate(async (mId) => {
+        if (pupPage) {
+            console.log(`[descargarMediaSeguro] Ejecutando extracción en página para msgId: ${msgId}...`);
+            const res = await pupPage.evaluate(async (params) => {
                 try {
-                    const msg = await window.WWebJS.getMsgById(mId);
-                    const mimetype = msg?.mimetype || 'image/jpeg';
-                    const filename = msg?.filename || 'imagen.jpg';
-
-                    // Estrategia A: renderableUrl (blob: en memoria)
-                    if (msg?.mediaData?.renderableUrl) {
-                        try {
-                            const resp = await fetch(msg.mediaData.renderableUrl);
-                            if (resp.ok) {
-                                const buffer = await resp.arrayBuffer();
-                                const b64 = await window.WWebJS.arrayBufferToBase64Async(buffer);
-                                if (b64 && b64.length > 50) {
-                                    return { ok: true, data: b64, mimetype, filename, source: 'renderableUrl' };
-                                }
-                            }
-                        } catch (eA) {}
-                    }
-
-                    // Estrategia B: Buscar el nodo <img> en el DOM que corresponde a este mensaje
-                    const imgEl = document.querySelector(`[data-id="${mId}"] img`) ||
-                                  document.querySelector(`div[data-id*="${mId.replace(/[@:]/g, '')}"] img`) ||
-                                  document.querySelector(`div[data-id*="${(mId.split('_')[1] || '').replace(/[@:]/g, '')}"] img`);
-                    if (imgEl && imgEl.src && imgEl.src.startsWith('blob:')) {
-                        try {
-                            const resp = await fetch(imgEl.src);
-                            if (resp.ok) {
-                                const buffer = await resp.arrayBuffer();
-                                const b64 = await window.WWebJS.arrayBufferToBase64Async(buffer);
-                                if (b64 && b64.length > 50) {
-                                    return { ok: true, data: b64, mimetype, filename, source: 'dom_img' };
-                                }
-                            }
-                        } catch (eB) {}
-                    }
-
-                    // Estrategia C: WAWebDownloadManager sin mockQpl
-                    if (msg) {
+                    // Estrategia A: downloadManager con params directos
+                    if (params.directPath && params.mediaKey) {
                         try {
                             const dlMgr = window.require('WAWebDownloadManager')?.downloadManager || window.Store?.DownloadManager;
                             if (dlMgr && typeof dlMgr.downloadAndMaybeDecrypt === 'function') {
                                 const decrypted = await dlMgr.downloadAndMaybeDecrypt({
-                                    directPath: msg.directPath,
-                                    encFilehash: msg.encFilehash,
-                                    filehash: msg.filehash,
-                                    mediaKey: msg.mediaKey,
-                                    mediaKeyTimestamp: msg.mediaKeyTimestamp,
-                                    type: msg.type,
+                                    directPath: params.directPath,
+                                    encFilehash: params.encFilehash,
+                                    filehash: params.filehash,
+                                    mediaKey: params.mediaKey,
+                                    mediaKeyTimestamp: params.mediaKeyTimestamp,
+                                    type: params.type,
                                     signal: (new AbortController()).signal
                                 });
                                 if (decrypted) {
                                     const b64 = await window.WWebJS.arrayBufferToBase64Async(decrypted);
                                     if (b64 && b64.length > 50) {
-                                        return { ok: true, data: b64, mimetype, filename, source: 'dlMgr' };
+                                        return { ok: true, data: b64, mimetype: params.mimetype, source: 'dlMgr_direct' };
                                     }
                                 }
                             }
-                        } catch (eC) {}
+                        } catch (eA) {}
                     }
 
-                    // Estrategia D: Preview / Thumbnail base64
-                    if (msg?.mediaData?.preview) {
-                        let prev = msg.mediaData.preview;
-                        if (typeof prev === 'string') {
-                            prev = prev.replace(/^data:image\/[^;]+;base64,/, '');
-                            if (prev.length > 50) {
-                                return { ok: true, data: prev, mimetype: 'image/jpeg', filename: 'preview.jpg', source: 'preview_str' };
+                    // Estrategia B: Buscar en mensajes de WWebJS
+                    if (params.msgId) {
+                        try {
+                            const msg = await window.WWebJS.getMsgById(params.msgId);
+                            if (msg?.mediaData?.renderableUrl) {
+                                const resp = await fetch(msg.mediaData.renderableUrl);
+                                if (resp.ok) {
+                                    const buffer = await resp.arrayBuffer();
+                                    const b64 = await window.WWebJS.arrayBufferToBase64Async(buffer);
+                                    if (b64 && b64.length > 50) {
+                                        return { ok: true, data: b64, mimetype: params.mimetype, source: 'renderableUrl' };
+                                    }
+                                }
                             }
-                        } else if (prev instanceof Uint8Array || prev instanceof ArrayBuffer) {
-                            const b64 = await window.WWebJS.arrayBufferToBase64Async(prev);
-                            if (b64 && b64.length > 50) {
-                                return { ok: true, data: b64, mimetype: 'image/jpeg', filename: 'preview.jpg', source: 'preview_buf' };
+                            if (msg?.mediaData?.preview) {
+                                let prev = msg.mediaData.preview;
+                                if (typeof prev === 'string') {
+                                    prev = prev.replace(/^data:image\/[^;]+;base64,/, '');
+                                    if (prev.length > 50) {
+                                        return { ok: true, data: prev, mimetype: 'image/jpeg', source: 'preview_model' };
+                                    }
+                                }
                             }
-                        }
+                        } catch (eB) {}
                     }
 
-                    // Estrategia E: El blob de la última imagen visible en el DOM
+                    // Estrategia C: DOM img blob
                     const allBlobs = Array.from(document.querySelectorAll('img[src^="blob:"]'));
                     if (allBlobs.length > 0) {
                         const lastImg = allBlobs[allBlobs.length - 1];
@@ -1043,25 +1081,41 @@ async function descargarMediaSeguro(mensaje, maxIntentos = 2) {
                                 const buffer = await resp.arrayBuffer();
                                 const b64 = await window.WWebJS.arrayBufferToBase64Async(buffer);
                                 if (b64 && b64.length > 50) {
-                                    return { ok: true, data: b64, mimetype, filename, source: 'dom_last_blob' };
+                                    return { ok: true, data: b64, mimetype: params.mimetype, source: 'dom_last_blob' };
                                 }
                             }
-                        } catch (eE) {}
+                        } catch (eC) {}
                     }
 
-                    return { ok: false, err: 'exhausted', mediaStage: msg?.mediaData?.mediaStage };
-                } catch (eEval) {
-                    return { ok: false, err: String(eEval?.message || eEval) };
+                    return { ok: false, err: 'exhausted' };
+                } catch (eAll) {
+                    return { ok: false, err: String(eAll?.message || eAll) };
                 }
-            }, msgId);
+            }, {
+                msgId,
+                directPath,
+                mediaKey,
+                encFilehash: rawData.encFilehash,
+                filehash: rawData.filehash,
+                mediaKeyTimestamp: rawData.mediaKeyTimestamp,
+                type: mediaType,
+                mimetype
+            });
 
             console.log(`[descargarMediaSeguro] Resultado extracción profunda:`, JSON.stringify({ ok: res?.ok, source: res?.source, err: res?.err }));
             if (res && res.ok && res.data) {
-                return new MessageMedia(res.mimetype || 'image/jpeg', res.data, res.filename || 'imagen.jpg');
+                return new MessageMedia(mimetype, res.data, filename);
             }
         }
     } catch (eProfundo) {
         console.error(`[descargarMediaSeguro] Error en extracción profunda:`, eProfundo.message);
+    }
+
+    // 4. Último recurso infalible: Thumbnail / Preview base64 de _data.body
+    if (rawData.body && typeof rawData.body === 'string' && rawData.body.length > 50) {
+        console.log(`[descargarMediaSeguro] Usando thumbnail JPEG de mensaje._data.body (${rawData.body.length} caracteres)`);
+        const cleanBase64 = rawData.body.replace(/^data:image\/[^;]+;base64,/, '');
+        return new MessageMedia('image/jpeg', cleanBase64, 'thumbnail.jpg');
     }
 
     return null;
