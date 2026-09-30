@@ -346,6 +346,15 @@ async function ejecutarGeminiConRetries(callback) {
 
 // CONFIGURACIÓN DE YOUTUBE Y ESTADOS
 const rssParser = new Parser();
+
+function esAdmin(chatId, msg) {
+    if (msg && msg.fromMe) return true;
+    if (!chatId) return false;
+    if (chatId.includes("50378419704")) return true;
+    if (adminChatId && (chatId === adminChatId || chatId.includes(adminChatId.replace(/@.*$/, "")))) return true;
+    return false;
+}
+
 let adminChatId = null;
 let firebaseUid = "De3SAQbP7kbq9N2o31AEnIJuPlf1"; // UID por defecto de Geovanny Pacheco (Finanzas King)
 
@@ -2648,11 +2657,12 @@ client.on('auth_failure', (msg) => {
 });
 
 client.on('message_create', async (msg) => {
+    console.log(`[MSG_IN] fromMe=${msg.fromMe} from=${msg.from} to=${msg.to} body="${msg.body}"`);
     if (msg.fromMe) {
         const bodyStr = msg.body || "";
         const lowerBody = bodyStr.toLowerCase();
         const isCommand = lowerBody.startsWith('!bot') || lowerBody.startsWith('.s') || lowerBody.startsWith('.sticker') || lowerBody.startsWith('!iniciarbot') || lowerBody.startsWith('!finalizarbot');
-        const isSelfChat = msg.to === msg.from;
+        const isSelfChat = (msg.to === msg.from) || esAdmin(msg.to, msg) || esAdmin(msg.from, msg);
 
         // Si es un mensaje automático generado por el propio Asistente (tareas programadas, avisos, alarmas),
         // ignorar totalmente para evitar ciclos de re-procesamiento en chat propio (self-chat / número propio)
@@ -3557,7 +3567,7 @@ Responde de forma clara, natural y concisa en español.`;
     }
 
     const usaPrefijo = textoOriginal.toLowerCase().startsWith('!bot');
-    const esAdminPrivado = !isGroup && (chatId === adminChatId || (adminChatId && chatId.includes(adminChatId.replace(/@.*$/, ''))));
+    const esAdminPrivado = !isGroup && esAdmin(chatId, msg);
     if (!chatsActivos.has(chatId) && !usaPrefijo && !esAdminPrivado) return;
 
     let textoLimpio = usaPrefijo ? textoOriginal.substring(4).trim() : textoOriginal;
@@ -5719,11 +5729,16 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
         }
 
         // INTELIGENCIA ARTIFICIAL GEMINI
-        const _chatTyp = await msg.getChat();
-        await _chatTyp.sendStateTyping();
+        try {
+            const _chatTyp = await msg.getChat();
+            if (_chatTyp && _chatTyp.sendStateTyping) await _chatTyp.sendStateTyping();
+        } catch (eTyp) {}
         let contenido = [];
-        const contact = await msg.getContact();
-        const senderName = contact.pushname || contact.name || contact.number || "Usuario";
+        let senderName = "Usuario";
+        try {
+            const contact = await msg.getContact();
+            if (contact) senderName = contact.pushname || contact.name || contact.number || "Usuario";
+        } catch (eCont) {}
 
         let textoParaGemini = textoLimpio;
         if (isGroup && textoLimpio) textoParaGemini = '[Mensaje de ' + senderName + ']: ' + textoLimpio;
@@ -5757,7 +5772,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
 
         try {
             let isConversational = chatsActivos.has(chatId) && sesionesChat.has(chatId);
-            if (!isConversational && !isGroup && (!adminChatId || chatId === adminChatId)) {
+            if (!isConversational && !isGroup && esAdmin(chatId, msg)) {
                 chatsActivos.add(chatId);
                 const systemPromptFluid = agentesCustom["kingbot"];
                 sesionesChat.set(chatId, [
@@ -5769,7 +5784,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             const historial = isConversational ? sesionesChat.get(chatId) : null;
             let partsGuardar = [];
             const fechaContexto = obtenerFechaContexto();
-            const memoriaContexto = (!isGroup && (!adminChatId || chatId === adminChatId)) ? formatearMemoriaParaPrompt() : '';
+            const memoriaContexto = (!isGroup && esAdmin(chatId, msg)) ? formatearMemoriaParaPrompt() : '';
 
             if (isConversational) {
                 let entradaMessage = `[${fechaContexto}]${memoriaContexto}\n${textoParaGemini}`;
@@ -5794,7 +5809,7 @@ _Para ver todas tus tareas programadas escribe: *!bot programados*_`);
             } else {
                 respuestaTexto = await ejecutarGeminiConRetries(async (model) => {
                     let contenidoCopia = [...contenido];
-                    const esTercero = isGroup || (adminChatId && chatId !== adminChatId);
+                    const esTercero = isGroup || !esAdmin(chatId, msg);
                     let promptStr = "";
                     if (esTercero) {
                         promptStr = `Eres el asistente personal humano de Geovanny Pacheco. Estás interactuando con otra persona en WhatsApp que busca comunicarse con Geovanny o necesita ayuda. 
@@ -6831,6 +6846,7 @@ startBot();
 
 
 process.on('unhandledRejection', (reason, promise) => { console.error('Unhandled Rejection:', reason); if (reason && reason.message && reason.message.includes('Execution context was destroyed')) { process.exit(1); } });
+
 
 
 
