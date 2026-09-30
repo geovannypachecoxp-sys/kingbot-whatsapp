@@ -22,6 +22,7 @@ const cron = require('node-cron');
 const path = require('path');
 const os = require('os');
 const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+const clonarVozClient = require('./clonarVozClient');
 
 // ---------------------------------------------------------
 // DETECTOR AUTOMÁTICO DE ENTORNO (WINDOWS / TERMUX)
@@ -2220,6 +2221,23 @@ try {
 }
 
 async function obtenerAudioBufferTTS(texto, genero = 'hombre') {
+    // 0. Si se especificó una voz clonada (que no sea predefinida 'hombre' o 'mujer')
+    const esPredefinida = /^(hombre|h|masculino|male|mujer|m|femenino|female)$/i.test(genero);
+    if (!esPredefinida) {
+        try {
+            const servicio = await clonarVozClient.verificarServicio();
+            if (servicio.activo) {
+                console.log(`[ClonarVoz] Sintetizando con voz clonada: "${genero}"`);
+                const audioClonado = await clonarVozClient.sintetizarTexto(texto, genero);
+                if (audioClonado && audioClonado.length > 500) {
+                    return audioClonado;
+                }
+            }
+        } catch (eClon) {
+            console.warn('[ClonarVoz] Error sintetizando con clonador local, usando fallback neural:', eClon.message);
+        }
+    }
+
     const esHombre = !(/^(mujer|m|femenino|female)$/i.test(genero));
 
     // 1. Intentar Microsoft Edge Neural TTS (Máxima calidad de voz humana, 100% gratis)
@@ -4377,9 +4395,11 @@ function obtenerDetalleAyuda(opcionRaw) {
     if (opcion === '8' || opcion === 'utilidades' || opcion === 'herramientas' || opcion === 'varios') {
         return ` *8. UTILIDADES Y HERRAMIENTAS:*
 • \`!bot decir <texto>\` (o \`!bot tts <texto>\`) - Dicta audio con la voz activa actual.
-• \`!bot decir hombre <texto>\` (o \`!bot decir h <texto>\`) - Dicta con voz masculina .
-• \`!bot decir mujer <texto>\` (o \`!bot decir m <texto>\`) - Dicta con voz femenina .
-• \`!bot voz\` - Muestra el estado de la voz y cómo configurarla.
+• \`!bot decir hombre <texto>\` / \`!bot decir mujer <texto>\` - Dicta con voz masculina o femenina.
+• \`!bot voces\` - Lista las voces clonadas y del sistema disponibles.
+• \`!bot vozguardar <nombre>\` - Guarda y clona una voz respondiendo a una nota de voz.
+• \`!bot clonarvoz <nombre> <texto>\` - Dicta mensaje usando una voz clonada específica.
+• \`!bot voz <nombre o hombre/mujer>\` - Establece la voz activa del bot.
 • \`!bot tarea agregar <texto>\` - Agrega un pendiente personal.
 • \`!bot tareas\` - Muestra la lista de pendientes.
 • \`!bot tareacompletar <número>\` - Marca una tarea como completada.
@@ -5306,34 +5326,161 @@ if (isTermux) {
         }
 
 
-        // --- MÓDULO CONFIGURACIÓN DE VOZ (TTS) ---
+        // --- MÓDULO CONFIGURACIÓN DE VOZ Y CLONACIÓN LOCAL (QWEN3-TTS) ---
         if (comando === 'voz' || comando === 'setvoz') {
             const arg = (argumento || '').toLowerCase().trim();
             if (!arg) {
-                const nombreVozActual = vozDefault === 'mujer' ? 'Femenina  (Lorena Neural)' : 'Masculina  (Rodrigo Neural)';
-                return msg.reply(` *CONFIGURACIÓN DE VOZ ASISTENTE:*
+                let nombreVozActual = 'Masculina (Rodrigo Neural)';
+                if (vozDefault === 'mujer') nombreVozActual = 'Femenina (Lorena Neural)';
+                else if (vozDefault && vozDefault !== 'hombre') nombreVozActual = `Clonada (${vozDefault})`;
+
+                return msg.reply(`*CONFIGURACIÓN DE VOZ ASISTENTE:*
 • *Voz predeterminada actual:* ${nombreVozActual}
 
-*¿Cómo cambiar la voz por defecto?*
-• \`!bot voz hombre\` - Establece voz masculina por defecto.
-• \`!bot voz mujer\` - Establece voz femenina por defecto.
-
-*¿Cómo dictar audios eligiendo la voz al instante?*
-• \`!bot decir hombre <texto>\` (o \`!bot decir h <texto>\`)
-• \`!bot decir mujer <texto>\` (o \`!bot decir m <texto>\`)
-• \`!bot decir <texto>\` (usa la voz predeterminada actual)`);
+*Opciones disponibles:*
+• \`!bot voz hombre\` - Establece voz masculina Neural.
+• \`!bot voz mujer\` - Establece voz femenina Neural.
+• \`!bot voz <nombre_clon>\` - Establece una voz clonada por defecto.
+• \`!bot voces\` - Ver biblioteca de voces y estado del clonador local.
+• \`!bot clonarvoz <voz> <texto>\` - Dictar audio con voz clonada.
+• \`!bot vozguardar <nombre>\` - Guardar voz respondiendo a un audio.`);
             }
 
             if (/^(hombre|h|masculino|male)$/i.test(arg)) {
                 vozDefault = 'hombre';
                 guardarAdminJson();
-                return msg.reply(" *Asistente:* Voz predeterminada configurada en *Masculina*  (Rodrigo Neural).");
+                return msg.reply("*Asistente:* Voz predeterminada configurada en *Masculina* (Rodrigo Neural).");
             } else if (/^(mujer|m|femenino|female)$/i.test(arg)) {
                 vozDefault = 'mujer';
                 guardarAdminJson();
-                return msg.reply(" *Asistente:* Voz predeterminada configurada en *Femenina*  (Lorena Neural).");
+                return msg.reply("*Asistente:* Voz predeterminada configurada en *Femenina* (Lorena Neural).");
             } else {
-                return msg.reply(" *Asistente:* Opción no válida. Escriba *!bot voz hombre* o *!bot voz mujer*.");
+                // Verificar si coincide con una voz clonada en el servicio local
+                const estado = await clonarVozClient.verificarServicio();
+                if (estado.activo) {
+                    const lista = await clonarVozClient.listarVoces();
+                    const encontrada = lista.find(v => v.id === arg || v.nombre.toLowerCase() === arg.toLowerCase());
+                    if (encontrada) {
+                        vozDefault = encontrada.nombre;
+                        guardarAdminJson();
+                        return msg.reply(`*Asistente:* Voz predeterminada configurada en voz clonada: *${encontrada.nombre}*.`);
+                    }
+                }
+                return msg.reply("*Asistente:* Opción no válida. Escribe *!bot voz hombre*, *!bot voz mujer* o *!bot voces* para ver las voces disponibles.");
+            }
+        }
+
+        // --- GESTIÓN DE VOCES Y CLONACIÓN LOCAL (QWEN3-TTS) ---
+        if (comando === 'voces' || comando === 'voceslista') {
+            const estado = await clonarVozClient.verificarServicio();
+            let respuesta = `*BIBLIOTECA DE VOCES*\n\n`;
+            respuesta += `*Voces del Sistema (Predefinidas):*\n`;
+            respuesta += `• \`hombre\` - Rodrigo Neural (ES-SV)\n`;
+            respuesta += `• \`mujer\` - Lorena Neural (ES-SV)\n`;
+            respuesta += `Voz activa actual: *${vozDefault || 'hombre'}*\n\n`;
+
+            if (estado.activo) {
+                const lista = await clonarVozClient.listarVoces();
+                respuesta += `*Voces Clonadas Locales (Qwen3-TTS):* (Servicio Activo)\n`;
+                if (!lista || lista.length === 0) {
+                    respuesta += `_No hay voces clonadas registradas aún._\n`;
+                } else {
+                    lista.forEach((v, idx) => {
+                        respuesta += `${idx + 1}. *${v.nombre}* (ID: \`${v.id}\`)\n`;
+                    });
+                }
+                respuesta += `\n*Comandos disponibles:*\n`;
+                respuesta += `• \`!bot vozguardar <nombre>\` (respondiendo a un audio)\n`;
+                respuesta += `• \`!bot clonarvoz <nombre> <texto>\` (hablar con esa voz)\n`;
+                respuesta += `• \`!bot voz <nombre>\` (establecerla como predeterminada)\n`;
+                respuesta += `• \`!bot vozborrar <nombre o ID>\`\n`;
+                respuesta += `• Interfaz Web: http://127.0.0.1:8080`;
+            } else {
+                respuesta += `*Clonador de Voz Local (Qwen3-TTS):* Inactivo\n`;
+                respuesta += `_Para iniciarlo, ejecuta \`iniciar.bat\` en la carpeta \`clonar-voz\` de tu equipo._\n`;
+                respuesta += `Una vez activo, podrás clonar voces respondiendo a audios de WhatsApp con \`!bot vozguardar <nombre>\`.`;
+            }
+            return msg.reply(respuesta);
+        }
+
+        if (comando === 'vozguardar' || comando === 'clonar' || comando === 'guardarvoz') {
+            if (!esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador.");
+            if (!argumento) return msg.reply("Indica el nombre para la voz. Ejemplo: `!bot vozguardar Geovanny` (respondiendo a una nota de voz).");
+            
+            let audioMsg = null;
+            if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
+                audioMsg = msg;
+            } else if (msg.hasQuotedMsg) {
+                try {
+                    const quoted = await msg.getQuotedMessage();
+                    if (quoted && quoted.hasMedia && (quoted.type === 'ptt' || quoted.type === 'audio' || (quoted.mimetype && quoted.mimetype.startsWith('audio/')))) {
+                        audioMsg = quoted;
+                    }
+                } catch(e) {}
+            }
+
+            if (!audioMsg) {
+                return msg.reply("Debes responder a una nota de voz o adjuntar un audio con el comando:\n`!bot vozguardar <nombre>`");
+            }
+
+            const estado = await clonarVozClient.verificarServicio();
+            if (!estado.activo) {
+                return msg.reply("El servicio local de clonación de voz no está activo.\nEjecuta `iniciar.bat` en la carpeta `clonar-voz` de tu computadora para iniciarlo.");
+            }
+
+            await msg.reply(`Extrayendo muestra acústica y registrando voz "${argumento}"...`);
+            try {
+                const mediaDescargada = await descargarMediaSeguro(audioMsg);
+                if (!mediaDescargada || !mediaDescargada.data) {
+                    return msg.reply("No fue posible descargar el audio de referencia.");
+                }
+                const bufferAudio = Buffer.from(mediaDescargada.data, 'base64');
+                const nuevaVoz = await clonarVozClient.guardarVoz(argumento.trim(), bufferAudio, mediaDescargada.mimetype || 'audio/ogg');
+                return msg.reply(`Voz *${nuevaVoz.nombre}* clonada y guardada con éxito (ID: \`${nuevaVoz.id}\`).\n\nPara hablar con ella usa: \`!bot clonarvoz ${nuevaVoz.nombre} <texto>\` o configúrala como activa con: \`!bot voz ${nuevaVoz.nombre}\`.`);
+            } catch (errSave) {
+                console.error("[ClonarVoz] Error:", errSave.message);
+                return msg.reply(`Error al registrar la voz clonada: ${errSave.message}`);
+            }
+        }
+
+        if (comando === 'clonarvoz' || comando === 'decirvoz') {
+            if (!argumento) {
+                return msg.reply("Uso: `!bot clonarvoz <nombre_voz> <texto a decir>`\nEjemplo: `!bot clonarvoz Geovanny Hola a todos, este es un mensaje con voz clonada.`");
+            }
+            const primerEspacio = argumento.indexOf(' ');
+            if (primerEspacio === -1) {
+                return msg.reply("Falta el texto a sintetizar. Uso: `!bot clonarvoz <nombre_voz> <texto>`");
+            }
+            const targetVoz = argumento.substring(0, primerEspacio).trim();
+            const textoDictar = argumento.substring(primerEspacio + 1).trim();
+
+            const estado = await clonarVozClient.verificarServicio();
+            if (!estado.activo) {
+                return msg.reply("El servidor de clonación de voz no está activo.\nInícialo ejecutando `iniciar.bat` dentro de la carpeta `clonar-voz`.");
+            }
+
+            await msg.reply(`Sintetizando voz clonada "${targetVoz}" con IA local, un momento...`);
+            try {
+                const wavBuffer = await clonarVozClient.sintetizarTexto(textoDictar, targetVoz);
+                if (wavBuffer && wavBuffer.length > 500) {
+                    const media = new MessageMedia('audio/wav', wavBuffer.toString('base64'), 'voz_clonada.wav');
+                    return await msg.reply(media, undefined, { sendAudioAsVoice: true });
+                } else {
+                    return msg.reply("No se recibió audio válido del motor de síntesis.");
+                }
+            } catch (errSin) {
+                return msg.reply(`Error durante la síntesis de voz: ${errSin.message}`);
+            }
+        }
+
+        if (comando === 'vozborrar') {
+            if (!esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador.");
+            if (!argumento) return msg.reply("Uso: `!bot vozborrar <nombre o ID>`");
+            const ok = await clonarVozClient.eliminarVoz(argumento.trim());
+            if (ok) {
+                return msg.reply(`Voz eliminada correctamente.`);
+            } else {
+                return msg.reply(`No se pudo eliminar la voz. Verifica el nombre o ID.`);
             }
         }
 

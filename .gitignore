@@ -11,3 +11,9 @@ llaves API gemini*
 llaves*.txt
 gas_script.js*
 Codigo.gs
+clonar-voz/modelo/*.gguf
+clonar-voz/salidas/*
+clonar-voz/.tmp/*
+clonar-voz/voces/*
+clonar-voz/__pycache__/
+clonar-voz/config.json
