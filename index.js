@@ -5450,29 +5450,56 @@ if (isTermux) {
             return msg.reply(respuesta);
         }
 
-        if (comando === 'vozguardar' || comando === 'clonar' || comando === 'guardarvoz') {
+        if (comando === 'vozguardar' || comando === 'clonar' || comando === 'guardarvoz' || comando === 'vozdescargar') {
             if (!esAdmin(chatId, msg)) return msg.reply("Comando restringido solo al Administrador.");
-            if (!argumento) return msg.reply("Indica el nombre para la voz. Ejemplo: `!bot vozguardar Geovanny` (respondiendo a una nota de voz).");
-            
+            if (!argumento) return msg.reply("Indica el nombre para la voz. Ejemplo:\n• Respondiendo a audio/video: `!bot vozguardar Homero`\n• Con enlace directo: `!bot vozguardar Homero https://ejemplo.com/audio.mp3`");
+
+            const estado = await clonarVozClient.verificarServicio();
+            if (!estado.activo) {
+                return msg.reply("El servicio local de clonación de voz no está activo.\nEjecuta `iniciar.bat` en la carpeta `clonar-voz` de tu computadora para iniciarlo.");
+            }
+
+            // Caso A: El usuario proporcionó una URL en el comando
+            const urlMatch = argumento.match(/https?:\/\/[^\s]+/i);
+            if (urlMatch) {
+                const url = urlMatch[0];
+                const nombreVoz = argumento.replace(url, '').trim() || 'Voz';
+                await msg.reply(`Descargando audio de muestra desde enlace para voz "${nombreVoz}"...`);
+                try {
+                    const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+                    if (!resp.ok) return msg.reply(`No se pudo descargar el archivo desde el enlace (HTTP ${resp.status}).`);
+                    const buf = Buffer.from(await resp.arrayBuffer());
+                    const cType = resp.headers.get('content-type') || 'audio/mpeg';
+                    const nuevaVoz = await clonarVozClient.guardarVoz(nombreVoz, buf, cType);
+                    return msg.reply(`Voz *${nuevaVoz.nombre}* clonada y guardada con éxito (ID: \`${nuevaVoz.id}\`).\n\nPara hablar con ella usa: \`!bot clonarvoz ${nuevaVoz.nombre} <texto>\` o configúrala como activa con: \`!bot voz ${nuevaVoz.nombre}\`.`);
+                } catch (eUrl) {
+                    console.error("[ClonarVoz] Error descargando URL:", eUrl.message);
+                    return msg.reply(`Error al descargar el audio del enlace: ${eUrl.message}`);
+                }
+            }
+
+            // Caso B: El usuario responde a un audio, nota de voz o video
             let audioMsg = null;
-            if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
+            const esMediaValido = (m) => m && m.hasMedia && (
+                m.type === 'ptt' ||
+                m.type === 'audio' ||
+                m.type === 'video' ||
+                (m.mimetype && (m.mimetype.startsWith('audio/') || m.mimetype.startsWith('video/')))
+            );
+
+            if (esMediaValido(msg)) {
                 audioMsg = msg;
             } else if (msg.hasQuotedMsg) {
                 try {
                     const quoted = await msg.getQuotedMessage();
-                    if (quoted && quoted.hasMedia && (quoted.type === 'ptt' || quoted.type === 'audio' || (quoted.mimetype && quoted.mimetype.startsWith('audio/')))) {
+                    if (esMediaValido(quoted)) {
                         audioMsg = quoted;
                     }
                 } catch(e) {}
             }
 
             if (!audioMsg) {
-                return msg.reply("Debes responder a una nota de voz o adjuntar un audio con el comando:\n`!bot vozguardar <nombre>`");
-            }
-
-            const estado = await clonarVozClient.verificarServicio();
-            if (!estado.activo) {
-                return msg.reply("El servicio local de clonación de voz no está activo.\nEjecuta `iniciar.bat` en la carpeta `clonar-voz` de tu computadora para iniciarlo.");
+                return msg.reply("Debes responder a una nota de voz, audio o video, o indicar un enlace:\n• `!bot vozguardar <nombre>` (respondiendo a un archivo)\n• `!bot vozguardar <nombre> <url>`");
             }
 
             await msg.reply(`Extrayendo muestra acústica y registrando voz "${argumento}"...`);
@@ -5489,7 +5516,7 @@ if (isTermux) {
                     mediaDescargada = await descargarMediaSeguro(audioMsg);
                 }
                 if (!mediaDescargada || !mediaDescargada.data) {
-                    return msg.reply("No fue posible descargar el audio de referencia. Intenta reenviarlo o grabarlo nuevamente.");
+                    return msg.reply("No fue posible descargar el archivo de referencia. Intenta reenviarlo o grabarlo nuevamente.");
                 }
                 const bufferAudio = Buffer.from(mediaDescargada.data, 'base64');
                 const nuevaVoz = await clonarVozClient.guardarVoz(argumento.trim(), bufferAudio, mediaDescargada.mimetype || 'audio/ogg');
