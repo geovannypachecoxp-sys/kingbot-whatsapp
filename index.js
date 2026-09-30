@@ -341,7 +341,7 @@ async function ejecutarGeminiConRetries(callback) {
             }
         }
     }
-    return " *Asistente:* Mis sistemas de Inteligencia Artificial est·n experimentando una alta demanda y no est·n disponibles temporalmente. Por favor, intente de nuevo en unos minutos.";
+    return " *Asistente:* Mis sistemas de Inteligencia Artificial estÔøΩn experimentando una alta demanda y no estÔøΩn disponibles temporalmente. Por favor, intente de nuevo en unos minutos.";
 }
 
 // CONFIGURACI√ìN DE YOUTUBE Y ESTADOS
@@ -2657,8 +2657,7 @@ client.on('message_create', async (msg) => {
         // Si es un mensaje autom√°tico generado por el propio Asistente (tareas programadas, avisos, alarmas),
         // ignorar totalmente para evitar ciclos de re-procesamiento en chat propio (self-chat / n√∫mero propio)
         if (bodyStr && (
-            bodyStr.startsWith('') || 
-            bodyStr.includes('Asistente - Tarea Programada') || 
+                        bodyStr.includes('Asistente - Tarea Programada') || 
             bodyStr.includes('Asistente (Aviso Programado') ||
             bodyStr.startsWith(' *ALARMA') ||
             bodyStr.includes('RECORDATORIO!') ||
